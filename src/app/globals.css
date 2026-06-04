@@ -30,6 +30,11 @@
     --destructive: 0 72% 51%; /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
+    --success: 152 58% 36%; /* #259466 verde disponible */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%; /* #F59E0B ámbar bajo stock */
+    --warning-foreground: 28 80% 16%;
+
     --border: 326 84% 90%; /* #FBCFE8 */
     --input: 326 84% 90%;
     --ring: 331 100% 59%; /* focus rosa */
