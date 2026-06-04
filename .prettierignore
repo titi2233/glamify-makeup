@@ -1,0 +1,15 @@
+# Dependencias / build / generados
+node_modules
+.next
+pnpm-lock.yaml
+prisma/migrations
+next-env.d.ts
+
+# Contenido del usuario (fuente de verdad — no reformatear)
+blueprints
+docs
+SETUP.md
+TODO.md
+
+# Assets
+*.svg

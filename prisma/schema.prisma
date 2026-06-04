@@ -1,0 +1,395 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ ENUMS (blueprint 01 §4 — inglés británico: cancelled) ============
+enum OrderStatus {
+  pending_payment
+  paid
+  preparing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentStatus {
+  pending
+  approved
+  rejected
+  in_process
+  refunded
+  cancelled
+}
+
+enum PaymentProvider {
+  mercadopago
+}
+
+enum ShipmentStatus {
+  pending
+  ready
+  dispatched
+  in_transit
+  delivered
+  returned
+}
+
+enum ShipmentCarrier {
+  correo_argentino
+}
+
+enum ShippingMethod {
+  domicilio
+  sucursal
+}
+
+enum ShippingZoneMatchType {
+  province
+  cpRange
+}
+
+enum CartStatus {
+  active
+  ordered
+  abandoned
+}
+
+enum CouponType {
+  percentage
+  fixed
+  free_shipping
+}
+
+enum CouponScope {
+  all
+  category
+  product
+}
+
+enum UserRole {
+  owner
+  admin
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+// ============ CATÁLOGO ============
+model Category {
+  id        String     @id @default(uuid()) @db.Uuid
+  slug      String     @unique
+  name      String
+  parentId  String?    @db.Uuid
+  parent    Category?  @relation("CategoryToChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Category[] @relation("CategoryToChildren")
+  skuPrefix String     @db.VarChar(3)
+  image     String?
+  order     Int        @default(0)
+  active    Boolean    @default(true)
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Product {
+  id             String           @id @default(uuid()) @db.Uuid
+  slug           String           @unique
+  name           String
+  description    String?
+  categoryId     String           @db.Uuid
+  category       Category         @relation(fields: [categoryId], references: [id])
+  basePrice      Decimal          @db.Decimal(12, 2)
+  cost           Decimal          @db.Decimal(12, 2)
+  weightGr       Int
+  images         String[]
+  isFeatured     Boolean          @default(false)
+  heroRank       Int?
+  tags           String[]
+  seoTitle       String?
+  seoDescription String?
+  active         Boolean          @default(true)
+  variants       ProductVariant[]
+  reviews        Review[]
+  wishlistedBy   Wishlist[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  id                String      @id @default(uuid()) @db.Uuid
+  productId         String      @db.Uuid
+  product           Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name              String
+  sku               String      @unique
+  priceOverride     Decimal?    @db.Decimal(12, 2)
+  stock             Int         @default(0)
+  lowStockThreshold Int         @default(3)
+  weightGrOverride  Int?
+  image             String?
+  active            Boolean     @default(true)
+  order             Int         @default(0)
+  comboItems        ComboItem[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+
+  @@index([productId])
+}
+
+model Combo {
+  id          String      @id @default(uuid()) @db.Uuid
+  slug        String      @unique
+  name        String
+  description String?
+  comboPrice  Decimal     @db.Decimal(12, 2)
+  images      String[]
+  active      Boolean     @default(true)
+  validFrom   DateTime?
+  validTo     DateTime?
+  items       ComboItem[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model ComboItem {
+  id        String         @id @default(uuid()) @db.Uuid
+  comboId   String         @db.Uuid
+  combo     Combo          @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  variantId String         @db.Uuid
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  qty       Int
+
+  @@index([comboId])
+}
+
+// ============ CLIENTAS ============
+model Customer {
+  id        String     @id @db.Uuid // = uid de Supabase Auth
+  email     String     @unique
+  name      String?
+  phone     String?
+  addresses Address[]
+  wishlist  Wishlist[]
+  reviews   Review[]
+  carts     Cart[]
+  orders    Order[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Address {
+  id            String   @id @default(uuid()) @db.Uuid
+  customerId    String   @db.Uuid
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recipientName String
+  phone         String
+  street        String
+  number        String
+  floorApt      String?
+  city          String
+  province      String
+  postalCode    String
+  notes         String?
+  isDefault     Boolean  @default(false)
+
+  @@index([customerId])
+  @@index([postalCode])
+}
+
+model Wishlist {
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([customerId, productId])
+}
+
+model Review {
+  id               String       @id @default(uuid()) @db.Uuid
+  productId        String       @db.Uuid
+  product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId       String?      @db.Uuid
+  customer         Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  authorName       String
+  rating           Int
+  title            String?
+  body             String
+  photoUrl         String?
+  verifiedPurchase Boolean      @default(false)
+  status           ReviewStatus @default(pending)
+  createdAt        DateTime     @default(now())
+
+  @@index([productId])
+}
+
+// ============ VENTAS ============
+model Cart {
+  id           String     @id @default(uuid()) @db.Uuid
+  customerId   String?    @db.Uuid
+  customer     Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  sessionId    String?
+  status       CartStatus @default(active)
+  contactEmail String?
+  contactPhone String?
+  items        CartItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([sessionId])
+}
+
+model CartItem {
+  id                String          @id @default(uuid()) @db.Uuid
+  cartId            String          @db.Uuid
+  cart              Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId         String?         @db.Uuid
+  variant           ProductVariant? @relation(fields: [variantId], references: [id])
+  comboId           String?         @db.Uuid
+  combo             Combo?          @relation(fields: [comboId], references: [id])
+  qty               Int
+  unitPriceSnapshot Decimal         @db.Decimal(12, 2)
+
+  @@index([cartId])
+}
+
+model Order {
+  id              String         @id @default(uuid()) @db.Uuid
+  orderNumber     String         @unique
+  customerId      String?        @db.Uuid
+  customer        Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  contactName     String
+  contactEmail    String
+  contactPhone    String
+  shippingAddress Json
+  shippingMethod  ShippingMethod
+  shippingZoneId  String?        @db.Uuid
+  shippingZone    ShippingZone?  @relation(fields: [shippingZoneId], references: [id])
+  subtotal        Decimal        @db.Decimal(12, 2)
+  shippingCost    Decimal        @db.Decimal(12, 2)
+  discountTotal   Decimal        @default(0) @db.Decimal(12, 2)
+  total           Decimal        @db.Decimal(12, 2)
+  couponId        String?        @db.Uuid
+  coupon          Coupon?        @relation(fields: [couponId], references: [id])
+  status          OrderStatus    @default(pending_payment)
+  items           OrderItem[]
+  payments        Payment[]
+  shipment        Shipment?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id                  String          @id @default(uuid()) @db.Uuid
+  orderId             String          @db.Uuid
+  order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId           String?         @db.Uuid
+  variant             ProductVariant? @relation(fields: [variantId], references: [id])
+  comboId             String?         @db.Uuid
+  combo               Combo?          @relation(fields: [comboId], references: [id])
+  productNameSnapshot String
+  variantNameSnapshot String?
+  skuSnapshot         String?
+  unitPriceSnapshot   Decimal         @db.Decimal(12, 2)
+  qty                 Int
+  lineTotal           Decimal         @db.Decimal(12, 2)
+
+  @@index([orderId])
+}
+
+model Payment {
+  id             String          @id @default(uuid()) @db.Uuid
+  orderId        String          @db.Uuid
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider       PaymentProvider @default(mercadopago)
+  mpPreferenceId String?
+  mpPaymentId    String?         @unique
+  status         PaymentStatus   @default(pending)
+  amount         Decimal         @db.Decimal(12, 2)
+  rawPayload     Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([orderId])
+}
+
+// ============ ENVÍOS ============
+model ShippingZone {
+  id        String                @id @default(uuid()) @db.Uuid
+  name      String
+  matchType ShippingZoneMatchType
+  provinces String[]
+  cpFrom    String?
+  cpTo      String?
+  price     Decimal               @db.Decimal(12, 2)
+  active    Boolean               @default(true)
+  order     Int                   @default(0)
+  orders    Order[]
+}
+
+model Shipment {
+  id             String          @id @default(uuid()) @db.Uuid
+  orderId        String          @unique @db.Uuid
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier        ShipmentCarrier @default(correo_argentino)
+  service        String?
+  trackingNumber String?
+  status         ShipmentStatus  @default(pending)
+  labelUrl       String?
+  cost           Decimal         @db.Decimal(12, 2)
+  createdAt      DateTime        @default(now())
+}
+
+// ============ PROMOS ============
+model Coupon {
+  id               String      @id @default(uuid()) @db.Uuid
+  code             String      @unique
+  type             CouponType
+  value            Decimal     @db.Decimal(12, 2)
+  scope            CouponScope @default(all)
+  minSubtotal      Decimal?    @db.Decimal(12, 2)
+  maxUses          Int?
+  usedCount        Int         @default(0)
+  perCustomerLimit Int?
+  validFrom        DateTime?
+  validTo          DateTime?
+  active           Boolean     @default(true)
+  orders           Order[]
+}
+
+// ============ SISTEMA ============
+model User {
+  id        String   @id @db.Uuid // = uid de Supabase Auth
+  email     String   @unique
+  role      UserRole @default(admin)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id                    String   @id @default("default")
+  storeName             String   @default("Glamify Makeup")
+  freeShippingThreshold Decimal  @default(47500) @db.Decimal(12, 2)
+  originPostalCode      String   @default("6700")
+  whatsappNumber        String?
+  instagramUrl          String?
+  tiktokUrl             String?
+  updatedAt             DateTime @updatedAt
+}

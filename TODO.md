@@ -4,7 +4,6 @@
 
 ## Infra / notificaciones
 - [ ] **WhatsApp automatizado (Evolution Go):** avisos a la dueña y a la clienta (confirmación, despacho) + carrito abandonado por WhatsApp. Requiere instancia **always-on** (reutilizar la de Elite Padel OS o un VPS). **Hoy:** email (Resend). *(El botón wa.me manual en la web ya está en v1.)*
-- [ ] **Vercel Pro** (~US$20/mes): pasar de Hobby si factura / para estar ToS-clean. Hoy: Hobby asumiendo el riesgo.
 - [ ] **Sentry** (monitoreo de errores). Hoy: Vercel logs + PostHog.
 
 ## Assets / marca

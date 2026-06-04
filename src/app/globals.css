@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* === Glamify Makeup — tokens (blueprint 02 §2) ===
+       Light mode only (girly-clean, sin dark mode por ahora). */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 328 82% 24%; /* #6E0B3F vino oscuro */
+
+    --card: 0 0% 100%;
+    --card-foreground: 328 82% 24%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 328 82% 24%;
+
+    --primary: 331 100% 59%; /* #FF2E93 rosa eléctrico */
+    --primary-hover: 331 76% 50%; /* #E01E7D */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --secondary: 328 100% 81%; /* #FF9ED1 rosa suave */
+    --secondary-foreground: 328 82% 24%;
+
+    --accent: 258 90% 66%; /* #8B5CF6 lavanda (pop opcional) */
+    --accent-foreground: 0 0% 100%;
+
+    --muted: 324 60% 96%; /* #FBEFF6 */
+    --muted-foreground: 328 25% 45%;
+
+    --destructive: 0 72% 51%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 326 84% 90%; /* #FBCFE8 */
+    --input: 326 84% 90%;
+    --ring: 331 100% 59%; /* focus rosa */
+
+    --surface-alt: 330 100% 98%; /* #FFF5FA secciones alternas */
+
+    --radius: 0.75rem; /* botones ~12px; cards usan rounded-2xl (16px) */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    /* body 16px mínimo en mobile (evita auto-zoom iOS) */
+    font-size: 16px;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+  /* Números tabulares para precios/totales (blueprint 02 §3) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

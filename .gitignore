@@ -31,8 +31,20 @@ Thumbs.db
 .vscode/
 .idea/
 
+# TypeScript / Next.js generados (no editar a mano)
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+coverage/
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
 # Tooling / deploy
 .turbo/
-.vercel/
-coverage/
 *.pem
+
+# Cloudflare (OpenNext + Wrangler)
+.open-next/
+.wrangler/
