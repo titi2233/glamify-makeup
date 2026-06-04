@@ -1,6 +1,6 @@
 # Glamify Makeup — Blueprints
 
-> **Tienda online oficial de Glamify Makeup** — ecommerce custom (Next.js + Supabase + Vercel), operado por la dueña, con foco en venta por redes (IG/TikTok → web), envíos a todo el país y mecánicas de conversión.
+> **Tienda online oficial de Glamify Makeup** — ecommerce custom (Next.js + Supabase + Cloudflare Workers), operado por la dueña, con foco en venta por redes (IG/TikTok → web), envíos a todo el país y mecánicas de conversión.
 >
 > **Regla de oro:** estos blueprints son la **fuente de verdad** del sistema. No se escribe código hasta que estén cerrados y aprobados. El desarrollo arranca recién cuando los 10 documentos estén lockeados.
 
@@ -39,7 +39,7 @@
 
 ## Decisiones tomadas (resumen)
 
-- **Build:** custom, no plataforma. Stack: Next.js 15 (App Router) + TypeScript + Supabase (Postgres/Auth/Storage) + Prisma + shadcn/ui + Vercel.
+- **Build:** custom, no plataforma. Stack: Next.js 15 (App Router) + TypeScript + Supabase (Postgres/Auth/Storage) + Prisma + shadcn/ui + **Cloudflare Workers** (vía `@opennextjs/cloudflare`).
 - **Operación:** la dueña gestiona todo (CRUD, stock, pedidos, envíos) desde un panel propio; soporte técnico a cargo del dev.
 - **Cobro:** Mercado Pago Checkout Pro (Fase 1).
 - **Envíos:** Correo Argentino (MiCorreo/PaqAr) como operador principal; cálculo por código postal; envío gratis sobre umbral; retiro en persona.
@@ -52,4 +52,4 @@
 ## Pendientes / decisiones abiertas
 
 - [ ] **Datos reales** para KPIs y pricing (ver 00 §7 y §12).
-- [ ] **Scope diferido** (WhatsApp/Evolution Go, Vercel Pro, Sentry, logo vectorial, Fase 2) → [`../TODO.md`](../TODO.md).
+- [ ] **Scope diferido** (WhatsApp/Evolution Go, Cloudflare Workers Paid, Sentry, logo vectorial, Fase 2) → [`../TODO.md`](../TODO.md).

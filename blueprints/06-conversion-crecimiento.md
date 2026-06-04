@@ -42,7 +42,7 @@
 
 ## 6. Recuperación y recompra
 
-- **C2 ✔ — Carrito abandonado por email (Resend)** en v1; requiere email + **consentimiento**. Timing: 1º a ~1h, 2º a ~24h (vía Vercel Cron). WhatsApp diferido → `TODO.md`.
+- **C2 ✔ — Carrito abandonado por email (Resend)** en v1; requiere email + **consentimiento**. Timing: 1º a ~1h, 2º a ~24h (vía Cloudflare Cron Trigger). WhatsApp diferido → `TODO.md`.
 - **Wishlist / favoritos** + **aviso de reposición** (back-in-stock).
 - **Cupones**: bienvenida (1ª compra), recompra, recuperación.
 - **Opt-in** a novedades (WhatsApp/email) con consentimiento y baja fácil.

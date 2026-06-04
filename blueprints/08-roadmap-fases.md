@@ -2,7 +2,7 @@
 
 > **Propósito:** el plan de construcción en **milestones**, derivado de los blueprints `00`–`07`. Cada milestone se ejecuta siguiendo el `09` (playbook). El orden prioriza tener algo demostrable temprano y dejar el launch para el final con QA.
 >
-> Estado: ✅ **aprobado** · Fecha: 2026-06-03
+> Estado: ✅ **aprobado** · Fecha: 2026-06-03 · **Actualizado: 2026-06-04** (Vercel → Cloudflare)
 
 ---
 
@@ -11,20 +11,20 @@
 Cuentas/credenciales necesarias (las junta el dev a medida que avanzan los milestones):
 
 - [ ] **GitHub** — repo del proyecto.
-- [ ] **Vercel** (Hobby) + conectar repo.
+- [ ] **Cloudflare** — cuenta + conectar repo a Workers.
 - [ ] **Supabase** — proyecto (Postgres/Auth/Storage) + **Google OAuth** (para login con Google).
 - [ ] **Mercado Pago** — app + credenciales **TEST y PROD** + webhook.
 - [ ] **MiCorreo (Correo Argentino)** — cuenta + credenciales de **API**.
 - [ ] **Resend** — cuenta + verificar dominio `glamifymakeup.site` (SPF/DKIM).
 - [ ] **PostHog** — cuenta + key.
-- [ ] **Dominio** — apuntar DNS de `glamifymakeup.site` a Vercel.
+- [ ] **Dominio** — apuntar DNS de `glamifymakeup.site` a Cloudflare.
 - [ ] **Assets** — fotos de producto + textos (logo vectorial → `TODO.md`).
 
 ## 2. Milestones (Fase 1)
 
 ### M0 — Cimientos
-Scaffolding Next.js 15 + TS + Tailwind + shadcn/ui · Supabase + **Prisma schema** (`01`) · **design tokens** (`02`: paleta rosa eléctrico, Playfair/Nunito) · layout base · CI + deploy a Vercel.
-**DoD:** app deployada (home placeholder) + DB migrada + tokens aplicados.
+Scaffolding Next.js 15 + TS + Tailwind + shadcn/ui · Supabase + **Prisma schema** (`01`) con **driver adapter** (`@prisma/adapter-pg`) · **`@opennextjs/cloudflare`** + `wrangler.jsonc` · **design tokens** (`02`: paleta rosa eléctrico, Playfair/Nunito) · layout base · CI + deploy a **Cloudflare Workers**.
+**DoD:** app deployada en Cloudflare (home placeholder) + DB migrada + tokens aplicados.
 
 ### M1 — Catálogo (lectura)
 Entidades de catálogo + seed · **Home** · **`/tienda`** con filtros · **ficha de producto** con variantes · componentes de diseño (`ProductCard`, `VariantSwatchSelector`, `PriceTag`, etc.).
@@ -39,7 +39,7 @@ Auth admin · CRUD productos/categorías/combos · **control de stock** · **ped
 **DoD:** la dueña opera **todo** sin tocar código.
 
 ### M4 — Cuenta + Conversión + Crecimiento
-Cuentas (email+Google) · wishlist · reseñas (alta + display) · **mecánicas de conversión** (`06`: barra envío gratis, combos, order-bump, cross-sell, stock badges) · **carrito abandonado** (Vercel Cron + email) · exit-intent · **PostHog** · **SEO/OG** · **estética IA** (`06 §5`).
+Cuentas (email+Google) · wishlist · reseñas (alta + display) · **mecánicas de conversión** (`06`: barra envío gratis, combos, order-bump, cross-sell, stock badges) · **carrito abandonado** (**Cloudflare Cron Trigger** + email) · exit-intent · **PostHog** · **SEO/OG** · **estética IA** (`06 §5`).
 **DoD:** funnel completo + medición andando.
 
 ### M5 — Pulido, QA y Launch
@@ -54,11 +54,11 @@ Páginas legales (**arrepentimiento**, términos, privacidad) · accesibilidad (
 
 ## 4. Fase 2 (post-launch) → `TODO.md`
 
-WhatsApp (Evolution Go), checkout embebido (Bricks), programa de puntos, PWA, historial de movimientos de stock, import CSV, reembolsos in-app, reactivar efectivo, Sentry, Vercel Pro.
+WhatsApp (Evolution Go), checkout embebido (Bricks), programa de puntos, PWA, historial de movimientos de stock, import CSV, reembolsos in-app, reactivar efectivo, Sentry, Cloudflare Workers Paid (si se supera 100K req/día).
 
 ## 5. Cómo se ejecuta
 
-Cada milestone se construye con el **`09` (playbook)**: **Superpowers** (plan → execute → TDD → verify → review) + **ux-ui-pro-max** para UI + **ultracode** en las fases pesadas, con el **modelo recomendado por fase**. Verificación antes de marcar cada milestone como listo.
+Cada milestone se construye con el **`09` (playbook)**: **Superpowers** (plan → execute → TDD → verify → review) + **ux-ui-pro-max** para UI + **ultracode** en las fases pesadas, con el **modelo recomendado por fase**. Deploy a **Cloudflare Workers** (preview por PR). Verificación antes de marcar cada milestone como listo.
 
 ## 6. Decisión
 

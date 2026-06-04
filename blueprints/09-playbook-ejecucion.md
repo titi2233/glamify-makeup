@@ -2,7 +2,7 @@
 
 > **Propósito:** cómo construir el sistema fase por fase con Claude Code — los **prompts exactos** que tirás, las **skills** y el **modelo**. Se escribe último porque referencia `00`–`08`.
 >
-> Estado: ✅ **aprobado** · Fecha: 2026-06-03
+> Estado: ✅ **aprobado** · Fecha: 2026-06-03 · **Actualizado: 2026-06-04** (Vercel → Cloudflare)
 
 ---
 
@@ -31,10 +31,15 @@ Milestone M0 — Cimientos. Superpowers: PLAN primero (writing-plans), luego TDD
 Alcance:
 - Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui.
 - Supabase (Postgres + Auth + Storage) + Prisma con el schema del blueprint 01.
+  - Prisma con driver adapter (@prisma/adapter-pg) para compatibilidad con Cloudflare Workers.
+- Deploy a **Cloudflare Workers** vía **@opennextjs/cloudflare** (NO usar @cloudflare/next-on-pages, es legacy).
+  - Crear wrangler.jsonc con nodejs_compat.
+  - Scripts: build:worker, dev:worker, preview:worker, deploy.
 - Design tokens del 02 (rosa eléctrico #FF2E93, Playfair Display + Nunito Sans, soft UI). Persistí design-system/MASTER.md con ux-ui-pro-max.
-- Layout base + estructura de carpetas. CI (lint/typecheck/test) + deploy a Vercel.
-Verificá: build OK, deploy OK, migración Prisma corre.
-DoD: app deployada (home placeholder) + DB migrada + tokens aplicados.
+- Layout base + estructura de carpetas. CI (lint/typecheck/test) + deploy a Cloudflare Workers.
+- .env.local ya existe con las credenciales de Supabase.
+Verificá: build OK, deploy a Cloudflare OK, migración Prisma corre.
+DoD: app deployada en Cloudflare (home placeholder) + DB migrada + tokens aplicados.
 ```
 
 ### M1 — Catálogo (lectura)
@@ -82,7 +87,7 @@ Glamify Makeup — Milestone M4 (Cuenta + Conversión). Releé 06, 02. Superpowe
 Alcance:
 - Cuentas (email + Google), wishlist, reseñas (alta + display + moderación).
 - Conversión (06): barra envío gratis, combos, order-bump, cross-sell, stock badges reales.
-- Carrito abandonado (Vercel Cron + email Resend), exit-intent sutil.
+- Carrito abandonado (Cloudflare Cron Trigger + email Resend), exit-intent sutil.
 - PostHog, SEO + Open Graph, estética IA (06 §5, con guardrails de performance/reduced-motion).
 Verificá: funnel completo + eventos en PostHog + emails de recupero.
 DoD: funnel y medición andando.
@@ -109,7 +114,7 @@ Cada milestone se cierra **solo** cuando su **DoD** está verificado con evidenc
 
 - **Siempre en rama, nunca `main`:** una rama por milestone (`m0-cimientos`, `m1-catalogo`, …). PR + code-review antes de mergear a `main`.
 - **Seed de "producción falsa":** en **M1** se carga un **seed realista** (productos, variantes, combos, fotos placeholder) para **ver cómo queda la tienda** sin esperar datos reales. El seed es **solo dev/preview**.
-- **Preview deploy:** cada PR genera un **deploy de preview en Vercel** → una URL para ver la tienda en vivo con el seed.
+- **Preview deploy:** cada PR genera un **deploy de preview en Cloudflare** → una URL para ver la tienda en vivo con el seed.
 - **Datos reales:** la dueña carga los productos **uno por uno** desde el panel (M3). El seed se limpia antes del launch (M5).
 
 ## 7. Manejo de contexto (`/clear` y `/compact`)

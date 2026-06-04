@@ -105,7 +105,7 @@ En una línea: **glam accesible**, estética cuidada pero no intimidante, lógic
 
 - ✅ **Gratis:** Supabase (free tier), dominio ya comprado, código propio, sin comisión de plataforma.
 - ⚠️ **Mercado Pago cobra comisión por venta** — inevitable en cualquier solución.
-- ⚠️ **Vercel Hobby es "no comercial"** en sus términos: sirve para construir/lanzar, pero una tienda que factura debería migrar a Vercel Pro (~US$20/mes) o a un hosting alternativo gratuito. Único costo futuro probable además de MP y el dominio.
+- ✅ **Cloudflare Workers (free):** hosting gratuito con uso comercial permitido. 100K req/día, assets estáticos ilimitados. Si el tráfico crece: Workers Paid ($5/mes).
 - **Legal (Argentina):** rige la **Ley 24.240 (Defensa del Consumidor)** y Lealtad Comercial → prohibido scarcity/urgencia falsa, precios engañosos y costos ocultos. La persuasión va sobre datos reales.
 - **Operación:** la dueña gestiona sola; la UX del panel debe ser **"que la entienda un nene"**.
 - **Volumen:** hoy bajo (poco stock y pocas ventas). Diseñamos para **crecer**, sin sobre-ingeniería para escala que no existe aún.
