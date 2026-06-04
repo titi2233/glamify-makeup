@@ -33,6 +33,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -53,6 +61,12 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "Georgia", "serif"],
+      },
+      fontSize: {
+        // escala blueprint 02 §3 (Tailwind no trae 32/40/48 exactos)
+        "heading-sm": ["2rem", { lineHeight: "1.2" }], // 32px
+        "heading-md": ["2.5rem", { lineHeight: "1.1" }], // 40px
+        "heading-lg": ["3rem", { lineHeight: "1.05" }], // 48px hero desktop
       },
       boxShadow: {
         // soft UI (blueprint 02 §4)
