@@ -4,7 +4,7 @@
 
 ## Infra / notificaciones
 - [ ] **WhatsApp automatizado (Evolution Go):** avisos a la dueña y a la clienta (confirmación, despacho) + carrito abandonado por WhatsApp. Requiere instancia **always-on** (reutilizar la de Elite Padel OS o un VPS). **Hoy:** email (Resend). *(El botón wa.me manual en la web ya está en v1.)*
-- [ ] **Sentry** (monitoreo de errores). Hoy: Vercel logs + PostHog.
+- [ ] **Sentry** (monitoreo de errores). Hoy: Cloudflare logs + PostHog.
 
 ## Assets / marca
 - [x] **Logo vectorial real (SVG) o PNG transparente** — el actual es un JPEG envuelto en SVG (fondo blanco). Necesario para footer / secciones de color.
