@@ -2,17 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (inline) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Dejar el repo de Glamify Makeup con Next.js 15 + TS + Tailwind + shadcn/ui andando, el schema Prisma completo del blueprint 01 migrado contra Supabase, los design tokens del blueprint 02 aplicados, `design-system/MASTER.md` persistido, layout base + home placeholder, y CI (lint/typecheck/test) — listo para conectar a Vercel.
+**Goal:** Dejar el repo de Glamify Makeup con Next.js 15 + TS + Tailwind + shadcn/ui andando, el schema Prisma completo del blueprint 01 migrado contra Supabase, los design tokens del blueprint 02 aplicados, `design-system/MASTER.md` persistido, layout base + home placeholder, y CI (lint/typecheck/test) — listo para deployar a Cloudflare Workers.
 
 **Architecture:** App Router con `src/`. Datos en Supabase Postgres vía Prisma (cliente singleton). Auth/Storage de Supabase vía `@supabase/ssr` (browser + server + service-role). Diseño girly-clean soft-UI: tokens como CSS vars (convención shadcn HSL) mapeados en `tailwind.config.ts`; tipografías con `next/font`. 100% serverless, sin piezas always-on.
 
-**Tech Stack:** Next.js 15 (App Router) · React 19 · TypeScript 5 (strict) · Tailwind CSS 3.4 · shadcn/ui (Radix + CVA + tailwind-merge) · lucide-react · Prisma 6 + `@prisma/client` · `@supabase/supabase-js` + `@supabase/ssr` · Vitest · Playwright · ESLint (`eslint-config-next`) + Prettier · GitHub Actions · Vercel · pnpm.
+**Tech Stack:** Next.js 15 (App Router) · React 19 · TypeScript 5 (strict) · Tailwind CSS 3.4 · shadcn/ui (Radix + CVA + tailwind-merge) · lucide-react · Prisma 6 + `@prisma/client` · `@supabase/supabase-js` + `@supabase/ssr` · Vitest · Playwright · ESLint (`eslint-config-next`) + Prettier · GitHub Actions · Cloudflare Workers (`@opennextjs/cloudflare`) · pnpm.
 
 **Convenciones del proyecto (de los blueprints — NO confundir con otros proyectos):**
 - Dinero: `Decimal(12,2)` en ARS (blueprint 01 §5). **NO** centavos-enteros.
 - Enums de estado en **inglés británico**: `cancelled` (doble L), tal como blueprint 01 §4. (Opuesto a la convención de TurnoGol.)
 - Timestamps UTC; conversión a ART solo en el front.
-- Secrets solo en `.env.local` / env de Vercel; nunca en git ni en el chat (`.gitignore` ya los excluye).
+- Secrets solo en `.env.local` / `wrangler secret`; nunca en git ni en el chat (`.gitignore` ya los excluye).
 - Siempre en rama, nunca `main` (playbook 09 §6). Esta rama: `m0-cimientos`.
 
 ---
@@ -75,7 +75,8 @@ glamify-makeup/
 ├─ .eslintrc.json
 ├─ .prettierrc.json
 ├─ .prettierignore
-├─ vercel.json                       # region gru1 (São Paulo) para latencia AR
+├─ wrangler.jsonc                    # config Cloudflare Workers (nodejs_compat)
+├─ open-next.config.ts               # config OpenNext (adapter Cloudflare)
 ├─ package.json
 ├─ README.md
 ├─ .env.example                      # YA EXISTE (commitear)
@@ -1470,19 +1471,29 @@ jobs:
 
 ---
 
-## Task 13: README + vercel.json + script de Storage
+## Task 13: README + wrangler.jsonc/open-next.config.ts + script de Storage
 
 **Files:**
-- Create: `README.md`, `vercel.json`, `scripts/setup-storage.ts`
+- Create: `README.md`, `wrangler.jsonc`, `open-next.config.ts`, `scripts/setup-storage.ts`
 
-- [ ] **Step 1: `vercel.json` (region São Paulo)**
+- [ ] **Step 1: `wrangler.jsonc` + `open-next.config.ts` (Cloudflare Workers)**
 
-```json
+`wrangler.jsonc`:
+```jsonc
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["gru1"],
-  "framework": "nextjs"
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "glamify-makeup",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" }
 }
+```
+
+`open-next.config.ts`:
+```ts
+import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+export default defineCloudflareConfig();
 ```
 
 - [ ] **Step 2: `scripts/setup-storage.ts` (bucket idempotente)**
@@ -1532,11 +1543,11 @@ Expected: `Bucket "product-images" creado` (o "ya existe").
 ```markdown
 # Glamify Makeup
 
-Tienda online de Glamify Makeup — ecommerce custom (Next.js 15 + Supabase + Prisma + Vercel).
+Tienda online de Glamify Makeup — ecommerce custom (Next.js 15 + Supabase + Prisma + Cloudflare Workers).
 Fuente de verdad del producto: [`blueprints/`](blueprints/) (00–09). Plan de M0: [`docs/superpowers/plans/`](docs/superpowers/plans/). Sistema de diseño: [`design-system/MASTER.md`](design-system/MASTER.md).
 
 ## Stack
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 3 · shadcn/ui · Prisma 6 · Supabase (Postgres/Auth/Storage) · Vitest · Playwright · Vercel.
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 3 · shadcn/ui · Prisma 6 · Supabase (Postgres/Auth/Storage) · Vitest · Playwright · Cloudflare Workers (@opennextjs/cloudflare).
 
 ## Desarrollo
 \`\`\`bash
@@ -1556,7 +1567,7 @@ pnpm dev
 ## Convenciones
 - Dinero: \`Decimal(12,2)\` ARS. Estados en inglés británico (\`cancelled\`).
 - Timestamps UTC; conversión a ART en el front.
-- Secrets solo en \`.env.local\` / env de Vercel (nunca en git).
+- Secrets solo en \`.env.local\` / \`wrangler secret\` (nunca en git).
 - Rama por milestone; PR + code-review antes de \`main\`.
 ```
 
@@ -1592,7 +1603,7 @@ cd "c:/Users/Lazar/Documents/glamify-makeup" && git add -A && git commit -m "M0:
 - Design tokens del blueprint 02 (rosa electrico, Playfair/Nunito, soft UI)
 - design-system/MASTER.md (ux-ui-pro-max)
 - Utils SKU + ARS con TDD; layout base + home placeholder
-- CI (lint/typecheck/test/build) + vercel.json + script de Storage
+- CI (lint/typecheck/test/build) + wrangler.jsonc + script de Storage
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -1606,16 +1617,15 @@ Expected: rama publicada en `titi2233/glamify-makeup`. (Si el SSH del alias `git
 
 ---
 
-## Task 15: Handoff de deploy a Vercel (acción del usuario)
+## Task 15: Handoff de deploy a Cloudflare Workers (acción del usuario)
 
-> No ejecutable por el agente (sin Vercel CLI/auth). Documentar pasos exactos para el usuario.
+> El build del Worker (`pnpm build:worker`) se verifica en CI/Linux. El `wrangler deploy` final requiere auth de Cloudflare del usuario.
 
-- [ ] **Pasos para el usuario (SETUP.md §3):**
-  1. vercel.com → **Add New Project → Import** `glamify-makeup`.
-  2. Cargar Environment Variables (las de `.env.local`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`.
-  3. Region de funciones: São Paulo (`gru1`) — ya fijada en `vercel.json`.
-  4. Deploy. El preview por PR queda automático.
-  5. Abrir un PR de `m0-cimientos` → `main` para code-review + preview deploy.
+- [ ] **Pasos para el usuario:**
+  1. `wrangler login` (o `CLOUDFLARE_API_TOKEN` en el entorno).
+  2. Cargar secrets: `wrangler secret put DATABASE_URL` (pooler 6543), `DIRECT_URL`, `SUPABASE_SERVICE_ROLE_KEY`; públicas (`NEXT_PUBLIC_*`) como vars.
+  3. `pnpm deploy` (= `build:worker && wrangler deploy`) — o conectar el repo en el dashboard de Cloudflare Workers (deploy automático + previews por PR).
+  4. Custom domain `glamifymakeup.site` en Workers → Custom Domains.
 
 ---
 
@@ -1627,7 +1637,7 @@ Expected: rama publicada en `titi2233/glamify-makeup`. (Si el SSH del alias `git
 - Design tokens del 02 (#FF2E93, Playfair/Nunito, soft UI) + MASTER.md → Tasks 3, 11. ✔
 - Layout base + estructura de carpetas → Task 10 + File Structure. ✔
 - CI (lint/typecheck/test) → Task 12. ✔
-- Deploy a Vercel → Task 13 (config) + Task 15 (handoff). ⚠️ requiere acción del usuario.
+- Deploy a Cloudflare Workers → Task 13 (config) + Task 15 (handoff). ⚠️ requiere acción del usuario.
 - Verificar build OK / migración corre → Task 14. ✔  Deploy OK → Task 15 (usuario). ⚠️
 - DoD: home placeholder ✔ (Task 10) · DB migrada ✔ (Task 6) · tokens aplicados ✔ (Tasks 3,10,11).
 
@@ -1638,4 +1648,4 @@ Expected: rama publicada en `titi2233/glamify-makeup`. (Si el SSH del alias `git
 **Riesgos conocidos:**
 - Resolución de versiones por caret (pnpm elige patch nuevo); si algún paquete trae breaking, fijar la versión exacta.
 - `Intl` puede emitir un espacio distinto entre `$` y el número según Node → ajustar el esperado del test de `money` al carácter real (Task 8 Step 4 nota).
-- Deploy a Vercel y push SSH dependen de credenciales del usuario.
+- Deploy a Cloudflare Workers y push SSH dependen de credenciales del usuario.

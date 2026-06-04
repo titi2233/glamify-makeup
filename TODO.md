@@ -18,3 +18,8 @@
 - [ ] **Reembolsos in-app** (vía API MP) — hoy manuales por WhatsApp / panel MP.
 - [ ] **Reactivar efectivo** (Rapipago/Pago Fácil) si se quiere captar ese público (con manejo de pendientes 24–48h).
 - [ ] **Subcategorías 3+ niveles** si el catálogo crece (hoy máx 2).
+
+## Deuda técnica (decidir en M1)
+> Hallazgos del review de conformidad de M0 (no-high; el blueprint 01 es ambiguo en estos puntos).
+- [ ] **Soft-delete en catálogo:** hoy `deletedAt` está solo en `Product`. El blueprint 01 §5 dice "soft-delete en *catálogo*" (más amplio). Decidir en M1 si agregar `deletedAt` a `Category`/`ProductVariant`/`Combo` o acotar el blueprint a `Product`. *(Sin riesgo hoy: `Order`/`OrderItem` usan snapshots, así que borrar catálogo no rompe historial.)*
+- [ ] **Timestamps consistentes:** §5 dice "createdAt/updatedAt en todo", pero `ProductVariant`/`ShippingZone`/`Coupon` no los tienen y varios sin `updatedAt`. Definir en M1 si se agregan o se acota el blueprint.
