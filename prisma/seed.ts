@@ -236,16 +236,106 @@ async function upsertProducts(idBySlug: Map<string, string>): Promise<void> {
   }
 }
 
+// ---- M2: cupones, zonas de envío, ajustes, combo ----
+
+async function upsertSettings(): Promise<void> {
+  await prisma.setting.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      storeName: "Glamify Makeup",
+      freeShippingThreshold: 47500,
+      originPostalCode: "6700",
+      whatsappNumber: "5491100000000",
+      instagramUrl: "https://instagram.com/glamifymakeup",
+    },
+  });
+}
+
+interface SeedZone {
+  name: string;
+  matchType: "province" | "cpRange";
+  provinces?: string[];
+  cpFrom?: string;
+  cpTo?: string;
+  price: number;
+  order: number;
+}
+const ZONES: SeedZone[] = [
+  { name: "AMBA (CABA + GBA)", matchType: "cpRange", cpFrom: "1000", cpTo: "1900", price: 2500, order: 0 },
+  { name: "Buenos Aires interior", matchType: "province", provinces: ["Buenos Aires"], price: 3800, order: 1 },
+  { name: "Centro (Córdoba, Santa Fe, Entre Ríos)", matchType: "province", provinces: ["Córdoba", "Santa Fe", "Entre Ríos"], price: 4500, order: 2 },
+  { name: "Resto del país", matchType: "cpRange", cpFrom: "0", cpTo: "9999", price: 6200, order: 3 },
+];
+
+async function upsertZones(): Promise<void> {
+  // ShippingZone no tiene unique natural; limpiamos y recreamos (idempotente para dev).
+  await prisma.shippingZone.deleteMany({});
+  for (const z of ZONES) {
+    await prisma.shippingZone.create({
+      data: {
+        name: z.name, matchType: z.matchType, provinces: z.provinces ?? [],
+        cpFrom: z.cpFrom ?? null, cpTo: z.cpTo ?? null, price: z.price, order: z.order, active: true,
+      },
+    });
+  }
+}
+
+interface SeedCoupon {
+  code: string;
+  type: "percentage" | "fixed" | "free_shipping";
+  value: number;
+  scope?: "all" | "category" | "product";
+  minSubtotal?: number;
+  maxUses?: number;
+}
+const COUPONS: SeedCoupon[] = [
+  { code: "GLAM10", type: "percentage", value: 10, scope: "all" },
+  { code: "BIENVENIDA", type: "fixed", value: 1000, scope: "all", minSubtotal: 5000 },
+  { code: "ENVIOGRATIS", type: "free_shipping", value: 0, scope: "all" },
+];
+
+async function upsertCoupons(): Promise<void> {
+  for (const c of COUPONS) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: { type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null, active: true },
+      create: { code: c.code, type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null },
+    });
+  }
+}
+
+async function upsertCombo(): Promise<void> {
+  // Combo "Dúo Labios Glam": 1 labial mate + 1 gloss. Descuenta stock de sus componentes al pagarse.
+  const labial = await prisma.productVariant.findFirst({ where: { product: { slug: "labial-mate-larga-duracion" }, stock: { gt: 0 } }, orderBy: { order: "asc" } });
+  const gloss = await prisma.productVariant.findFirst({ where: { product: { slug: "gloss-brillo-humedo" }, stock: { gt: 0 } }, orderBy: { order: "asc" } });
+  if (!labial || !gloss) { console.warn("⚠️  Combo no creado: faltan variantes con stock."); return; }
+  const combo = await prisma.combo.upsert({
+    where: { slug: "duo-labios-glam" },
+    update: { name: "Dúo Labios Glam", description: "Labial mate + gloss a precio especial.", comboPrice: 4990, active: true },
+    create: { slug: "duo-labios-glam", name: "Dúo Labios Glam", description: "Labial mate + gloss a precio especial.", comboPrice: 4990, images: [] },
+  });
+  await prisma.comboItem.deleteMany({ where: { comboId: combo.id } });
+  await prisma.comboItem.createMany({ data: [{ comboId: combo.id, variantId: labial.id, qty: 1 }, { comboId: combo.id, variantId: gloss.id, qty: 1 }] });
+}
+
 async function main(): Promise<void> {
   console.log("🌱 Seeding catálogo Glamify Makeup…");
   const idBySlug = await upsertCategories();
   await upsertProducts(idBySlug);
-  const [cats, prods, vars] = await Promise.all([
+  await upsertSettings();
+  await upsertZones();
+  await upsertCoupons();
+  await upsertCombo();
+  const [cats, prods, vars, coups, zones] = await Promise.all([
     prisma.category.count(),
     prisma.product.count(),
     prisma.productVariant.count(),
+    prisma.coupon.count(),
+    prisma.shippingZone.count(),
   ]);
-  console.log(`✅ Seed listo: ${cats} categorías, ${prods} productos, ${vars} variantes.`);
+  console.log(`✅ Seed listo: ${cats} categorías, ${prods} productos, ${vars} variantes, ${coups} cupones, ${zones} zonas.`);
 }
 
 main()
