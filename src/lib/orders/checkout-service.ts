@@ -1,0 +1,156 @@
+// NOTA: sin `import "server-only"` — lo importa scripts/simulate-mp-webhook.ts (node). Server por importar prisma.
+import { prisma } from "@/lib/prisma";
+import { round2 } from "@/lib/money";
+import { cartSubtotal } from "@/lib/cart/totals";
+import { lineTotal } from "@/lib/cart/totals";
+import { validateCoupon, applyCoupon } from "@/lib/coupons/apply";
+import { formatOrderNumber } from "@/lib/orders/order-number";
+import { createPreference as realCreatePreference } from "@/lib/payments/mercadopago";
+import { quoteShipping as realQuoteShipping, type ShippingQuote } from "@/lib/shipping/index";
+import { getShippingZonesForQuote, getFreeShippingThreshold } from "@/lib/orders/checkout-data";
+import type { CartLine } from "@/lib/cart/types";
+
+export interface CheckoutLineInput {
+  line: CartLine;
+  productNameSnapshot: string;
+  variantNameSnapshot: string | null;
+  skuSnapshot: string | null;
+  title: string;
+}
+export interface CheckoutAddress {
+  cp: string;
+  province?: string | null;
+  street?: string;
+  number?: string;
+  floorApt?: string | null;
+  city?: string;
+  notes?: string | null;
+}
+export interface CreateCheckoutInput {
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  shippingMethod: "domicilio" | "sucursal";
+  address: CheckoutAddress;
+  lines: CheckoutLineInput[];
+  couponCode?: string | null;
+  customerId?: string | null;
+  cartId?: string | null;
+}
+
+/** Superficie mínima de DB que necesita el servicio (para inyectar fakes en tests). */
+export interface CheckoutDb {
+  coupon: { findUnique: (args: { where: { code: string } }) => Promise<any> };
+  $transaction: <T>(fn: (tx: any) => Promise<T>) => Promise<T>;
+}
+export interface CreateCheckoutDeps {
+  db: CheckoutDb;
+  nextOrderSeq: (tx: any) => Promise<number>;
+  createPreference: typeof realCreatePreference;
+  quoteShipping: (input: Parameters<typeof realQuoteShipping>[0]) => Promise<ShippingQuote>;
+  appUrl: string;
+  now?: Date;
+}
+export interface CreateCheckoutResult {
+  orderId: string;
+  orderNumber: string;
+  initPoint: string;
+}
+
+/** Lee la secuencia order_number_seq dentro de la tx (default real). */
+async function defaultNextOrderSeq(tx: any): Promise<number> {
+  const rows = (await tx.$queryRawUnsafe("SELECT nextval('order_number_seq') AS seq")) as Array<{ seq: bigint | number }>;
+  return Number(rows[0].seq);
+}
+
+export function defaultCheckoutDeps(appUrl: string): CreateCheckoutDeps {
+  return {
+    db: prisma as unknown as CheckoutDb,
+    nextOrderSeq: defaultNextOrderSeq,
+    createPreference: realCreatePreference,
+    quoteShipping: (input) => realQuoteShipping(input, { getZones: getShippingZonesForQuote, getThreshold: getFreeShippingThreshold }),
+    appUrl,
+  };
+}
+
+export async function createCheckout(input: CreateCheckoutInput, deps: CreateCheckoutDeps): Promise<CreateCheckoutResult> {
+  if (input.lines.length === 0) throw new Error("El carrito está vacío.");
+  const now = deps.now ?? new Date();
+  const cartLines = input.lines.map((l) => l.line);
+  const subtotal = cartSubtotal(cartLines);
+
+  // --- Cupón (revalidado en server) ---
+  let discount = 0;
+  let freeShippingByCoupon = false;
+  let couponId: string | null = null;
+  if (input.couponCode) {
+    const coupon = await deps.db.coupon.findUnique({ where: { code: input.couponCode } });
+    if (coupon) {
+      const v = validateCoupon(coupon, { subtotal, now });
+      if (v.ok) {
+        const res = applyCoupon(coupon, cartLines);
+        discount = res.discount;
+        freeShippingByCoupon = res.freeShipping;
+        couponId = coupon.id;
+      }
+    }
+  }
+
+  // --- Envío ---
+  const quote = await deps.quoteShipping({
+    cp: input.address.cp, province: input.address.province ?? null,
+    method: input.shippingMethod, lines: cartLines, subtotal,
+  });
+  const shippingCost = freeShippingByCoupon ? 0 : quote.cost;
+  const total = round2(subtotal - discount + shippingCost);
+
+  // --- Persistencia (tx) ---
+  const order = await deps.db.$transaction(async (tx) => {
+    const seq = await deps.nextOrderSeq(tx);
+    const orderNumber = formatOrderNumber(seq);
+    const created = await tx.order.create({
+      data: {
+        orderNumber,
+        customerId: input.customerId ?? null,
+        contactName: input.contactName, contactEmail: input.contactEmail, contactPhone: input.contactPhone,
+        shippingAddress: input.address as unknown as object,
+        shippingMethod: input.shippingMethod,
+        shippingZoneId: quote.zoneId,
+        subtotal, shippingCost, discountTotal: discount, total,
+        couponId,
+        status: "pending_payment",
+        items: {
+          create: input.lines.map((l) => ({
+            variantId: l.line.kind === "variant" ? l.line.refId : null,
+            comboId: l.line.kind === "combo" ? l.line.refId : null,
+            productNameSnapshot: l.productNameSnapshot,
+            variantNameSnapshot: l.variantNameSnapshot,
+            skuSnapshot: l.skuSnapshot,
+            unitPriceSnapshot: l.line.unitPrice,
+            qty: l.line.qty,
+            lineTotal: lineTotal(l.line),
+          })),
+        },
+        payments: { create: { provider: "mercadopago", status: "pending", amount: total } },
+      },
+      include: { payments: true },
+    });
+    if (input.cartId) await tx.cart.update({ where: { id: input.cartId }, data: { status: "ordered" } });
+    return created;
+  });
+
+  // --- Preference MP ---
+  const preference = await deps.createPreference({
+    orderId: order.id, orderNumber: order.orderNumber,
+    items: input.lines.map((l) => ({ title: l.title, quantity: l.line.qty, unit_price: l.line.unitPrice })),
+    payerEmail: input.contactEmail,
+    appUrl: deps.appUrl,
+    notificationUrl: `${deps.appUrl}/api/webhooks/mercadopago`,
+  });
+
+  await deps.db.$transaction(async (tx) => {
+    await tx.payment.update({ where: { id: order.payments[0].id }, data: { mpPreferenceId: preference.id } });
+  });
+
+  return { orderId: order.id, orderNumber: order.orderNumber, initPoint: preference.sandbox_init_point ?? preference.init_point };
+}
