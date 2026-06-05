@@ -1,7 +1,19 @@
-import { prisma, type PrismaTransactionClient } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { generateSku } from "@/lib/sku";
 import { nextSkuSequence } from "@/lib/admin/sku";
 import type { ProductClean, VariantClean } from "@/lib/admin/products/validation";
+
+/** Superficie mínima del cliente transaccional usada dentro de `$transaction`. */
+export interface ProductTx {
+  productVariant: {
+    findMany: (args: { where: { sku: { startsWith: string } }; select: { sku: true } }) => Promise<Array<{ sku: string }>>;
+    deleteMany: (args: { where: { productId: string } }) => Promise<{ count: number }>;
+  };
+  product: {
+    create: (args: { data: Record<string, unknown> }) => Promise<{ id: string }>;
+    update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<{ id: string }>;
+  };
+}
 
 /** Superficie mínima de Prisma usada por el servicio (para inyectar fakes en tests). */
 export interface ProductDb {
@@ -10,7 +22,7 @@ export interface ProductDb {
     findFirst: (args: { where: { slug: string; id?: { not: string }; deletedAt?: null } }) => Promise<{ id: string } | null>;
     update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<{ id: string }>;
   };
-  $transaction: <T>(fn: (tx: PrismaTransactionClient) => Promise<T>) => Promise<T>;
+  $transaction: <T>(fn: (tx: ProductTx) => Promise<T>) => Promise<T>;
 }
 export interface CreateProductDeps {
   db: ProductDb;
@@ -117,14 +129,10 @@ export async function createProduct(input: ProductClean, deps: CreateProductDeps
 
   const attempt = async (): Promise<{ id: string }> => {
     return deps.db.$transaction(async (tx) => {
-      const txx = tx as unknown as {
-        productVariant: { findMany: (args: { where: { sku: { startsWith: string } }; select: { sku: true } }) => Promise<Array<{ sku: string }>> };
-        product: { create: (args: { data: Record<string, unknown> }) => Promise<{ id: string }> };
-      };
-      const rows = await txx.productVariant.findMany({ where: { sku: { startsWith: `${prefix}-` } }, select: { sku: true } });
+      const rows = await tx.productVariant.findMany({ where: { sku: { startsWith: `${prefix}-` } }, select: { sku: true } });
       const startSeq = nextSkuSequence(rows.map((r) => r.sku));
       const variantRows = assignSkus(variants, prefix, startSeq);
-      const created = await txx.product.create({ data: productData(input, variantRows) });
+      const created = await tx.product.create({ data: productData(input, variantRows) });
       return { id: created.id };
     });
   };
@@ -146,18 +154,11 @@ export async function updateProduct(id: string, input: ProductClean, deps: Creat
 
   const attempt = async (): Promise<{ id: string }> => {
     return deps.db.$transaction(async (tx) => {
-      const txx = tx as unknown as {
-        productVariant: {
-          findMany: (args: { where: { sku: { startsWith: string } }; select: { sku: true } }) => Promise<Array<{ sku: string }>>;
-          deleteMany: (args: { where: { productId: string } }) => Promise<{ count: number }>;
-        };
-        product: { update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<{ id: string }> };
-      };
-      await txx.productVariant.deleteMany({ where: { productId: id } });
-      const rows = await txx.productVariant.findMany({ where: { sku: { startsWith: `${prefix}-` } }, select: { sku: true } });
+      await tx.productVariant.deleteMany({ where: { productId: id } });
+      const rows = await tx.productVariant.findMany({ where: { sku: { startsWith: `${prefix}-` } }, select: { sku: true } });
       const startSeq = nextSkuSequence(rows.map((r) => r.sku));
       const variantRows = assignSkus(variants, prefix, startSeq);
-      const updated = await txx.product.update({ where: { id }, data: productData(input, variantRows) });
+      const updated = await tx.product.update({ where: { id }, data: productData(input, variantRows) });
       return { id: updated.id };
     });
   };
