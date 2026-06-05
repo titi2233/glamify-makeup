@@ -367,6 +367,7 @@ model Coupon {
   type             CouponType
   value            Decimal     @db.Decimal(12, 2)
   scope            CouponScope @default(all)
+  scopeId          String?     @db.Uuid // categoryId o productId según `scope` (null si scope=all)
   minSubtotal      Decimal?    @db.Decimal(12, 2)
   maxUses          Int?
   usedCount        Int         @default(0)
