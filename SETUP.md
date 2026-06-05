@@ -66,6 +66,25 @@ En ⚙️ **Project Settings → Database → Connection string → pestaña "Pr
 
 ---
 
+## Crear el usuario administrador
+
+El panel `/admin` se protege con Supabase Auth + una fila `User` con role `owner`.
+Para crear (de forma idempotente) la cuenta de la dueña:
+
+1. Definí en tu `.env` (no commitear):
+   - `ADMIN_EMAIL` — email de acceso al panel.
+   - `ADMIN_PASSWORD` — contraseña inicial (cambiable luego).
+   - Ya deben estar: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`.
+2. Corré:
+   ```bash
+   pnpm admin:create
+   ```
+   Crea el usuario en Supabase Auth (email confirmado) y la fila `User` (role `owner`).
+   Es idempotente: si ya existe, reutiliza la cuenta de Auth y refresca la fila.
+3. Entrá a `/admin/login` con ese email/contraseña.
+
+---
+
 ## 3. Cloudflare (hosting)
 
 ### 3.1 Crear cuenta
