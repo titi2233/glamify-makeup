@@ -112,11 +112,19 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
 
   // 5. Aplicar en tx.
   await deps.db.$transaction(async (tx: PrismaTransactionClient) => {
-    await tx.payment.upsert({
-      where: { mpPaymentId: String(mpPayment.id) },
-      create: { orderId: order.id, provider: "mercadopago", mpPaymentId: String(mpPayment.id), status: effects.updatePaymentTo, amount: mpPayment.transaction_amount ?? toNumber(order.total), rawPayload: mpPayment as unknown as object },
-      update: { status: effects.updatePaymentTo, rawPayload: mpPayment as unknown as object },
+    // Reconciliar el Payment: reusar la fila creada en el checkout (mpPaymentId aún null) o la ya
+    // vinculada a este pago; nunca dejar un huérfano "pending" extra. Idempotente por mpPaymentId.
+    const mpId = String(mpPayment.id);
+    const amount = mpPayment.transaction_amount ?? toNumber(order.total);
+    const existingPayment = await tx.payment.findFirst({
+      where: { orderId: order.id, OR: [{ mpPaymentId: mpId }, { mpPaymentId: null }] },
+      orderBy: { createdAt: "asc" },
     });
+    if (existingPayment) {
+      await tx.payment.update({ where: { id: existingPayment.id }, data: { mpPaymentId: mpId, status: effects.updatePaymentTo, amount, rawPayload: mpPayment as unknown as object } });
+    } else {
+      await tx.payment.create({ data: { orderId: order.id, provider: "mercadopago", mpPaymentId: mpId, status: effects.updatePaymentTo, amount, rawPayload: mpPayment as unknown as object } });
+    }
 
     if (effects.setOrderStatusTo === "paid") {
       // Guarda ATÓMICA: updateMany con precondición de estado. READ COMMITTED no serializa dos
@@ -142,7 +150,12 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       }
       if (!avail.ok) {
         oversoldLines = order.items
-          .filter((it) => avail.shortages.some((s) => s.variantId === it.variantId))
+          .filter((it) =>
+            it.variantId
+              ? avail.shortages.some((s) => s.variantId === it.variantId)
+              : // línea de combo: matchea si algún componente está en falta
+                (it.combo?.items.some((ci) => avail.shortages.some((s) => s.variantId === ci.variantId)) ?? false),
+          )
           .map((it) => ({ name: it.variantNameSnapshot ? `${it.productNameSnapshot} (${it.variantNameSnapshot})` : it.productNameSnapshot }));
       }
       await tx.shipment.create({ data: { orderId: order.id, status: "pending", cost: toNumber(order.shippingCost) } });
@@ -160,6 +173,8 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       items: order.items.map((it) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
       subtotal: toNumber(order.subtotal), shippingCost: toNumber(order.shippingCost), discountTotal: toNumber(order.discountTotal), total: toNumber(order.total),
       shippingMethod: order.shippingMethod,
+      // Defensa: monto realmente acreditado por MP → la alerta a la dueña flaggea si no coincide con el total.
+      amountPaid: mpPayment.transaction_amount ?? undefined,
     };
     const customer = orderConfirmationEmail(emailData);
     await deps.sendEmail({ to: order.contactEmail, subject: customer.subject, html: customer.html, text: customer.text });

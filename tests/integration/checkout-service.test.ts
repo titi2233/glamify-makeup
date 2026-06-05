@@ -88,4 +88,22 @@ describe("createCheckout", () => {
     expect(orderData.couponId).toBeNull();
     expect(r.orderNumber).toBe("GLM-000001");
   });
+
+  it("los ítems de la preference MP suman exactamente el total (con envío, sin cupón)", async () => {
+    const { deps } = makeDeps();
+    await createCheckout(baseInput, deps);
+    const items = (deps.createPreference as any).mock.calls[0][0].items as Array<{ unit_price: number; quantity: number; title: string }>;
+    const sum = items.reduce((a, it) => a + it.unit_price * it.quantity, 0);
+    expect(sum).toBe(8900); // 6400 subtotal + 2500 envío = total
+    expect(items.some((it) => it.title === "Envío" && it.unit_price === 2500)).toBe(true);
+  });
+
+  it("con cupón de descuento, la preference se consolida en una línea = total", async () => {
+    const { deps } = makeDeps();
+    await createCheckout({ ...baseInput, couponCode: "GLAM10" }, deps);
+    const items = (deps.createPreference as any).mock.calls[0][0].items as Array<{ unit_price: number; quantity: number }>;
+    const sum = items.reduce((a, it) => a + it.unit_price * it.quantity, 0);
+    expect(sum).toBe(8260); // = total con descuento, lo que MP realmente cobra
+    expect(items).toHaveLength(1);
+  });
 });

@@ -17,6 +17,8 @@ export interface OrderEmailData {
   total: number;
   shippingMethod: string;
   oversoldLines?: Array<{ name: string }>;
+  /** Monto realmente acreditado por MP (para reconciliar contra `total` en la alerta a la dueña). */
+  amountPaid?: number;
 }
 export interface EmailContent {
   subject: string;
@@ -64,8 +66,10 @@ export function orderConfirmationEmail(d: OrderEmailData): EmailContent {
 /** Email de alerta a la dueña (nuevo pedido pagado), con alerta de oversell si corresponde. */
 export function newOrderAlertEmail(d: OrderEmailData): EmailContent {
   const oversell = d.oversoldLines && d.oversoldLines.length > 0;
-  const subject = oversell
-    ? `⚠️ Nuevo pedido ${d.orderNumber} — REVISAR STOCK`
+  const amountMismatch = d.amountPaid != null && Math.abs(d.amountPaid - d.total) > 0.01;
+  const needsReview = oversell || amountMismatch;
+  const subject = needsReview
+    ? `⚠️ Nuevo pedido ${d.orderNumber} — REVISAR`
     : `🛍️ Nuevo pedido pagado ${d.orderNumber} (${formatARS(d.total)})`;
   const oversellHtml = oversell
     ? `<div style="background:#FEE;padding:8px;border-radius:8px">
@@ -74,14 +78,20 @@ export function newOrderAlertEmail(d: OrderEmailData): EmailContent {
         Coordinar con la clienta por WhatsApp.
       </div>`
     : "";
+  const amountHtml = amountMismatch
+    ? `<div style="background:#FEE;padding:8px;border-radius:8px">
+        <strong>Monto:</strong> MP acreditó ${formatARS(d.amountPaid!)} pero el total del pedido es ${formatARS(d.total)}. Revisar antes de despachar.
+      </div>`
+    : "";
   const html = `<div style="font-family:sans-serif;color:#6E0B3F">
     <h1>Nuevo pedido ${d.orderNumber}</h1>
     ${oversellHtml}
+    ${amountHtml}
     <p>Cliente: ${d.contactName} — ${d.contactEmail}</p>
     <table style="width:100%;border-collapse:collapse">${itemsHtml(d.items)}</table>
     <table style="width:100%;border-collapse:collapse">${totalsBlock(d)}</table>
     <p>Envío: ${d.shippingMethod}.</p>
   </div>`;
-  const text = `Nuevo pedido ${d.orderNumber}\nCliente: ${d.contactName} (${d.contactEmail})\nTotal: ${formatARS(d.total)}${oversell ? `\n⚠️ OVERSELL: ${d.oversoldLines!.map((l) => l.name).join(", ")}` : ""}`;
+  const text = `Nuevo pedido ${d.orderNumber}\nCliente: ${d.contactName} (${d.contactEmail})\nTotal: ${formatARS(d.total)}${oversell ? `\n⚠️ OVERSELL: ${d.oversoldLines!.map((l) => l.name).join(", ")}` : ""}${amountMismatch ? `\n⚠️ MONTO: acreditado ${formatARS(d.amountPaid!)} ≠ total ${formatARS(d.total)}` : ""}`;
   return { subject, html, text };
 }

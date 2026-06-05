@@ -6,7 +6,7 @@ import {
 } from "@/lib/cart/cart-service";
 import { getCartIdFromCookie, setCartIdCookie, getCouponCodeFromCookie, setCouponCodeCookie } from "@/lib/cart/cart-cookie";
 import { cartSubtotal } from "@/lib/cart/totals";
-import { validateCoupon } from "@/lib/coupons/apply";
+import { validateCoupon, applyCoupon } from "@/lib/coupons/apply";
 import { toNumber } from "@/lib/catalog/pricing";
 import { prisma } from "@/lib/prisma";
 import { quoteShipping } from "@/lib/shipping/index";
@@ -70,6 +70,12 @@ export async function applyCouponAction(code: string): Promise<ActionResult> {
   const validatable = { ...coupon, minSubtotal: coupon.minSubtotal != null ? toNumber(coupon.minSubtotal) : null };
   const v = validateCoupon(validatable, { subtotal, now: new Date() });
   if (!v.ok) return { ok: false, error: v.reason };
+  // No "aplicar" un cupón con scope a producto/categoría que no rinde descuento sobre este carrito.
+  const applicable = { ...coupon, value: toNumber(coupon.value) };
+  const effect = applyCoupon(applicable, lines);
+  if (effect.discount === 0 && !effect.freeShipping) {
+    return { ok: false, error: "El cupón no aplica a los productos de tu carrito." };
+  }
   await setCouponCodeCookie(normalized);
   revalidatePath("/carrito");
   revalidatePath("/checkout");

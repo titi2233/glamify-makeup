@@ -156,9 +156,19 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
   });
 
   // --- Preference MP ---
+  // CRÍTICO: los ítems enviados a MP DEBEN sumar exactamente `total` (lo que MP le cobra a la clienta).
+  // Sin descuento: ítems de producto + línea de envío (todo positivo → suma = subtotal + envío = total).
+  // Con descuento: una sola línea consolidada = total (MP no acepta líneas de precio negativo de forma confiable).
+  const mpItems =
+    discount > 0
+      ? [{ title: `Glamify Makeup · Pedido ${order.orderNumber}`, quantity: 1, unit_price: total }]
+      : [
+          ...input.lines.map((l) => ({ title: l.title, quantity: l.line.qty, unit_price: l.line.unitPrice })),
+          ...(shippingCost > 0 ? [{ title: "Envío", quantity: 1, unit_price: shippingCost }] : []),
+        ];
   const preference = await deps.createPreference({
     orderId: order.id, orderNumber: order.orderNumber,
-    items: input.lines.map((l) => ({ title: l.title, quantity: l.line.qty, unit_price: l.line.unitPrice })),
+    items: mpItems,
     payerEmail: input.contactEmail,
     appUrl: deps.appUrl,
     notificationUrl: `${deps.appUrl}/api/webhooks/mercadopago`,

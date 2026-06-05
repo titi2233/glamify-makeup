@@ -33,7 +33,18 @@ describe("newOrderAlertEmail", () => {
   });
   it("destaca oversell cuando hay líneas sin stock", () => {
     const m = newOrderAlertEmail({ ...data, oversoldLines: [{ name: "Labial Mate (Rojo Pasión)" }] });
-    expect(m.subject.toLowerCase()).toContain("stock");
+    expect(m.subject.toLowerCase()).toContain("revisar");
+    expect(m.html.toLowerCase()).toContain("stock");
     expect(m.html).toContain("Labial Mate (Rojo Pasión)");
+  });
+  it("flaggea cuando el monto acreditado no coincide con el total", () => {
+    const m = newOrderAlertEmail({ ...data, amountPaid: 8900 }); // pagó subtotal, total 10900
+    expect(m.subject.toLowerCase()).toContain("revisar");
+    expect(m.html).toContain("$ 8.900,00");
+    expect(m.text.toLowerCase()).toContain("monto");
+  });
+  it("no flaggea cuando el monto coincide", () => {
+    const m = newOrderAlertEmail({ ...data, amountPaid: 10900 });
+    expect(m.subject.toLowerCase()).not.toContain("revisar");
   });
 });

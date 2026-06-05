@@ -10,7 +10,8 @@ function makeFakeDb() {
       items: [{ variantId: "v1", comboId: null, productNameSnapshot: "Labial", variantNameSnapshot: "Rojo", qty: 2, lineTotal: 6400, combo: null }],
     } as any,
     variants: new Map<string, number>([["v1", 5]]),
-    payments: [] as any[],
+    // Fila "pending" creada en el checkout (mpPaymentId null). El webhook debe reusarla, no crear otra.
+    payments: [{ id: "pay-pending", orderId: "ord-1", mpPaymentId: null, status: "pending", amount: 8260 }] as any[],
     couponUsed: 0,
     shipments: [] as any[],
   };
@@ -25,11 +26,22 @@ function makeFakeDb() {
       }),
     },
     payment: {
-      findUnique: vi.fn(async ({ where }: any) => state.payments.find((p) => p.mpPaymentId === where.mpPaymentId) ?? null),
-      upsert: vi.fn(async ({ where, create, update }: any) => {
-        const existing = state.payments.find((p) => p.mpPaymentId === where.mpPaymentId);
-        if (existing) { Object.assign(existing, update); return existing; }
-        const p = { id: `pay-${state.payments.length + 1}`, ...create }; state.payments.push(p); return p;
+      findFirst: vi.fn(async ({ where }: any) =>
+        state.payments.find(
+          (p) =>
+            p.orderId === where.orderId &&
+            (where.OR ? where.OR.some((c: any) => "mpPaymentId" in c && p.mpPaymentId === c.mpPaymentId) : true),
+        ) ?? null,
+      ),
+      update: vi.fn(async ({ where, data }: any) => {
+        const p = state.payments.find((x) => x.id === where.id);
+        if (p) Object.assign(p, data);
+        return p;
+      }),
+      create: vi.fn(async ({ data }: any) => {
+        const p = { id: `pay-${state.payments.length + 1}`, ...data };
+        state.payments.push(p);
+        return p;
       }),
     },
     productVariant: {
@@ -74,6 +86,10 @@ describe("processWebhook", () => {
     expect(state.variants.get("v1")).toBe(3); // 5 - 2
     expect(state.couponUsed).toBe(1);
     expect((deps.sendEmail as any).mock.calls.length).toBe(2);
+    // Reconciliación: reusó la fila pending, sin huérfano.
+    expect(state.payments).toHaveLength(1);
+    expect(state.payments[0].status).toBe("approved");
+    expect(state.payments[0].mpPaymentId).toBe("mp-pay-1");
   });
 
   it("idempotente: el mismo webhook 2× descuenta stock una sola vez", async () => {
@@ -83,6 +99,7 @@ describe("processWebhook", () => {
     await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
     expect(state.variants.get("v1")).toBe(3); // sigue 3, no 1
     expect(state.couponUsed).toBe(1);
+    expect(state.payments).toHaveLength(1); // sin huérfano tras 2 webhooks
   });
 
   it("perdió la carrera concurrente (otro webhook ya transicionó) → sin efectos", async () => {
