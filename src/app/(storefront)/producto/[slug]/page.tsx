@@ -6,9 +6,7 @@ import { getEffectivePrice, isOnSale, getDiscountPercent, toNumber } from "@/lib
 import { CatalogBreadcrumbs } from "@/components/catalog/catalog-breadcrumbs";
 import { ProductGallery } from "@/components/catalog/product-gallery";
 import { PriceTag } from "@/components/catalog/price-tag";
-import { VariantSwatchSelector } from "@/components/catalog/variant-swatch-selector";
-import { QuantityStepper } from "@/components/catalog/quantity-stepper";
-import { Button } from "@/components/ui/button";
+import { AddToCart } from "@/components/cart/add-to-cart";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -64,15 +62,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
             size="lg"
           />
 
-          {product.variants.length > 0 && <VariantSwatchSelector variants={product.variants} />}
-
-          <div className="flex flex-wrap items-center gap-3">
-            <QuantityStepper max={99} />
-            <Button size="lg" className="flex-1" disabled title="Disponible próximamente">
-              Agregar al carrito
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">El carrito estará disponible muy pronto.</p>
+          <AddToCart variants={product.variants} />
 
           {product.description && (
             <section className="border-t border-border pt-5">
