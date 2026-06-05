@@ -69,6 +69,10 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
   const effects = decideWebhookEffects({ currentOrderStatus: order.status, mpStatus: paymentStatus, hasCoupon: Boolean(order.couponId) });
 
   let oversoldLines: Array<{ name: string }> = [];
+  // Solo UN webhook gana la transición pending_payment → paid (guarda atómica dentro de la tx).
+  // Los efectos "una sola vez" (stock, cupón, shipment, emails) se gatean por esto, no por el
+  // estado leído antes de la tx — así MP entregando el mismo aviso en paralelo no doble-descuenta.
+  let wonPaidTransition = false;
 
   // 5. Aplicar en tx.
   await deps.db.$transaction(async (tx: any) => {
@@ -78,11 +82,17 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       update: { status: effects.updatePaymentTo, rawPayload: mpPayment as unknown as object },
     });
 
-    if (effects.setOrderStatusTo) {
+    if (effects.setOrderStatusTo === "paid") {
+      // Guarda ATÓMICA: updateMany con precondición de estado. READ COMMITTED no serializa dos
+      // findFirst previos, pero sí esta escritura condicional → solo una invocación obtiene count 1.
+      const res = await tx.order.updateMany({ where: { id: order.id, status: "pending_payment" }, data: { status: "paid" } });
+      wonPaidTransition = res.count === 1;
+    } else if (effects.setOrderStatusTo) {
       await tx.order.update({ where: { id: order.id }, data: { status: effects.setOrderStatusTo } });
     }
 
-    if (effects.decrementStock) {
+    // Efectos de una sola vez: SOLO si este webhook ganó la transición a paid.
+    if (wonPaidTransition) {
       const lines = order.items.map(orderItemToLine);
       const decrements = computeStockDecrements(lines);
       const ids = [...decrements.keys()];
@@ -100,30 +110,28 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
           .map((it: any) => ({ name: it.variantNameSnapshot ? `${it.productNameSnapshot} (${it.variantNameSnapshot})` : it.productNameSnapshot }));
       }
       await tx.shipment.create({ data: { orderId: order.id, status: "pending", cost: toNumber(order.shippingCost) } });
-    }
 
-    if (effects.incrementCouponUse && order.couponId) {
-      await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
+      if (order.couponId) {
+        await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
+      }
     }
   });
 
-  // 6. Emails (fuera de tx).
-  if (effects.sendCustomerEmail || effects.sendOwnerEmail) {
+  // 6. Emails (fuera de tx) — solo si ganamos la transición a paid (una sola vez).
+  if (wonPaidTransition) {
     const emailData: OrderEmailData = {
       orderNumber: order.orderNumber, contactName: order.contactName, contactEmail: order.contactEmail,
       items: order.items.map((it: any) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
       subtotal: toNumber(order.subtotal), shippingCost: toNumber(order.shippingCost), discountTotal: toNumber(order.discountTotal), total: toNumber(order.total),
       shippingMethod: order.shippingMethod,
     };
-    if (effects.sendCustomerEmail) {
-      const m = orderConfirmationEmail(emailData);
-      await deps.sendEmail({ to: order.contactEmail, subject: m.subject, html: m.html, text: m.text });
-    }
-    if (effects.sendOwnerEmail && deps.ownerEmail) {
-      const m = newOrderAlertEmail({ ...emailData, oversoldLines: oversoldLines.length ? oversoldLines : undefined });
-      await deps.sendEmail({ to: deps.ownerEmail, subject: m.subject, html: m.html, text: m.text });
+    const customer = orderConfirmationEmail(emailData);
+    await deps.sendEmail({ to: order.contactEmail, subject: customer.subject, html: customer.html, text: customer.text });
+    if (deps.ownerEmail) {
+      const owner = newOrderAlertEmail({ ...emailData, oversoldLines: oversoldLines.length ? oversoldLines : undefined });
+      await deps.sendEmail({ to: deps.ownerEmail, subject: owner.subject, html: owner.html, text: owner.text });
     }
   }
 
-  return { status: 200, detail: effects.setOrderStatusTo ?? "sin cambio" };
+  return { status: 200, detail: wonPaidTransition ? "paid" : (effects.setOrderStatusTo === "paid" ? "ya pagado (idempotente)" : (effects.setOrderStatusTo ?? "sin cambio")) };
 }

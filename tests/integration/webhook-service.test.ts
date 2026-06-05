@@ -18,6 +18,11 @@ function makeFakeDb() {
     order: {
       findFirst: vi.fn(async () => structuredCloneSafe(state.order)),
       update: vi.fn(async ({ data }: any) => { state.order.status = data.status ?? state.order.status; return state.order; }),
+      // Guarda atómica: solo actualiza si el estado actual matchea la precondición (como Postgres).
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        if (state.order.status === where.status) { state.order.status = data.status; return { count: 1 }; }
+        return { count: 0 };
+      }),
     },
     payment: {
       findUnique: vi.fn(async ({ where }: any) => state.payments.find((p) => p.mpPaymentId === where.mpPaymentId) ?? null),
@@ -78,6 +83,18 @@ describe("processWebhook", () => {
     await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
     expect(state.variants.get("v1")).toBe(3); // sigue 3, no 1
     expect(state.couponUsed).toBe(1);
+  });
+
+  it("perdió la carrera concurrente (otro webhook ya transicionó) → sin efectos", async () => {
+    const { db, state } = makeFakeDb();
+    // Simula que otra invocación concurrente ya pasó el pedido a paid entre el read y el write:
+    db.order.updateMany = vi.fn(async () => ({ count: 0 }));
+    const deps = makeDeps({ db });
+    const r = await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect(r.status).toBe(200);
+    expect(state.variants.get("v1")).toBe(5); // no descontó (la otra invocación lo hizo)
+    expect(state.couponUsed).toBe(0);
+    expect((deps.sendEmail as any).mock.calls.length).toBe(0);
   });
 
   it("rejected → no cambia el pedido (reintento), sin descuento", async () => {
