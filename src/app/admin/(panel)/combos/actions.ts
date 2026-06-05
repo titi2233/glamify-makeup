@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminResult } from "@/lib/admin/result";
 import { validateCombo, type ComboFormInput } from "@/lib/admin/combos/validation";
 import { createCombo, updateCombo, deleteCombo, defaultComboDeps } from "@/lib/admin/combos/service";
+import { prisma } from "@/lib/prisma";
+import type { VariantOption } from "./combo-form";
 
 /** Payload serializable desde el form cliente (fechas como ISO string o null). */
 export interface ComboActionInput {
@@ -69,4 +71,27 @@ export async function deleteComboAction(id: string): Promise<AdminResult> {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "No se pudo borrar el combo." };
   }
+}
+
+/** Lista plana de variantes activas (de productos no borrados) para el picker del form. */
+export async function listVariantOptions(): Promise<VariantOption[]> {
+  const products = await prisma.product.findMany({
+    where: { deletedAt: null },
+    orderBy: { name: "asc" },
+    select: {
+      name: true,
+      variants: {
+        where: { active: true },
+        orderBy: { order: "asc" },
+        select: { id: true, name: true, sku: true },
+      },
+    },
+  });
+  const options: VariantOption[] = [];
+  for (const p of products) {
+    for (const v of p.variants) {
+      options.push({ id: v.id, label: `${p.name} — ${v.name} (${v.sku})` });
+    }
+  }
+  return options;
 }
