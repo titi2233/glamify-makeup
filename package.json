@@ -22,6 +22,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "setup:storage": "tsx scripts/setup-storage.ts",
+    "sim:webhook": "tsx --env-file=.env scripts/simulate-mp-webhook.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
