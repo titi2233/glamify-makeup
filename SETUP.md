@@ -180,3 +180,28 @@ DIRECT_URL=...                       # direct 5432
 | **Ahora (M0)** | GitHub · Supabase · Cloudflare | repo + URL/anon/service_role + DATABASE_URL/DIRECT_URL + cuenta Cloudflare |
 | **M2** ✔ | Mercado Pago (sandbox) | `MP_ACCESS_TOKEN` (TEST) + `MP_WEBHOOK_SECRET` — carrito, checkout, webhook implementados |
 | **M5 (launch)** | MiCorreo · Resend · MP (prod) · Dominio | API Correo · API key + dominio verificado · token PROD · DNS → Cloudflare |
+
+---
+
+## E2E del panel de administración (M3)
+
+El test `tests/e2e/admin.spec.ts` ejecuta el DoD de M3: login → crear producto
+con variante+stock → crear cupón → abrir un pedido y cambiarle el estado.
+
+Prerequisitos (una vez por entorno):
+
+1. Crear el admin (idempotente):
+   ```bash
+   ADMIN_EMAIL=owner@glamify.test ADMIN_PASSWORD=una-clave-fuerte pnpm admin:create
+   ```
+2. Seedear catálogo + pedido de muestra (`GLM-E2E001`, estado `paid`):
+   ```bash
+   pnpm db:seed
+   ```
+3. Correr el e2e con las mismas credenciales en el entorno:
+   ```bash
+   ADMIN_EMAIL=owner@glamify.test ADMIN_PASSWORD=una-clave-fuerte pnpm test:e2e -- admin.spec.ts
+   ```
+
+Si `ADMIN_EMAIL`/`ADMIN_PASSWORD` no están definidas, el test se **saltea**
+(no falla), para no romper CI en entornos sin admin configurado.
