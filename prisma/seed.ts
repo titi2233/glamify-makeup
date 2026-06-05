@@ -306,6 +306,86 @@ async function upsertCoupons(): Promise<void> {
   }
 }
 
+// ---- M3: pedido de muestra para el e2e del panel admin (idempotente) ----
+
+const E2E_ORDER_NUMBER = "GLM-E2E001";
+
+async function upsertE2eOrder(): Promise<void> {
+  // Variante real del seed para snapshots coherentes.
+  const variant = await prisma.productVariant.findFirst({
+    where: { product: { slug: "labial-mate-larga-duracion" }, stock: { gt: 0 } },
+    orderBy: { order: "asc" },
+    include: { product: true },
+  });
+  if (!variant) {
+    console.warn("⚠️  Pedido e2e no creado: falta variante con stock.");
+    return;
+  }
+
+  const unitPrice = Number(variant.priceOverride ?? variant.product.basePrice);
+  const qty = 1;
+  const subtotal = unitPrice * qty;
+  const shippingCost = 2500;
+  const total = subtotal + shippingCost;
+
+  const existing = await prisma.order.findUnique({ where: { orderNumber: E2E_ORDER_NUMBER } });
+
+  const order = existing
+    ? await prisma.order.update({
+        where: { orderNumber: E2E_ORDER_NUMBER },
+        data: {
+          contactName: "Clienta E2E",
+          contactEmail: "e2e@example.com",
+          contactPhone: "1100000000",
+          shippingAddress: {
+            recipientName: "Clienta E2E", phone: "1100000000",
+            street: "Calle Falsa", number: "123", city: "CABA",
+            province: "CABA", postalCode: "1414", notes: null,
+          },
+          shippingMethod: "domicilio",
+          subtotal, shippingCost, discountTotal: 0, total,
+          status: "paid",
+        },
+      })
+    : await prisma.order.create({
+        data: {
+          orderNumber: E2E_ORDER_NUMBER,
+          contactName: "Clienta E2E",
+          contactEmail: "e2e@example.com",
+          contactPhone: "1100000000",
+          shippingAddress: {
+            recipientName: "Clienta E2E", phone: "1100000000",
+            street: "Calle Falsa", number: "123", city: "CABA",
+            province: "CABA", postalCode: "1414", notes: null,
+          },
+          shippingMethod: "domicilio",
+          subtotal, shippingCost, discountTotal: 0, total,
+          status: "paid",
+        },
+      });
+
+  // Recrear el único item (snapshots) de forma idempotente.
+  await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
+  await prisma.orderItem.create({
+    data: {
+      orderId: order.id,
+      variantId: variant.id,
+      productNameSnapshot: variant.product.name,
+      variantNameSnapshot: variant.name,
+      skuSnapshot: variant.sku,
+      unitPriceSnapshot: unitPrice,
+      qty,
+      lineTotal: subtotal,
+    },
+  });
+
+  // Pago aprobado de muestra (idempotente por orderId; recreamos).
+  await prisma.payment.deleteMany({ where: { orderId: order.id } });
+  await prisma.payment.create({
+    data: { orderId: order.id, provider: "mercadopago", status: "approved", amount: total },
+  });
+}
+
 async function upsertCombo(): Promise<void> {
   // Combo "Dúo Labios Glam": 1 labial mate + 1 gloss. Descuenta stock de sus componentes al pagarse.
   const labial = await prisma.productVariant.findFirst({ where: { product: { slug: "labial-mate-larga-duracion" }, stock: { gt: 0 } }, orderBy: { order: "asc" } });
@@ -328,14 +408,16 @@ async function main(): Promise<void> {
   await upsertZones();
   await upsertCoupons();
   await upsertCombo();
-  const [cats, prods, vars, coups, zones] = await Promise.all([
+  await upsertE2eOrder();
+  const [cats, prods, vars, coups, zones, orders] = await Promise.all([
     prisma.category.count(),
     prisma.product.count(),
     prisma.productVariant.count(),
     prisma.coupon.count(),
     prisma.shippingZone.count(),
+    prisma.order.count(),
   ]);
-  console.log(`✅ Seed listo: ${cats} categorías, ${prods} productos, ${vars} variantes, ${coups} cupones, ${zones} zonas.`);
+  console.log(`✅ Seed listo: ${cats} categorías, ${prods} productos, ${vars} variantes, ${coups} cupones, ${zones} zonas, ${orders} pedidos.`);
 }
 
 main()
