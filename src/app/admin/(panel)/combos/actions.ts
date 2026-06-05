@@ -75,6 +75,7 @@ export async function deleteComboAction(id: string): Promise<AdminResult> {
 
 /** Lista plana de variantes activas (de productos no borrados) para el picker del form. */
 export async function listVariantOptions(): Promise<VariantOption[]> {
+  await requireAdmin(); // server action lee la DB: gatear aunque se invoque sólo desde páginas guardadas.
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
     orderBy: { name: "asc" },

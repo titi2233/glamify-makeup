@@ -338,9 +338,8 @@ async function upsertE2eOrder(): Promise<void> {
           contactEmail: "e2e@example.com",
           contactPhone: "1100000000",
           shippingAddress: {
-            recipientName: "Clienta E2E", phone: "1100000000",
-            street: "Calle Falsa", number: "123", city: "CABA",
-            province: "CABA", postalCode: "1414", notes: null,
+            cp: "1414", province: "CABA",
+            street: "Calle Falsa", number: "123", floorApt: null, city: "CABA", notes: null,
           },
           shippingMethod: "domicilio",
           subtotal, shippingCost, discountTotal: 0, total,
@@ -354,9 +353,8 @@ async function upsertE2eOrder(): Promise<void> {
           contactEmail: "e2e@example.com",
           contactPhone: "1100000000",
           shippingAddress: {
-            recipientName: "Clienta E2E", phone: "1100000000",
-            street: "Calle Falsa", number: "123", city: "CABA",
-            province: "CABA", postalCode: "1414", notes: null,
+            cp: "1414", province: "CABA",
+            street: "Calle Falsa", number: "123", floorApt: null, city: "CABA", notes: null,
           },
           shippingMethod: "domicilio",
           subtotal, shippingCost, discountTotal: 0, total,
