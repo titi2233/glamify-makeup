@@ -27,6 +27,8 @@ pnpm dev                     # http://localhost:3000
 - `pnpm deploy` — build:worker + `wrangler deploy` (requiere `wrangler login`)
 - `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm test:e2e`
 - `pnpm db:migrate` / `pnpm db:studio` / `pnpm setup:storage`
+- `pnpm db:seed` — seed de catálogo + cupones + zonas + ajustes
+- `pnpm sim:webhook` — simula el webhook MP (verifica idempotencia/stock sin túnel)
 
 ## Deploy (Cloudflare Workers)
 
@@ -42,3 +44,4 @@ pnpm dev                     # http://localhost:3000
 - Timestamps UTC; conversión a ART en el front.
 - Secrets solo en `.env.local` / `wrangler secret` (nunca en git).
 - Rama por milestone; PR + code-review antes de `main`.
+- Pagos: MP Checkout Pro (efectivo excluido), webhook con firma + idempotencia; total recalculado en server.

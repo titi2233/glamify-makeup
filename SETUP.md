@@ -159,5 +159,5 @@ DIRECT_URL=...                       # direct 5432
 | Cuándo | Servicio | Qué necesitás |
 |---|---|---|
 | **Ahora (M0)** | GitHub · Supabase · Cloudflare | repo + URL/anon/service_role + DATABASE_URL/DIRECT_URL + cuenta Cloudflare |
-| **M2** | Mercado Pago (sandbox) · Google OAuth | access token TEST + public key · client id/secret |
+| **M2** ✔ | Mercado Pago (sandbox) | `MP_ACCESS_TOKEN` (TEST) + `MP_WEBHOOK_SECRET` — carrito, checkout, webhook implementados |
 | **M5 (launch)** | MiCorreo · Resend · MP (prod) · Dominio | API Correo · API key + dominio verificado · token PROD · DNS → Cloudflare |

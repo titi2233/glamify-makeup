@@ -10,6 +10,9 @@
 - [x] **Logo vectorial real (SVG) o PNG transparente** — el actual es un JPEG envuelto en SVG (fondo blanco). Necesario para footer / secciones de color.
 
 ## Producto / features (Fase 2)
+- [ ] **MiCorreo API real** (cotización en vivo por CP) — hoy fallback a tabla de zonas (seam listo en `lib/shipping/correo.ts`).
+- [ ] **Cron de autocancelación 24h** (Cloudflare Cron Trigger) — lógica lista en `lib/orders/expiry.ts`; falta cablear el trigger (M4).
+- [ ] **Cupones por cliente** (`perCustomerLimit`) — requiere cuentas (M4).
 - [ ] **Checkout embebido (MP Bricks)** — pago on-site sin redirección.
 - [ ] **Programa de puntos / fidelidad.**
 - [ ] **PWA** (experiencia app-like, instalable).
