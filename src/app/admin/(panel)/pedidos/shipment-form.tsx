@@ -80,7 +80,7 @@ export function ShipmentForm({
           className="h-11 rounded-xl border border-border px-4 text-base"
         />
         <p className="text-xs text-muted-foreground">
-          Al cargar el seguimiento, el pedido pasa a "Enviado".
+          Al cargar el seguimiento, el pedido pasa a &quot;Enviado&quot;.
         </p>
       </div>
       <div className="grid gap-2">
