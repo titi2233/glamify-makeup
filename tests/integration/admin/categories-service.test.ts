@@ -156,6 +156,17 @@ describe("deleteCategory", () => {
     );
   });
 
+  it("permite borrar cuando los únicos productos están soft-deleted", async () => {
+    // product.count con deletedAt: null devuelve 0 (solo hay soft-deleted)
+    const { deps, db } = makeDeps({ product: { count: vi.fn(async () => 0) } });
+    await deleteCategory("cat-1", deps);
+    expect(db.category.delete).toHaveBeenCalledWith({ where: { id: "cat-1" } });
+    // verifica que se pasó deletedAt: null al filtro
+    expect(db.product.count).toHaveBeenCalledWith({
+      where: { categoryId: "cat-1", deletedAt: null },
+    });
+  });
+
   it("bloquea el borrado si tiene subcategorías", async () => {
     const { deps } = makeDeps({
       category: {

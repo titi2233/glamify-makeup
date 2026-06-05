@@ -18,7 +18,7 @@ export interface CategoryDb {
     count: (args: { where: { parentId: string } }) => Promise<number>;
   };
   product: {
-    count: (args: { where: { categoryId: string } }) => Promise<number>;
+    count: (args: { where: { categoryId: string; deletedAt?: null } }) => Promise<number>;
   };
 }
 
@@ -95,7 +95,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string, deps: CategoryServiceDeps): Promise<void> {
-  const products = await deps.db.product.count({ where: { categoryId: id } });
+  const products = await deps.db.product.count({ where: { categoryId: id, deletedAt: null } });
   if (products > 0) throw new Error("No se puede borrar: la categoría tiene productos.");
   const children = await deps.db.category.count({ where: { parentId: id } });
   if (children > 0) throw new Error("No se puede borrar: la categoría tiene subcategorías.");
