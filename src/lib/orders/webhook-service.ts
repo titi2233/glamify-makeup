@@ -1,5 +1,5 @@
 // NOTA: sin `import "server-only"` — lo importa scripts/simulate-mp-webhook.ts (node). Server por importar prisma.
-import { prisma } from "@/lib/prisma";
+import { prisma, type PrismaTransactionClient } from "@/lib/prisma";
 import { verifyMpSignature } from "@/lib/payments/signature";
 import { getPayment as realGetPayment, mpStatusToPaymentStatus } from "@/lib/payments/mercadopago";
 import { decideWebhookEffects } from "@/lib/payments/webhook-effects";
@@ -8,14 +8,50 @@ import { sendEmail as realSendEmail } from "@/lib/email/resend";
 import { orderConfirmationEmail, newOrderAlertEmail, type OrderEmailData } from "@/lib/email/templates";
 import { toNumber } from "@/lib/catalog/pricing";
 import type { CartLine } from "@/lib/cart/types";
+import type { OrderStatus } from "@prisma/client";
+import type { Money } from "@/lib/catalog/types";
 
 export interface ProcessWebhookInput {
   dataId: string;
   xSignature: string | null;
   xRequestId: string | null;
 }
+/** Interfaz mínima de la DB necesaria para el webhook (para inyectar fakes en tests). */
+export interface WebhookDb {
+  order: { findFirst: (args: Record<string, unknown>) => Promise<WebhookOrder | null> };
+  $transaction: <T>(fn: (tx: PrismaTransactionClient) => Promise<T>) => Promise<T>;
+}
+
+/** Shape mínimo de pedido para el webhook (incluye items + combo). */
+export interface WebhookOrderItem {
+  id: string;
+  variantId: string | null;
+  comboId: string | null;
+  productNameSnapshot: string;
+  variantNameSnapshot: string | null;
+  skuSnapshot: string | null;
+  unitPriceSnapshot: Money;
+  qty: number;
+  lineTotal: Money;
+  combo: { items: Array<{ variantId: string; qty: number }> } | null;
+}
+export interface WebhookOrder {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  couponId: string | null;
+  contactName: string;
+  contactEmail: string;
+  shippingMethod: string;
+  subtotal: Money;
+  shippingCost: Money;
+  discountTotal: Money;
+  total: Money;
+  items: WebhookOrderItem[];
+}
+
 export interface ProcessWebhookDeps {
-  db: any;
+  db: WebhookDb;
   getPayment: typeof realGetPayment;
   sendEmail: typeof realSendEmail;
   verifySignature: (input: { xSignature: string | null; xRequestId: string | null; dataId: string; secret: string }) => Promise<boolean>;
@@ -30,7 +66,7 @@ export interface ProcessWebhookResult {
 
 export function defaultWebhookDeps(): ProcessWebhookDeps {
   return {
-    db: prisma,
+    db: prisma as unknown as WebhookDb,
     getPayment: realGetPayment,
     sendEmail: realSendEmail,
     verifySignature: verifyMpSignature,
@@ -40,11 +76,11 @@ export function defaultWebhookDeps(): ProcessWebhookDeps {
 }
 
 /** Convierte un OrderItem (con snapshots) a CartLine para computar decrementos de stock. */
-function orderItemToLine(it: any): CartLine {
+function orderItemToLine(it: WebhookOrderItem): CartLine {
   if (it.comboId && it.combo) {
-    return { id: it.id ?? it.comboId, kind: "combo", refId: it.comboId, unitPrice: toNumber(it.unitPriceSnapshot), qty: it.qty, weightGr: 0, components: it.combo.items.map((ci: any) => ({ variantId: ci.variantId, qty: ci.qty })) };
+    return { id: it.id ?? it.comboId, kind: "combo", refId: it.comboId, unitPrice: toNumber(it.unitPriceSnapshot), qty: it.qty, weightGr: 0, components: it.combo.items.map((ci) => ({ variantId: ci.variantId, qty: ci.qty })) };
   }
-  return { id: it.id ?? it.variantId, kind: "variant", refId: it.variantId, unitPrice: toNumber(it.unitPriceSnapshot), qty: it.qty, weightGr: 0 };
+  return { id: it.id ?? it.variantId ?? "", kind: "variant", refId: it.variantId ?? "", unitPrice: toNumber(it.unitPriceSnapshot), qty: it.qty, weightGr: 0 };
 }
 
 export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWebhookDeps): Promise<ProcessWebhookResult> {
@@ -75,7 +111,7 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
   let wonPaidTransition = false;
 
   // 5. Aplicar en tx.
-  await deps.db.$transaction(async (tx: any) => {
+  await deps.db.$transaction(async (tx: PrismaTransactionClient) => {
     await tx.payment.upsert({
       where: { mpPaymentId: String(mpPayment.id) },
       create: { orderId: order.id, provider: "mercadopago", mpPaymentId: String(mpPayment.id), status: effects.updatePaymentTo, amount: mpPayment.transaction_amount ?? toNumber(order.total), rawPayload: mpPayment as unknown as object },
@@ -97,7 +133,7 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       const decrements = computeStockDecrements(lines);
       const ids = [...decrements.keys()];
       const current = await tx.productVariant.findMany({ where: { id: { in: ids } }, select: { id: true, stock: true } });
-      const stockMap = new Map<string, number>(current.map((v: any) => [v.id, v.stock]));
+      const stockMap = new Map<string, number>((current as Array<{ id: string; stock: number }>).map((v) => [v.id, v.stock]));
       const avail = checkAvailability(decrements, stockMap);
       for (const [variantId, qty] of decrements) {
         const have = stockMap.get(variantId) ?? 0;
@@ -106,8 +142,8 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       }
       if (!avail.ok) {
         oversoldLines = order.items
-          .filter((it: any) => avail.shortages.some((s: any) => s.variantId === it.variantId))
-          .map((it: any) => ({ name: it.variantNameSnapshot ? `${it.productNameSnapshot} (${it.variantNameSnapshot})` : it.productNameSnapshot }));
+          .filter((it) => avail.shortages.some((s) => s.variantId === it.variantId))
+          .map((it) => ({ name: it.variantNameSnapshot ? `${it.productNameSnapshot} (${it.variantNameSnapshot})` : it.productNameSnapshot }));
       }
       await tx.shipment.create({ data: { orderId: order.id, status: "pending", cost: toNumber(order.shippingCost) } });
 
@@ -121,7 +157,7 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
   if (wonPaidTransition) {
     const emailData: OrderEmailData = {
       orderNumber: order.orderNumber, contactName: order.contactName, contactEmail: order.contactEmail,
-      items: order.items.map((it: any) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
+      items: order.items.map((it) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
       subtotal: toNumber(order.subtotal), shippingCost: toNumber(order.shippingCost), discountTotal: toNumber(order.discountTotal), total: toNumber(order.total),
       shippingMethod: order.shippingMethod,
     };

@@ -1,5 +1,5 @@
 // NOTA: sin `import "server-only"` — lo importa scripts/simulate-mp-webhook.ts (node). Server por importar prisma.
-import { prisma } from "@/lib/prisma";
+import { prisma, type PrismaTransactionClient } from "@/lib/prisma";
 import { round2 } from "@/lib/money";
 import { cartSubtotal } from "@/lib/cart/totals";
 import { lineTotal } from "@/lib/cart/totals";
@@ -38,14 +38,30 @@ export interface CreateCheckoutInput {
   cartId?: string | null;
 }
 
+/** Interfaz mínima de coupon row necesaria para validar y aplicar. */
+export interface CouponRow {
+  id: string;
+  code: string;
+  type: "percentage" | "fixed" | "free_shipping";
+  value: number | string;
+  scope: "all" | "category" | "product";
+  scopeId: string | null;
+  active: boolean;
+  minSubtotal: number | string | null;
+  validFrom: Date | null;
+  validTo: Date | null;
+  maxUses: number | null;
+  usedCount: number;
+}
+
 /** Superficie mínima de DB que necesita el servicio (para inyectar fakes en tests). */
 export interface CheckoutDb {
-  coupon: { findUnique: (args: { where: { code: string } }) => Promise<any> };
-  $transaction: <T>(fn: (tx: any) => Promise<T>) => Promise<T>;
+  coupon: { findUnique: (args: { where: { code: string } }) => Promise<CouponRow | null> };
+  $transaction: <T>(fn: (tx: PrismaTransactionClient) => Promise<T>) => Promise<T>;
 }
 export interface CreateCheckoutDeps {
   db: CheckoutDb;
-  nextOrderSeq: (tx: any) => Promise<number>;
+  nextOrderSeq: (tx: PrismaTransactionClient) => Promise<number>;
   createPreference: typeof realCreatePreference;
   quoteShipping: (input: Parameters<typeof realQuoteShipping>[0]) => Promise<ShippingQuote>;
   appUrl: string;
@@ -58,7 +74,7 @@ export interface CreateCheckoutResult {
 }
 
 /** Lee la secuencia order_number_seq dentro de la tx (default real). */
-async function defaultNextOrderSeq(tx: any): Promise<number> {
+async function defaultNextOrderSeq(tx: PrismaTransactionClient): Promise<number> {
   const rows = (await tx.$queryRawUnsafe("SELECT nextval('order_number_seq') AS seq")) as Array<{ seq: bigint | number }>;
   return Number(rows[0].seq);
 }
