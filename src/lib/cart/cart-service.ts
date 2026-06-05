@@ -99,3 +99,31 @@ export async function updateItem(itemId: string, qty: number): Promise<void> {
 export async function removeItem(itemId: string): Promise<void> {
   await prisma.cartItem.delete({ where: { id: itemId } });
 }
+
+import type { CheckoutLineInput } from "@/lib/orders/checkout-service";
+
+/** Mapea un carrito cargado a las líneas de checkout (con snapshots y título para MP). */
+export function cartToCheckoutLines(cart: CartWithItems): CheckoutLineInput[] {
+  return cart.items.map((item) => {
+    const line = cartItemToCartLine(item);
+    if (item.combo) {
+      return { line, productNameSnapshot: item.combo.name, variantNameSnapshot: null, skuSnapshot: null, title: item.combo.name };
+    }
+    const v = item.variant!;
+    return {
+      line,
+      productNameSnapshot: v.product.name,
+      variantNameSnapshot: v.name,
+      skuSnapshot: v.sku,
+      title: `${v.product.name} — ${v.name}`,
+    };
+  });
+}
+
+/** Carga el carrito de la sesión actual (cookie) con sus líneas. */
+export async function loadCurrentCart(): Promise<LoadedCart & { cartId: string | null }> {
+  const { getCartIdFromCookie } = await import("@/lib/cart/cart-cookie");
+  const cartId = await getCartIdFromCookie();
+  const loaded = await loadCart(cartId);
+  return { ...loaded, cartId: loaded.cart ? cartId : null };
+}
