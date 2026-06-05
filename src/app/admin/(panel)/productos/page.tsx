@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatARS } from "@/lib/money";
 import { toNumber } from "@/lib/catalog/pricing";
@@ -26,6 +27,7 @@ export default async function ProductosPage({ searchParams }: { searchParams: Pr
     deletedAt: null;
     active?: boolean;
     categoryId?: string;
+    id?: { in: string[] };
     OR?: Array<{ name: { contains: string; mode: "insensitive" } } | { variants: { some: { sku: { contains: string; mode: "insensitive" } } } }>;
   } = { deletedAt: null };
   if (activo === "1") where.active = true;
@@ -38,24 +40,38 @@ export default async function ProductosPage({ searchParams }: { searchParams: Pr
     ];
   }
 
+  // El bajo stock es `stock <= lowStockThreshold` (dos columnas de la misma fila),
+  // algo que el `where` de Prisma no puede comparar. Resolvemos los ids de productos
+  // con al menos una variante en bajo stock vía SQL y los metemos en el `where`, así
+  // el filtro abarca TODO el catálogo (no solo los primeros 200) — issue del review.
+  if (lowStock) {
+    const lowStockRows = await prisma.$queryRaw<Array<{ productId: string }>>(Prisma.sql`
+      SELECT DISTINCT v."productId" AS "productId"
+      FROM "ProductVariant" v
+      JOIN "Product" p ON p."id" = v."productId"
+      WHERE p."deletedAt" IS NULL AND v."stock" <= v."lowStockThreshold"
+    `);
+    where.id = { in: lowStockRows.map((r) => r.productId) };
+  }
+
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy: [{ createdAt: "desc" }],
       include: { category: { select: { name: true } }, variants: { select: { stock: true, lowStockThreshold: true, sku: true } } },
-      take: 200,
+      // Sin tope cuando filtramos por bajo stock: el `where.id` ya acota el set y
+      // truncar acá volvería a esconder productos críticos del fondo del catálogo.
+      ...(lowStock ? {} : { take: 200 }),
     }),
     prisma.category.findMany({ where: { active: true }, orderBy: [{ order: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
   ]);
 
-  const rows = products
-    .map((p) => {
-      const totalStock = p.variants.reduce((acc, v) => acc + v.stock, 0);
-      const isLow = p.variants.some((v) => v.stock <= v.lowStockThreshold);
-      const firstSku = p.variants[0]?.sku ?? "—";
-      return { p, totalStock, isLow, firstSku };
-    })
-    .filter((r) => (lowStock ? r.isLow : true));
+  const rows = products.map((p) => {
+    const totalStock = p.variants.reduce((acc, v) => acc + v.stock, 0);
+    const isLow = p.variants.some((v) => v.stock <= v.lowStockThreshold);
+    const firstSku = p.variants[0]?.sku ?? "—";
+    return { p, totalStock, isLow, firstSku };
+  });
 
   return (
     <div className="space-y-6">
