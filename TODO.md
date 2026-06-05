@@ -2,6 +2,16 @@
 
 > Cosas decididas conscientemente para **más adelante**, para no inflar la v1. No son olvidos: son scope diferido.
 
+## Diferidos de M3 (panel admin)
+> Decididos fuera del scope de M3 (ver spec `docs/superpowers/specs/2026-06-05-m3-panel-admin-design.md`). No son olvidos.
+- [ ] **Reseñas (moderación):** aprobar/rechazar `Review` desde el panel — política depende de blueprint 06.
+- [ ] **Ajustes / Settings page:** editar `Setting` (storeName, envío gratis, CP origen, redes) desde el panel.
+- [ ] **ShippingZone CRUD:** alta/edición de zonas de envío desde el panel (hoy solo por seed).
+- [ ] **Import CSV de catálogo:** carga masiva de productos/variantes (hoy carga manual).
+- [ ] **Notificaciones WhatsApp** al cambiar estado de pedido (hoy: sin email automático en el cambio manual; el webhook de pago ya notifica).
+- [ ] **Historial de movimientos de stock** (auditoría) — hoy solo cantidad + alerta de stock crítico.
+- [ ] **Duplicar producto** (acelerar alta de variantes similares).
+
 ## Infra / notificaciones
 - [ ] **WhatsApp automatizado (Evolution Go):** avisos a la dueña y a la clienta (confirmación, despacho) + carrito abandonado por WhatsApp. Requiere instancia **always-on** (reutilizar la de Elite Padel OS o un VPS). **Hoy:** email (Resend). *(El botón wa.me manual en la web ya está en v1.)*
 - [ ] **Sentry** (monitoreo de errores). Hoy: Cloudflare logs + PostHog.
