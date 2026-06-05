@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatARS, parseDecimal } from "@/lib/money";
+import { formatARS, parseDecimal, round2 } from "@/lib/money";
 
 describe("formatARS", () => {
   it("formatea con separador de miles y 2 decimales (es-AR, espacio normalizado)", () => {
@@ -31,5 +31,24 @@ describe("parseDecimal", () => {
 
   it("rechaza valores no numéricos", () => {
     expect(() => parseDecimal("abc")).toThrow();
+  });
+});
+
+describe("round2", () => {
+  it("redondea a 2 decimales (half-up)", () => {
+    expect(round2(10.005)).toBe(10.01);
+    expect(round2(1.234)).toBe(1.23);
+    expect(round2(1.235)).toBe(1.24);
+    expect(round2(2500)).toBe(2500);
+  });
+  it("acepta strings", () => {
+    expect(round2("3.999")).toBe(4);
+  });
+  it("evita drift de punto flotante", () => {
+    expect(round2(0.1 + 0.2)).toBe(0.3);
+    expect(round2(3200 * 1.1)).toBe(3520);
+  });
+  it("rechaza no-finitos", () => {
+    expect(() => round2("abc")).toThrow();
   });
 });
