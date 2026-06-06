@@ -16,4 +16,14 @@ describe("validateReview", () => {
   it("rechaza body > 2000", () => {
     expect(validateReview({ rating: 4, body: "a".repeat(2001) }).ok).toBe(false);
   });
+  it("invitada sin nombre → inválido", () => {
+    expect(validateReview({ rating: 5, body: "Buenísimo", authorName: "" }).ok).toBe(false);
+    expect(validateReview({ rating: 5, body: "Buenísimo", authorName: " a " }).ok).toBe(false);
+  });
+  it("invitada con nombre válido → ok", () => {
+    expect(validateReview({ rating: 5, body: "Buenísimo", authorName: "Caro" }).ok).toBe(true);
+  });
+  it("logueada sin authorName → ok (no se valida)", () => {
+    expect(validateReview({ rating: 5, body: "Buenísimo" }).ok).toBe(true);
+  });
 });

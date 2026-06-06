@@ -2,6 +2,8 @@ export interface ReviewInput {
   rating: number;
   title?: string | null;
   body: string;
+  /** Nombre de la autora. Solo se valida para reseñas de invitada (se pasa definido). */
+  authorName?: string | null;
 }
 export type ReviewValidation = { ok: true } | { ok: false; reason: string };
 
@@ -14,6 +16,13 @@ export function validateReview(input: ReviewInput): ReviewValidation {
   if (body.length > 2000) return { ok: false, reason: "La reseña es demasiado larga (máx 2000)." };
   if (input.title && input.title.trim().length > 120) {
     return { ok: false, reason: "El título es demasiado largo (máx 120)." };
+  }
+  // Invitada: el nombre llega definido y es obligatorio (2–60). La logueada no lo pasa.
+  if (input.authorName !== undefined && input.authorName !== null) {
+    const name = input.authorName.trim();
+    if (name.length < 2 || name.length > 60) {
+      return { ok: false, reason: "Ingresá tu nombre (2 a 60 caracteres)." };
+    }
   }
   return { ok: true };
 }

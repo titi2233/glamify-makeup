@@ -10,6 +10,7 @@ import {
   Layers,
   Ticket,
   ShoppingCart,
+  Star,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const ITEMS: AdminNavItem[] = [
   { href: "/admin/combos", label: "Combos", icon: Layers },
   { href: "/admin/cupones", label: "Cupones", icon: Ticket },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
+  { href: "/admin/resenas", label: "Reseñas", icon: Star },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -77,7 +79,7 @@ export function AdminSidebar({ logout }: { logout?: React.ReactNode }) {
         aria-label="Navegación del panel"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card md:hidden"
       >
-        <ul className="grid grid-cols-6">
+        <ul className="grid grid-cols-7">
           {ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
