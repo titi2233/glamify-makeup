@@ -12,6 +12,9 @@ import { prisma } from "@/lib/prisma";
 import { quoteShipping } from "@/lib/shipping/index";
 import { getShippingZonesForQuote, getFreeShippingThreshold } from "@/lib/orders/checkout-data";
 import { createCheckout, defaultCheckoutDeps } from "@/lib/orders/checkout-service";
+import type { ActionResult } from "@/lib/forms/action-result";
+
+export type { ActionResult };
 
 function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -26,11 +29,6 @@ async function ensureCartId(): Promise<string> {
   const id = await createCart();
   await setCartIdCookie(id);
   return id;
-}
-
-export interface ActionResult {
-  ok: boolean;
-  error?: string;
 }
 
 export async function addToCartAction(input: { variantId?: string; comboId?: string; qty?: number }): Promise<ActionResult> {
