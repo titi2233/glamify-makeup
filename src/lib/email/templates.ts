@@ -95,3 +95,29 @@ export function newOrderAlertEmail(d: OrderEmailData): EmailContent {
   const text = `Nuevo pedido ${d.orderNumber}\nCliente: ${d.contactName} (${d.contactEmail})\nTotal: ${formatARS(d.total)}${oversell ? `\n⚠️ OVERSELL: ${d.oversoldLines!.map((l) => l.name).join(", ")}` : ""}${amountMismatch ? `\n⚠️ MONTO: acreditado ${formatARS(d.amountPaid!)} ≠ total ${formatARS(d.total)}` : ""}`;
   return { subject, html, text };
 }
+
+export interface AbandonedCartEmailData {
+  name?: string | null;
+  items: OrderEmailItem[];
+  recoverUrl: string;
+}
+
+/** Email de recupero de carrito abandonado (un único recordatorio a 24h). */
+export function abandonedCartEmail(d: AbandonedCartEmailData): EmailContent {
+  const hi = d.name ? `${d.name}, ` : "";
+  const subject = "Te quedó algo en el carrito 💄 — Glamify Makeup";
+  const rows = d.items
+    .map((it) => `<tr><td>${itemLabel(it)} × ${it.qty}</td><td style="text-align:right">${formatARS(it.lineTotal)}</td></tr>`)
+    .join("");
+  const html = `<div style="font-family:sans-serif;color:#6E0B3F">
+    <h1 style="color:#FF2E93">${hi}¿lo dejamos para después? 💕</h1>
+    <p>Guardamos tu carrito. Estos productos te están esperando:</p>
+    <table style="width:100%;border-collapse:collapse">${rows}</table>
+    <p style="margin-top:16px">
+      <a href="${d.recoverUrl}" style="background:#FF2E93;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;display:inline-block">Volver a mi carrito</a>
+    </p>
+    <p style="font-size:12px;color:#999">Si ya compraste o no te interesa, ignorá este mensaje.</p>
+  </div>`;
+  const text = `${hi}te quedó algo en el carrito:\n\n${d.items.map((it) => `- ${itemLabel(it)} × ${it.qty}: ${formatARS(it.lineTotal)}`).join("\n")}\n\nVolvé a tu carrito: ${d.recoverUrl}`;
+  return { subject, html, text };
+}
