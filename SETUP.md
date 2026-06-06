@@ -205,3 +205,44 @@ Prerequisitos (una vez por entorno):
 
 Si `ADMIN_EMAIL`/`ADMIN_PASSWORD` no están definidas, el test se **saltea**
 (no falla), para no romper CI en entornos sin admin configurado.
+
+---
+
+## Cuentas de clientas (M4)
+
+### Google OAuth (login con Google)
+1. **Google Cloud Console** → crear credenciales **OAuth 2.0 Client ID** (tipo *Web application*).
+   - **Authorized redirect URI:** `https://<tu-proyecto>.supabase.co/auth/v1/callback` (Supabase lo indica en el paso siguiente).
+2. **Supabase → Authentication → Providers → Google:** pegar **Client ID** y **Client Secret**, **Enable**.
+3. **Supabase → Authentication → URL Configuration:** agregar a *Redirect URLs* `https://glamifymakeup.site/auth/callback` y `http://localhost:3000/auth/callback`.
+   - El código ya tiene el botón "Continuar con Google" y la ruta `/auth/callback`. Sin el provider configurado, el botón falla controladamente; el login email+contraseña funciona igual.
+
+### Confirmación de email
+- Por defecto Supabase pide **confirmar el email** antes de poder loguear. El registro muestra "revisá tu correo".
+- Para desactivarla (opcional): **Supabase → Authentication → Providers → Email → "Confirm email" off**.
+
+### Cron Triggers (carrito abandonado + autocancelación)
+- `wrangler.jsonc` define `triggers.crons: ["0 * * * *"]` (horario). El `worker.ts` corre `runAbandonedCartJob` (recupero a 24h) y `runOrderExpiryJob` (autocancela `pending_payment` > 24h).
+- Requiere en los **secrets de Cloudflare**: `DATABASE_URL`, `RESEND_API_KEY` (sin esta última, el email se loguea a consola). Probar local: `pnpm dev:worker` y `curl "http://localhost:8771/__scheduled?cron=0+*+*+*+*"`.
+- **Nota:** `pnpm build:worker` necesita un entorno que permita symlinks (Linux/CI o Windows con *Developer Mode*); en Windows sin esos permisos el build de standalone falla con `EPERM`.
+
+## E2E de cuenta (M4)
+
+El test `tests/e2e/cuenta.spec.ts` ejecuta el DoD de M4: registro → login → favoritos → reseña post-compra.
+
+Prerequisitos (una vez por entorno):
+
+1. Crear la clienta de prueba (idempotente, Supabase Auth confirmada + fila `Customer`):
+   ```bash
+   CUSTOMER_EMAIL=clienta@glamify.test CUSTOMER_PASSWORD=una-clave-fuerte pnpm customer:create
+   ```
+2. Seedear (vincula el pedido `GLM-E2E001` a esa clienta para la reseña con compra verificada):
+   ```bash
+   CUSTOMER_EMAIL=clienta@glamify.test pnpm db:seed
+   ```
+3. Correr el e2e con las mismas credenciales en el entorno:
+   ```bash
+   CUSTOMER_EMAIL=clienta@glamify.test CUSTOMER_PASSWORD=una-clave-fuerte pnpm test:e2e -- cuenta.spec.ts
+   ```
+
+El test de "login → favoritos → reseña" se **saltea** si `CUSTOMER_EMAIL`/`CUSTOMER_PASSWORD` no están definidas; el de "registro" corre siempre (usa un email único y valida la pantalla de confirmación).

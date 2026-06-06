@@ -12,6 +12,16 @@
 - [ ] **Historial de movimientos de stock** (auditoría) — hoy solo cantidad + alerta de stock crítico.
 - [ ] **Duplicar producto** (acelerar alta de variantes similares).
 
+## Diferidos de M4 (Cuentas + Clientas)
+> M4 se ejecutó como el split **"Cuentas + Clientas"** (auth, perfil, reseñas, wishlist, carrito abandonado, cupones por cliente). La mitad **"Conversión + Crecimiento"** del M4 de blueprint 08/09 queda acá (ver spec `docs/superpowers/specs/2026-06-06-m4-cuentas-clientas-design.md`).
+- [ ] **Conversión/crecimiento:** order-bump, cross-sell "Te puede gustar", exit-intent sutil, PostHog (analytics), SEO + Open Graph, estética IA (06 §5). *(La barra de envío gratis y los `StockBadge` reales ya existen desde M1/M2.)*
+- [ ] **Moderación de reseñas en el panel admin** — hoy las reseñas de compra verificada se auto-publican; falta UI de aprobar/rechazar (diferido desde M3).
+- [ ] **Fotos en reseñas** — hoy solo rating + título + cuerpo (la entidad `Review` ya tiene `photoUrl`).
+- [ ] **Libreta de direcciones** en `/cuenta` (`Address` CRUD) — hoy el checkout snapshotea la dirección en el `Order`.
+- [ ] **Magic link** (login passwordless) y **cambio de email** de la clienta.
+- [ ] **Carrito abandonado de 2 etapas** (1h + 24h) y por WhatsApp — hoy un único recordatorio a 24h por email.
+- [ ] **Matching de pedidos de invitada por email** para una cuenta registrada — hoy "mis pedidos" solo muestra `customerId == me`.
+
 ## Infra / notificaciones
 - [ ] **WhatsApp automatizado (Evolution Go):** avisos a la dueña y a la clienta (confirmación, despacho) + carrito abandonado por WhatsApp. Requiere instancia **always-on** (reutilizar la de Elite Padel OS o un VPS). **Hoy:** email (Resend). *(El botón wa.me manual en la web ya está en v1.)*
 - [ ] **Sentry** (monitoreo de errores). Hoy: Cloudflare logs + PostHog.
@@ -21,8 +31,8 @@
 
 ## Producto / features (Fase 2)
 - [ ] **MiCorreo API real** (cotización en vivo por CP) — hoy fallback a tabla de zonas (seam listo en `lib/shipping/correo.ts`).
-- [ ] **Cron de autocancelación 24h** (Cloudflare Cron Trigger) — lógica lista en `lib/orders/expiry.ts`; falta cablear el trigger (M4).
-- [ ] **Cupones por cliente** (`perCustomerLimit`) — requiere cuentas (M4).
+- [x] **Cron de autocancelación 24h** (Cloudflare Cron Trigger) — cableado en M4 (`worker.ts` `scheduled` → `runOrderExpiryJob`, cron horario).
+- [x] **Cupones por cliente** (`perCustomerLimit`) — implementado en M4 (tabla `CouponRedemption`, enforcement en checkout + registro en webhook).
 - [ ] **Checkout embebido (MP Bricks)** — pago on-site sin redirección.
 - [ ] **Programa de puntos / fidelidad.**
 - [ ] **PWA** (experiencia app-like, instalable).
