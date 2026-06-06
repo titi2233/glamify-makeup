@@ -23,6 +23,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "setup:storage": "tsx scripts/setup-storage.ts",
     "admin:create": "tsx --env-file=.env scripts/create-admin.ts",
+    "customer:create": "tsx --env-file=.env scripts/create-customer.ts",
     "sim:webhook": "tsx --env-file=.env scripts/simulate-mp-webhook.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

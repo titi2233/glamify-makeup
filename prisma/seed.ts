@@ -311,6 +311,11 @@ async function upsertCoupons(): Promise<void> {
 const E2E_ORDER_NUMBER = "GLM-E2E001";
 
 async function upsertE2eOrder(): Promise<void> {
+  // Clienta e2e (si fue seedeada con `pnpm customer:create`): vincula el pedido a su cuenta
+  // para que pueda dejar una reseña con compra verificada sobre el producto del pedido.
+  const e2eEmail = process.env.CUSTOMER_EMAIL?.trim().toLowerCase() ?? "clienta.e2e@example.com";
+  const e2eCustomer = await prisma.customer.findUnique({ where: { email: e2eEmail } });
+
   // Variante real del seed para snapshots coherentes.
   const variant = await prisma.productVariant.findFirst({
     where: { product: { slug: "labial-mate-larga-duracion" }, stock: { gt: 0 } },
@@ -334,6 +339,7 @@ async function upsertE2eOrder(): Promise<void> {
     ? await prisma.order.update({
         where: { orderNumber: E2E_ORDER_NUMBER },
         data: {
+          customerId: e2eCustomer?.id ?? null,
           contactName: "Clienta E2E",
           contactEmail: "e2e@example.com",
           contactPhone: "1100000000",
@@ -349,6 +355,7 @@ async function upsertE2eOrder(): Promise<void> {
     : await prisma.order.create({
         data: {
           orderNumber: E2E_ORDER_NUMBER,
+          customerId: e2eCustomer?.id ?? null,
           contactName: "Clienta E2E",
           contactEmail: "e2e@example.com",
           contactPhone: "1100000000",

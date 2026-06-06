@@ -14,6 +14,8 @@ export default defineConfig({
     env: {
       ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "",
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? "",
+      CUSTOMER_EMAIL: process.env.CUSTOMER_EMAIL ?? "",
+      CUSTOMER_PASSWORD: process.env.CUSTOMER_PASSWORD ?? "",
     },
   },
 });
