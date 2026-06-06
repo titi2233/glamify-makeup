@@ -39,11 +39,13 @@ export async function mergeGuestCartIntoCustomer(
     ? await db.cart.findUnique({ where: { id: input.cookieCartId } })
     : null;
   const cookieActive = cookie && cookie.status === "active" ? cookie : null;
-  const previous = await db.cart.findFirst({ where: { customerId: input.customerId, status: "active" } });
 
   if (!cookieActive) {
+    const previous = await db.cart.findFirst({ where: { customerId: input.customerId, status: "active" } });
     return { canonicalCartId: previous ? previous.id : null };
   }
+
+  const previous = await db.cart.findFirst({ where: { customerId: input.customerId, status: "active" } });
 
   // Cookie gana: asignarle la clienta + consentimiento.
   await db.cart.update({

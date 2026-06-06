@@ -53,4 +53,68 @@ describe("mergeGuestCartIntoCustomer", () => {
     );
     expect(res.canonicalCartId).toBeNull();
   });
+
+  it("cookie + cart previo con items solapados → suma qty y borra item del previo", async () => {
+    const db = makeDb({
+      cart: {
+        findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
+          where.id === "cookie" ? { id: "cookie", status: "active", customerId: null } : null),
+        findFirst: vi.fn(async () => ({ id: "prev", status: "active", customerId: "u1" })),
+        update: vi.fn(async () => ({})),
+      },
+      cartItem: {
+        findMany: vi.fn(async ({ where }: { where: { cartId: string } }) => {
+          if (where.cartId === "prev") {
+            return [{ id: "pi1", variantId: "v1", comboId: null, qty: 2 }];
+          }
+          return [{ id: "ci1", variantId: "v1", comboId: null, qty: 3 }];
+        }),
+        update: vi.fn(async () => ({})),
+        delete: vi.fn(async () => ({})),
+      },
+    });
+    const res = await mergeGuestCartIntoCustomer(
+      { cookieCartId: "cookie", customerId: "u1", marketingConsent: false },
+      { db },
+    );
+    expect(res.canonicalCartId).toBe("cookie");
+    // qty sumada en el item de la cookie (3 + 2 = 5)
+    expect(db.cartItem.update).toHaveBeenCalledWith({ where: { id: "ci1" }, data: { qty: 5 } });
+    // item del previo eliminado
+    expect(db.cartItem.delete).toHaveBeenCalledWith({ where: { id: "pi1" } });
+    // cart previo abandonado
+    expect(db.cart.update).toHaveBeenCalledWith({ where: { id: "prev" }, data: { status: "abandoned" } });
+  });
+
+  it("cookie + cart previo con items no solapados → item del previo reasignado a la cookie", async () => {
+    const db = makeDb({
+      cart: {
+        findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
+          where.id === "cookie" ? { id: "cookie", status: "active", customerId: null } : null),
+        findFirst: vi.fn(async () => ({ id: "prev", status: "active", customerId: "u1" })),
+        update: vi.fn(async () => ({})),
+      },
+      cartItem: {
+        findMany: vi.fn(async ({ where }: { where: { cartId: string } }) => {
+          if (where.cartId === "prev") {
+            return [{ id: "pi2", variantId: "v2", comboId: null, qty: 1 }];
+          }
+          return [{ id: "ci1", variantId: "v1", comboId: null, qty: 3 }];
+        }),
+        update: vi.fn(async () => ({})),
+        delete: vi.fn(async () => ({})),
+      },
+    });
+    const res = await mergeGuestCartIntoCustomer(
+      { cookieCartId: "cookie", customerId: "u1", marketingConsent: false },
+      { db },
+    );
+    expect(res.canonicalCartId).toBe("cookie");
+    // item del previo reasignado al cart de la cookie
+    expect(db.cartItem.update).toHaveBeenCalledWith({ where: { id: "pi2" }, data: { cartId: "cookie" } });
+    // no se eliminó ningún item
+    expect(db.cartItem.delete).not.toHaveBeenCalled();
+    // cart previo abandonado
+    expect(db.cart.update).toHaveBeenCalledWith({ where: { id: "prev" }, data: { status: "abandoned" } });
+  });
 });
