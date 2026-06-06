@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getActiveProductSlugs, getCategoryTree } from "@/lib/catalog/queries";
+
+export const dynamic = "force-dynamic";
 import { absoluteUrl } from "@/lib/seo/url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
