@@ -10,10 +10,12 @@ export interface ValidatableCoupon {
   validTo: Date | null;
   maxUses: number | null;
   usedCount: number;
+  perCustomerLimit?: number | null;
 }
 export interface CouponContext {
   subtotal: number;
   now: Date;
+  customerRedemptions?: number;
 }
 export type CouponValidation = { ok: true } | { ok: false; reason: string };
 
@@ -26,6 +28,9 @@ export function validateCoupon(coupon: ValidatableCoupon, ctx: CouponContext): C
   }
   if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
     return { ok: false, reason: "El cupón alcanzó su límite de usos." };
+  }
+  if (coupon.perCustomerLimit != null && (ctx.customerRedemptions ?? 0) >= coupon.perCustomerLimit) {
+    return { ok: false, reason: "Ya usaste este cupón el máximo de veces." };
   }
   return { ok: true };
 }
