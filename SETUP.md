@@ -158,8 +158,9 @@ DIRECT_URL=...                       # direct 5432
 # MP_ACCESS_TOKEN=...                # M2 (sandbox) / M5 (prod) — SECRETA
 # MP_WEBHOOK_SECRET=...              # M2 — SECRETA
 # RESEND_API_KEY=...                 # M5 — SECRETA
-# NEXT_PUBLIC_POSTHOG_KEY=...        # M4
-# NEXT_PUBLIC_POSTHOG_HOST=...       # M4
+# NEXT_PUBLIC_POSTHOG_KEY=...        # M4b (pública) — sin key, analytics off
+# NEXT_PUBLIC_POSTHOG_HOST=...       # M4b (pública) — ej. https://us.i.posthog.com
+# NEXT_PUBLIC_WELCOME_COUPON_CODE=BIENVENIDA10  # M4b — cupón que revela el exit-intent
 ```
 
 ---
@@ -246,3 +247,35 @@ Prerequisitos (una vez por entorno):
    ```
 
 El test de "login → favoritos → reseña" se **saltea** si `CUSTOMER_EMAIL`/`CUSTOMER_PASSWORD` no están definidas; el de "registro" corre siempre (usa un email único y valida la pantalla de confirmación).
+
+---
+
+## Conversión + crecimiento (M4b)
+
+### PostHog (analytics)
+1. Crear un proyecto **free** en [posthog.com](https://posthog.com) (región US o EU).
+2. Copiar la **Project API Key** y el **host** (`https://us.i.posthog.com` o `https://eu.i.posthog.com`).
+3. Cargar como variables **públicas** (`NEXT_PUBLIC_*`): en `.env.local` para dev y en `wrangler.jsonc → [vars]` (o secrets/vars del dashboard) para prod:
+   ```bash
+   NEXT_PUBLIC_POSTHOG_KEY=phc_xxx
+   NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+   ```
+4. **Sin key → analytics desactivado** (dev local intacto; no rompe nada). El banner de consentimiento es **opt-out**: la captura está ON por defecto y "Rechazar" la desactiva (cookie `glamify_analytics=no`).
+5. Eventos que emite el storefront: `product_viewed`, `add_to_cart`, `begin_checkout`, `purchase`, `order_bump_added`, `exit_intent_shown/submitted`, `review_submitted`. Las UTM (link en bio) las autocaptura PostHog.
+
+### Cupón de bienvenida (exit-intent)
+- El exit-intent revela el código de `NEXT_PUBLIC_WELCOME_COUPON_CODE` (default `BIENVENIDA10`). El cupón lo crea el seed (`pnpm db:seed`): 10% off, scope todo, 1 uso por clienta.
+- Para cambiar el código: editar la var de entorno **y** crear el cupón real en `/admin/cupones` (o ajustar el seed). Si la var queda vacía, el exit-intent solo captura el email (sin revelar código).
+
+### Order-bump y cross-sell (por tags)
+- El **order-bump** ofrece el producto activo más barato con el tag **`order-bump`** (en la ficha del producto, campo Tags). El seed tagea la esponja y el set de brochas.
+- El **cross-sell** ("Te puede gustar") usa la misma categoría — no requiere configuración.
+
+### Moderación de reseñas
+- Las reseñas ahora son **abiertas**: cualquiera puede dejar una. Las de **compra verificada** se auto-publican; el resto entra a **`/admin/resenas`** para que la dueña **apruebe/rechace** antes de publicar.
+
+### Pendiente (diferido — estética IA, blueprint 06 §5)
+- **OG image de marca dedicada**: hoy el preview al compartir usa la **foto real del producto** (en la ficha) y el OG por defecto en el resto. Falta generar una OG image de marca (IA, on-brand) y ponerla en `public/` + `openGraph.images` del layout raíz.
+
+### E2E
+- `tests/e2e/conversion.spec.ts`: reseña de invitada → queda pendiente (no se publica) · order-bump visible en `/carrito` · banner de consentimiento presente y se cierra al rechazar. Corre en CI (`pnpm test:e2e -- conversion.spec.ts`).
