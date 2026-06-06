@@ -121,3 +121,28 @@ export function abandonedCartEmail(d: AbandonedCartEmailData): EmailContent {
   const text = `${hi}te quedó algo en el carrito:\n\n${d.items.map((it) => `- ${itemLabel(it)} × ${it.qty}: ${formatARS(it.lineTotal)}`).join("\n")}\n\nVolvé a tu carrito: ${d.recoverUrl}`;
   return { subject, html, text };
 }
+
+export interface RetractionEmailData {
+  ticket: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string | null;
+  orderNumber?: string | null;
+  reason?: string | null;
+}
+
+/** Alerta a la dueña: nueva solicitud del Botón de Arrepentimiento (Res. 424/2020). */
+export function retractionAlertEmail(d: RetractionEmailData): EmailContent {
+  const subject = `📨 Solicitud de arrepentimiento ${d.ticket}`;
+  const row = (k: string, v?: string | null) =>
+    v ? `<tr><td><strong>${k}</strong></td><td>${v}</td></tr>` : "";
+  const html = `<div style="font-family:sans-serif;color:#6E0B3F">
+    <h1 style="color:#FF2E93">Solicitud de arrepentimiento ${d.ticket}</h1>
+    <p>Un/a consumidor/a ejerció el derecho de arrepentimiento (art. 34 Ley 24.240). Contactalo/a para coordinar la devolución y el reintegro.</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${row("Nombre", d.contactName)}${row("Email", d.contactEmail)}${row("Teléfono", d.contactPhone)}${row("Pedido", d.orderNumber)}${row("Motivo", d.reason)}
+    </table>
+  </div>`;
+  const text = `Solicitud de arrepentimiento ${d.ticket}\nNombre: ${d.contactName}\nEmail: ${d.contactEmail}\nTeléfono: ${d.contactPhone ?? "-"}\nPedido: ${d.orderNumber ?? "-"}\nMotivo: ${d.reason ?? "-"}`;
+  return { subject, html, text };
+}
