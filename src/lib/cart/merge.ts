@@ -40,12 +40,18 @@ export async function mergeGuestCartIntoCustomer(
     : null;
   const cookieActive = cookie && cookie.status === "active" ? cookie : null;
 
-  if (!cookieActive) {
+  // Guard: si el cart de la cookie ya pertenece a otra clienta, no lo robamos.
+  if (cookieActive && cookieActive.customerId !== null && cookieActive.customerId !== input.customerId) {
     const previous = await db.cart.findFirst({ where: { customerId: input.customerId, status: "active" } });
     return { canonicalCartId: previous ? previous.id : null };
   }
 
+  // Buscamos el cart previo de la clienta una sola vez y lo reutilizamos en ambas ramas.
   const previous = await db.cart.findFirst({ where: { customerId: input.customerId, status: "active" } });
+
+  if (!cookieActive) {
+    return { canonicalCartId: previous ? previous.id : null };
+  }
 
   // Cookie gana: asignarle la clienta + consentimiento.
   await db.cart.update({

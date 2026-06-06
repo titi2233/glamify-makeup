@@ -86,6 +86,25 @@ describe("mergeGuestCartIntoCustomer", () => {
     expect(db.cart.update).toHaveBeenCalledWith({ where: { id: "prev" }, data: { status: "abandoned" } });
   });
 
+  it("cookie ya asignada a otra clienta → no la roba; devuelve cart propio si existe", async () => {
+    const db = makeDb({
+      cart: {
+        findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
+          where.id === "cookie" ? { id: "cookie", status: "active", customerId: "other-user" } : null),
+        findFirst: vi.fn(async () => ({ id: "own-prev", status: "active", customerId: "u1" })),
+        update: vi.fn(async () => ({})),
+      },
+    });
+    const res = await mergeGuestCartIntoCustomer(
+      { cookieCartId: "cookie", customerId: "u1", marketingConsent: false },
+      { db },
+    );
+    // No debe robarse el cart ajeno
+    expect(res.canonicalCartId).toBe("own-prev");
+    // No debe haber actualizado ningún cart
+    expect(db.cart.update).not.toHaveBeenCalled();
+  });
+
   it("cookie + cart previo con items no solapados → item del previo reasignado a la cookie", async () => {
     const db = makeDb({
       cart: {
