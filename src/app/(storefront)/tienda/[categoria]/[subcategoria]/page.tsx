@@ -13,8 +13,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { categoria, subcategoria } = await params;
   const { resolved } = await resolveCategoryPath(categoria, subcategoria);
-  if (!resolved?.subcategory) return { title: "Categoría — Glamify Makeup" };
-  return { title: `${resolved.subcategory.name} — Glamify Makeup`, description: `Productos de ${resolved.subcategory.name}.` };
+  if (!resolved?.subcategory) return { title: "Categoría" };
+  return { title: resolved.subcategory.name, description: `Productos de ${resolved.subcategory.name}.` };
 }
 
 export default async function SubcategoriaPage({

@@ -10,8 +10,8 @@ import { buildBreadcrumbs } from "@/lib/catalog/categories";
 export async function generateMetadata({ params }: { params: Promise<{ categoria: string }> }): Promise<Metadata> {
   const { categoria } = await params;
   const { resolved } = await resolveCategoryPath(categoria);
-  if (!resolved) return { title: "Categoría — Glamify Makeup" };
-  return { title: `${resolved.category.name} — Glamify Makeup`, description: `Productos de ${resolved.category.name}.` };
+  if (!resolved) return { title: "Categoría" };
+  return { title: resolved.category.name, description: `Productos de ${resolved.category.name}.` };
 }
 
 export default async function CategoriaPage({

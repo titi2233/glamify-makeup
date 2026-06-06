@@ -4,7 +4,7 @@ import { getProductList } from "@/lib/catalog/queries";
 import { ProductListView } from "@/components/catalog/product-list-view";
 
 export const metadata: Metadata = {
-  title: "Tienda — Glamify Makeup",
+  title: "Tienda",
   description: "Explorá todo el catálogo de maquillaje y accesorios.",
 };
 

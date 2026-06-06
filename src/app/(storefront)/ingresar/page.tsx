@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCustomer } from "@/lib/customer/auth";
 import { IngresarForm } from "./ingresar-form";
 
-export const metadata: Metadata = { title: "Ingresar — Glamify Makeup" };
+export const metadata: Metadata = { title: "Ingresar" };
 
 interface IngresarPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

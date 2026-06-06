@@ -126,7 +126,7 @@ const PRODUCTS: SeedProduct[] = [
   {
     slug: "set-brochas-x5", name: "Set de Brochas Profesionales x5", categorySlug: "brochas",
     description: "5 brochas esenciales de cerda suave para rostro y ojos. Incluye estuche.",
-    basePrice: 7800, compareAtPrice: 9900, cost: 3500, weightGr: 200, tags: ["set", "brochas"],
+    basePrice: 7800, compareAtPrice: 9900, cost: 3500, weightGr: 200, tags: ["set", "brochas", "order-bump"],
     variants: [{ name: "Rosa", swatchHex: "#FF2E93", stock: 5 }],
   },
   {
@@ -157,7 +157,7 @@ const PRODUCTS: SeedProduct[] = [
   {
     slug: "esponja-maquillaje-blender", name: "Esponja de Maquillaje Blender", categorySlug: "brochas",
     description: "Esponja sin látex que difumina la base para un acabado impecable.",
-    basePrice: 1800, cost: 600, weightGr: 12, tags: ["esponja"],
+    basePrice: 1800, cost: 600, weightGr: 12, tags: ["esponja", "order-bump"],
     variants: [
       { name: "Rosa", swatchHex: "#FF9ED1", stock: 30 },
       { name: "Violeta", swatchHex: "#8B5CF6", stock: 17 },
@@ -289,19 +289,22 @@ interface SeedCoupon {
   scope?: "all" | "category" | "product";
   minSubtotal?: number;
   maxUses?: number;
+  perCustomerLimit?: number;
 }
 const COUPONS: SeedCoupon[] = [
   { code: "GLAM10", type: "percentage", value: 10, scope: "all" },
   { code: "BIENVENIDA", type: "fixed", value: 1000, scope: "all", minSubtotal: 5000 },
   { code: "ENVIOGRATIS", type: "free_shipping", value: 0, scope: "all" },
+  // Cupón del exit-intent (NEXT_PUBLIC_WELCOME_COUPON_CODE). 1ª compra: 10% off, 1 uso por clienta.
+  { code: "BIENVENIDA10", type: "percentage", value: 10, scope: "all", perCustomerLimit: 1 },
 ];
 
 async function upsertCoupons(): Promise<void> {
   for (const c of COUPONS) {
     await prisma.coupon.upsert({
       where: { code: c.code },
-      update: { type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null, active: true },
-      create: { code: c.code, type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null },
+      update: { type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null, perCustomerLimit: c.perCustomerLimit ?? null, active: true },
+      create: { code: c.code, type: c.type, value: c.value, scope: c.scope ?? "all", minSubtotal: c.minSubtotal ?? null, maxUses: c.maxUses ?? null, perCustomerLimit: c.perCustomerLimit ?? null },
     });
   }
 }

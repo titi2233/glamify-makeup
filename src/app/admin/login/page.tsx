@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAdminUser } from "@/lib/admin/auth";
 import { LoginForm } from "./login-form";
 
-export const metadata = { title: "Panel · Ingresar — Glamify Makeup" };
+export const metadata = { title: "Panel · Ingresar" };
 
 export default async function AdminLoginPage() {
   const admin = await getAdminUser();
