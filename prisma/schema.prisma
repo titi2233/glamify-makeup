@@ -84,6 +84,12 @@ enum ReviewStatus {
   rejected
 }
 
+enum RetractionStatus {
+  pending
+  processed
+  rejected
+}
+
 // ============ CATÁLOGO ============
 model Category {
   id        String     @id @default(uuid()) @db.Uuid
@@ -413,4 +419,19 @@ model Setting {
   instagramUrl          String?
   tiktokUrl             String?
   updatedAt             DateTime @updatedAt
+}
+
+// Solicitudes del Botón de Arrepentimiento (Res. 424/2020, art. 34 Ley 24.240).
+model RetractionRequest {
+  id           String           @id @default(uuid()) @db.Uuid
+  seq          Int              @unique @default(autoincrement()) // constancia: ARR-000123
+  orderNumber  String?
+  contactName  String
+  contactEmail String
+  contactPhone String?
+  reason       String?
+  status       RetractionStatus @default(pending)
+  createdAt    DateTime         @default(now())
+
+  @@index([status])
 }
