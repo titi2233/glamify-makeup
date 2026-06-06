@@ -31,8 +31,7 @@ export default function NosotrasPage() {
       </ul>
 
       <p>
-        [COMPLETAR: sumá acá tu historia personal, dónde estás ubicada y qué te diferencia.] ¿Querés ver lo que
-        tenemos? Pasá por la <Link href="/tienda">tienda</Link> o escribinos por{" "}
+        ¿Querés ver lo que tenemos? Pasá por la <Link href="/tienda">tienda</Link> o escribinos por{" "}
         <Link href="/contacto">contacto</Link>.
       </p>
     </Prose>
