@@ -7,6 +7,9 @@ import { CartLineItem } from "@/components/cart/cart-line-item";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartSummary } from "@/components/cart/cart-summary";
 import { EmptyCart } from "@/components/cart/empty-cart";
+import { OrderBump } from "@/components/cart/order-bump";
+import { getOrderBumpOffers } from "@/lib/catalog/recommendations";
+import { selectOrderBump } from "@/lib/catalog/recommend";
 
 /** Contenido del carrito para el drawer (server component, se refresca con router.refresh). */
 export async function CartContents() {
@@ -15,6 +18,9 @@ export async function CartContents() {
 
   const discount = coupon?.discount ?? 0;
   const total = round2(subtotal - discount);
+
+  const cartVariantIds = cart.items.map((i) => i.variantId).filter((v): v is string => Boolean(v));
+  const bump = selectOrderBump(await getOrderBumpOffers(), cartVariantIds);
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -34,6 +40,7 @@ export async function CartContents() {
           />
         ))}
       </div>
+      {bump && <OrderBump offer={bump} />}
       <Separator />
       <CartSummary subtotal={subtotal} discount={discount} shippingCost={null} total={total} freeShipping={coupon?.freeShipping} />
       <div className="grid gap-2">

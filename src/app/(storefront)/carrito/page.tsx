@@ -9,8 +9,12 @@ import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CouponInput } from "@/components/cart/coupon-input";
 import { CartSummary } from "@/components/cart/cart-summary";
 import { EmptyCart } from "@/components/cart/empty-cart";
+import { OrderBump } from "@/components/cart/order-bump";
+import { CrossSell } from "@/components/catalog/cross-sell";
+import { getOrderBumpOffers, getCartCrossSell } from "@/lib/catalog/recommendations";
+import { selectOrderBump } from "@/lib/catalog/recommend";
 
-export const metadata: Metadata = { title: "Tu carrito — Glamify Makeup" };
+export const metadata: Metadata = { title: "Tu carrito" };
 
 export default async function CarritoPage() {
   const { cart, subtotal, count, threshold, coupon } = await getCartView();
@@ -26,6 +30,14 @@ export default async function CarritoPage() {
 
   const discount = coupon?.discount ?? 0;
   const total = round2(subtotal - discount);
+
+  const cartVariantIds = cart.items.map((i) => i.variantId).filter((v): v is string => Boolean(v));
+  const cartCategoryIds = [...new Set(cart.items.map((i) => i.variant?.product.categoryId).filter((v): v is string => Boolean(v)))];
+  const cartProductIds = cart.items.map((i) => i.variant?.product.id).filter((v): v is string => Boolean(v));
+  const [bump, related] = await Promise.all([
+    getOrderBumpOffers().then((offers) => selectOrderBump(offers, cartVariantIds)),
+    getCartCrossSell(cartCategoryIds, cartProductIds, 4),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl py-6">
@@ -50,12 +62,16 @@ export default async function CarritoPage() {
           </div>
         </div>
         <aside className="space-y-4 rounded-2xl border border-border p-5 lg:sticky lg:top-20 lg:self-start">
+          {bump && <OrderBump offer={bump} />}
           <CouponInput applied={coupon?.code ?? null} />
           <Separator />
           <CartSummary subtotal={subtotal} discount={discount} shippingCost={null} total={total} freeShipping={coupon?.freeShipping} />
           <p className="text-xs text-muted-foreground">El envío se calcula en el checkout según tu código postal.</p>
           <Button asChild size="lg" className="w-full"><Link href="/checkout">Iniciar compra</Link></Button>
         </aside>
+      </div>
+      <div className="mt-10">
+        <CrossSell products={related} />
       </div>
     </div>
   );
