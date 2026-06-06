@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 import { CategoryNav } from "@/components/layout/category-nav";
 import { CartButton } from "@/components/cart/cart-button";
 import { getCategoryTree } from "@/lib/catalog/queries";
@@ -16,6 +17,9 @@ export async function SiteHeader() {
         <div className="flex items-center gap-1">
           <Link href="/tienda" className="hidden text-sm font-medium hover:text-primary sm:inline">
             Tienda
+          </Link>
+          <Link href="/cuenta" aria-label="Mi cuenta" className="hidden p-2 text-foreground hover:text-primary md:inline-flex">
+            <User className="size-5" aria-hidden />
           </Link>
           <CartButton count={count} />
         </div>

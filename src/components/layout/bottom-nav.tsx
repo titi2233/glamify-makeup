@@ -18,7 +18,7 @@ const ITEMS: NavItem[] = [
   { href: "/tienda", label: "Tienda", icon: Store, enabled: true },
   { href: "#", label: "Buscar", icon: Search, enabled: false },
   { href: "/carrito", label: "Carrito", icon: ShoppingBag, enabled: true },
-  { href: "#", label: "Cuenta", icon: User, enabled: false },
+  { href: "/cuenta", label: "Cuenta", icon: User, enabled: true },
 ];
 
 export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
