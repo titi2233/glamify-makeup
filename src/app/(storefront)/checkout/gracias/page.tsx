@@ -4,8 +4,9 @@ import { CheckCircle2, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatARS } from "@/lib/money";
 import { Button } from "@/components/ui/button";
+import { TrackOnMount } from "@/components/analytics/track-on-mount";
 
-export const metadata: Metadata = { title: "¡Gracias por tu compra! — Glamify Makeup" };
+export const metadata: Metadata = { title: "¡Gracias por tu compra!" };
 
 export default async function GraciasPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
@@ -16,6 +17,9 @@ export default async function GraciasPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto max-w-lg py-10 text-center">
+      {paid && order && (
+        <TrackOnMount event="purchase" props={{ orderNumber: order.orderNumber, total: Number(order.total) }} />
+      )}
       {paid ? <CheckCircle2 className="mx-auto size-14 text-primary" /> : <Clock className="mx-auto size-14 text-muted-foreground" />}
       <h1 className="mt-4 font-display text-2xl font-bold">{paid ? "¡Gracias por tu compra! 💄" : "Estamos confirmando tu pago"}</h1>
 

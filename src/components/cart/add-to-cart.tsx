@@ -8,6 +8,7 @@ import { VariantSwatchSelector } from "@/components/catalog/variant-swatch-selec
 import { QuantityStepper } from "@/components/catalog/quantity-stepper";
 import { useCartUI } from "@/components/cart/cart-provider";
 import { addToCartAction } from "@/app/(storefront)/actions";
+import { track } from "@/lib/analytics/track";
 import type { CatalogVariant } from "@/lib/catalog/types";
 
 export function AddToCart({ variants }: { variants: CatalogVariant[] }) {
@@ -28,6 +29,7 @@ export function AddToCart({ variants }: { variants: CatalogVariant[] }) {
       if (!variantId) { setError("Elegí un tono."); return; }
       const r = await addToCartAction({ variantId, qty });
       if (!r.ok) { setError(r.error ?? "No se pudo agregar."); return; }
+      track("add_to_cart", { variantId, qty, variantName: selected?.name });
       router.refresh();
       openCart();
     });

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
+import { track } from "@/lib/analytics/track";
 import { formatARS, round2 } from "@/lib/money";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,11 @@ export function CheckoutForm({ subtotal, discount, couponFreeShipping, items }: 
 
   const shippingCost = couponFreeShipping ? 0 : shipping?.free ? 0 : shipping?.cost ?? null;
   const total = round2(subtotal - discount + (shippingCost ?? 0));
+
+  useEffect(() => {
+    track("begin_checkout", { subtotal, items: items.length });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const quote = () => {
     if (!/^\d{4}$/.test(cp)) { setShipping(null); return; }
