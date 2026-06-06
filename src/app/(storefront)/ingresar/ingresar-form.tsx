@@ -9,10 +9,14 @@ import { signInAction, signUpAction, signInWithGoogleAction } from "./actions";
 
 type Mode = "in" | "up";
 
-export function IngresarForm() {
+interface IngresarFormProps {
+  initialError?: string | null;
+}
+
+export function IngresarForm({ initialError = null }: IngresarFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("in");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
