@@ -37,6 +37,7 @@ export interface WebhookOrderItem {
 }
 export interface WebhookOrder {
   id: string;
+  customerId: string | null;
   orderNumber: string;
   status: OrderStatus;
   couponId: string | null;
@@ -162,6 +163,13 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
 
       if (order.couponId) {
         await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
+        if (order.customerId) {
+          await tx.couponRedemption.upsert({
+            where: { customerId_couponId: { customerId: order.customerId, couponId: order.couponId } },
+            create: { customerId: order.customerId, couponId: order.couponId, redeemedCount: 1, lastRedeemedAt: deps.now ?? new Date() },
+            update: { redeemedCount: { increment: 1 }, lastRedeemedAt: deps.now ?? new Date() },
+          });
+        }
       }
     }
   });
