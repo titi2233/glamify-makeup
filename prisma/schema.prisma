@@ -180,17 +180,19 @@ model ComboItem {
 
 // ============ CLIENTAS ============
 model Customer {
-  id        String     @id @db.Uuid // = uid de Supabase Auth
-  email     String     @unique
-  name      String?
-  phone     String?
-  addresses Address[]
-  wishlist  Wishlist[]
-  reviews   Review[]
-  carts     Cart[]
-  orders    Order[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id               String             @id @db.Uuid // = uid de Supabase Auth
+  email            String             @unique
+  name             String?
+  phone            String?
+  marketingConsent Boolean            @default(false)
+  redemptions      CouponRedemption[]
+  addresses        Address[]
+  wishlist         Wishlist[]
+  reviews          Review[]
+  carts            Cart[]
+  orders           Order[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 }
 
 model Address {
@@ -238,20 +240,23 @@ model Review {
   createdAt        DateTime     @default(now())
 
   @@index([productId])
+  @@unique([customerId, productId])
 }
 
 // ============ VENTAS ============
 model Cart {
-  id           String     @id @default(uuid()) @db.Uuid
-  customerId   String?    @db.Uuid
-  customer     Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  sessionId    String?
-  status       CartStatus @default(active)
-  contactEmail String?
-  contactPhone String?
-  items        CartItem[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                   String     @id @default(uuid()) @db.Uuid
+  customerId           String?    @db.Uuid
+  customer             Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  sessionId            String?
+  status               CartStatus @default(active)
+  contactEmail         String?
+  contactPhone         String?
+  recoveryEmailConsent Boolean    @default(false)
+  abandonedEmailSentAt DateTime?
+  items                CartItem[]
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
   @@index([sessionId])
 }
@@ -362,20 +367,33 @@ model Shipment {
 
 // ============ PROMOS ============
 model Coupon {
-  id               String      @id @default(uuid()) @db.Uuid
-  code             String      @unique
+  id               String             @id @default(uuid()) @db.Uuid
+  code             String             @unique
   type             CouponType
-  value            Decimal     @db.Decimal(12, 2)
-  scope            CouponScope @default(all)
-  scopeId          String?     @db.Uuid // categoryId o productId según `scope` (null si scope=all)
-  minSubtotal      Decimal?    @db.Decimal(12, 2)
+  value            Decimal            @db.Decimal(12, 2)
+  scope            CouponScope        @default(all)
+  scopeId          String?            @db.Uuid // categoryId o productId según `scope` (null si scope=all)
+  minSubtotal      Decimal?           @db.Decimal(12, 2)
   maxUses          Int?
-  usedCount        Int         @default(0)
+  usedCount        Int                @default(0)
   perCustomerLimit Int?
   validFrom        DateTime?
   validTo          DateTime?
-  active           Boolean     @default(true)
+  active           Boolean            @default(true)
   orders           Order[]
+  redemptions      CouponRedemption[]
+}
+
+model CouponRedemption {
+  customerId     String    @db.Uuid
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  couponId       String    @db.Uuid
+  coupon         Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  redeemedCount  Int       @default(0)
+  lastRedeemedAt DateTime?
+
+  @@id([customerId, couponId])
+  @@index([couponId])
 }
 
 // ============ SISTEMA ============
