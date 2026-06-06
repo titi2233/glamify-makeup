@@ -7,6 +7,8 @@ import { CatalogBreadcrumbs } from "@/components/catalog/catalog-breadcrumbs";
 import { ProductGallery } from "@/components/catalog/product-gallery";
 import { PriceTag } from "@/components/catalog/price-tag";
 import { AddToCart } from "@/components/cart/add-to-cart";
+import { WishlistHeart } from "@/components/catalog/wishlist-heart";
+import { isWishlisted } from "@/app/(storefront)/cuenta/favoritos/actions";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -25,6 +27,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
 
   const price = getEffectivePrice(product);
   const onSale = isOnSale(product);
+  const wishlisted = await isWishlisted(product.id);
 
   // Ubicar la categoría del producto en el árbol para los breadcrumbs.
   const { tree } = await resolveCategoryPath();
@@ -50,9 +53,12 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
       <div className="grid gap-8 lg:grid-cols-2">
         <ProductGallery images={product.images} name={product.name} />
         <div className="space-y-5">
-          <header className="space-y-1">
-            <p className="text-sm text-muted-foreground">{product.category.name}</p>
-            <h1 className="font-display text-2xl font-bold md:text-3xl">{product.name}</h1>
+          <header className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">{product.category.name}</p>
+              <h1 className="font-display text-2xl font-bold md:text-3xl">{product.name}</h1>
+            </div>
+            <WishlistHeart productId={product.id} initial={wishlisted} />
           </header>
 
           <PriceTag

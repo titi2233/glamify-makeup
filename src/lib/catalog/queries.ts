@@ -11,7 +11,7 @@ import {
 import { buildCategoryTree, findCategoryByPath, type CategoryNode } from "@/lib/catalog/categories";
 import type { CatalogProduct } from "@/lib/catalog/types";
 
-const PRODUCT_INCLUDE = {
+export const PRODUCT_INCLUDE = {
   category: true,
   variants: { where: { active: true }, orderBy: { order: "asc" } },
 } satisfies Prisma.ProductInclude;

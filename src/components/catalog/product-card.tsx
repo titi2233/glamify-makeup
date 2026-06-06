@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WishlistHeart } from "@/components/catalog/wishlist-heart";
 import { ProductImage } from "@/components/catalog/product-image";
 import { PriceTag } from "@/components/catalog/price-tag";
 import { StockBadge } from "@/components/catalog/stock-badge";
@@ -29,6 +30,9 @@ export function ProductCard({ product }: { product: CatalogListItem }) {
             <StockBadge state="out_of_stock" />
           </span>
         )}
+        <span className="absolute bottom-2 right-2 z-10">
+          <WishlistHeart productId={product.id} />
+        </span>
       </div>
       <div className="space-y-2 p-3">
         <p className="text-xs text-muted-foreground">{product.category.name}</p>
