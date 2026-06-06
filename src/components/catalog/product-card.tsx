@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: CatalogListItem }) {
       <div className="relative">
         <ProductImage src={product.images[0]} alt={product.name} fallbackLabel={product.name} className="rounded-none" />
         {onSale && (
-          <span className="absolute left-2 top-2 rounded-md bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
+          <span className="absolute left-2 top-2 rounded-md bg-primary-hover px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
             -{getDiscountPercent(product)}%
           </span>
         )}

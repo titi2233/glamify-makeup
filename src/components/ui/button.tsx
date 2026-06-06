@@ -9,14 +9,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-soft hover:bg-primary-hover",
+          "bg-primary-hover text-primary-foreground shadow-soft hover:brightness-95",
         secondary: "bg-secondary text-secondary-foreground hover:brightness-95",
         outline:
           "border border-border bg-background text-foreground hover:bg-muted",
         ghost: "text-foreground hover:bg-muted",
         destructive:
           "bg-destructive text-destructive-foreground hover:brightness-95",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary-hover underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-6 py-2", // touch target >= 44px (blueprint 02 §10)

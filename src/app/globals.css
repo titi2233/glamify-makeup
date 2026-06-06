@@ -30,7 +30,7 @@
     --destructive: 0 72% 51%; /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 58% 36%; /* #259466 verde disponible */
+    --success: 152 70% 26%; /* verde disponible (oscurecido para contraste AA sobre tint) */
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%; /* #F59E0B ámbar bajo stock */
     --warning-foreground: 28 80% 16%;

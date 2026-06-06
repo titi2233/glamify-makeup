@@ -28,7 +28,7 @@ export function PriceTag({ price, compareAtPrice, discountPercent = 0, size = "m
             {formatARS(compareAtPrice)}
           </span>
           {discountPercent > 0 && (
-            <span className="rounded-md bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
+            <span className="rounded-md bg-primary-hover px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
               -{discountPercent}%
             </span>
           )}

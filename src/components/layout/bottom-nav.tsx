@@ -33,10 +33,10 @@ export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
           const active = item.enabled && (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href));
           const Icon = item.icon;
           const content = (
-            <span className={cn("relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px]", active ? "text-primary" : "text-muted-foreground")}>
+            <span className={cn("relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px]", active ? "text-primary-hover" : "text-muted-foreground")}>
               <Icon className="size-5" aria-hidden />
               {isCart && cartCount > 0 && (
-                <span className="absolute right-1/4 top-1.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground tabular-nums">{cartCount}</span>
+                <span className="absolute right-1/4 top-1.5 grid min-w-4 place-items-center rounded-full bg-primary-hover px-1 text-[10px] font-bold text-primary-foreground tabular-nums">{cartCount}</span>
               )}
               {item.label}
             </span>

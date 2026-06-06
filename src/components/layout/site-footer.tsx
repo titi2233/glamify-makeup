@@ -36,7 +36,7 @@ export function SiteFooter() {
     <footer className="mt-12 border-t border-border bg-surface-alt">
       <div className="container grid grid-cols-2 gap-6 py-10 text-sm text-muted-foreground md:grid-cols-4">
         <div className="col-span-2 md:col-span-1">
-          <p className="font-display text-lg text-primary">Glamify Makeup</p>
+          <p className="font-display text-2xl text-primary">Glamify Makeup</p>
           <p className="mt-2 max-w-xs">Glam accesible, no humo. Maquillaje y accesorios con envíos a todo el país.</p>
         </div>
         {columns.map((col) => (

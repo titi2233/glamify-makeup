@@ -54,8 +54,8 @@ export function IngresarForm({ initialError = null }: IngresarFormProps) {
   return (
     <div className="mx-auto max-w-sm space-y-5">
       <div className="grid grid-cols-2 rounded-xl border border-border p-1 text-sm">
-        <button type="button" onClick={() => setMode("in")} className={mode === "in" ? "rounded-lg bg-primary py-2 font-medium text-primary-foreground" : "py-2"}>Ingresar</button>
-        <button type="button" onClick={() => setMode("up")} className={mode === "up" ? "rounded-lg bg-primary py-2 font-medium text-primary-foreground" : "py-2"}>Crear cuenta</button>
+        <button type="button" onClick={() => setMode("in")} className={mode === "in" ? "rounded-lg bg-primary-hover py-2 font-medium text-primary-foreground" : "py-2"}>Ingresar</button>
+        <button type="button" onClick={() => setMode("up")} className={mode === "up" ? "rounded-lg bg-primary-hover py-2 font-medium text-primary-foreground" : "py-2"}>Crear cuenta</button>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">

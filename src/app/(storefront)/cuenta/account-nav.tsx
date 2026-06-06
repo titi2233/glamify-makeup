@@ -19,7 +19,7 @@ export function AccountNav() {
       {LINKS.map((l) => {
         const active = l.href === "/cuenta" ? pathname === "/cuenta" : pathname.startsWith(l.href);
         return (
-          <Link key={l.href} href={l.href} className={cn("rounded-full border border-border px-3 py-1.5", active ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+          <Link key={l.href} href={l.href} className={cn("rounded-full border border-border px-3 py-1.5", active ? "bg-primary-hover text-primary-foreground" : "text-muted-foreground")}>
             {l.label}
           </Link>
         );
