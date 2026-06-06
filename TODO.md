@@ -24,6 +24,12 @@
 - [ ] **Carrito abandonado de 2 etapas** (1h + 24h) y por WhatsApp — hoy un único recordatorio a 24h por email.
 - [ ] **Matching de pedidos de invitada por email** para una cuenta registrada — hoy "mis pedidos" solo muestra `customerId == me`.
 
+## Diferidos de M5 (pulido / QA / launch)
+> Ver spec `docs/superpowers/specs/2026-06-06-m5-pulido-qa-launch-design.md`. La mitad de ops está en `docs/LAUNCH.md`.
+- [ ] **CRUD admin de solicitudes de arrepentimiento** — hoy se registran en `RetractionRequest` y se notifican por email a la dueña; falta una vista en `/admin` para listar/cambiar estado (`pending`/`processed`/`rejected`). No bloquea launch (la constancia + email cumplen la Res. 424/2020).
+- [ ] **Formulario de contacto** — `/contacto` es informativo (email/WhatsApp/redes). Sumar form si se quiere captar consultas on-site.
+- [ ] **OG image de marca dedicada** (heredado de M4b §06.5) — sigue pendiente.
+
 ## Infra / notificaciones
 - [ ] **WhatsApp automatizado (Evolution Go):** avisos a la dueña y a la clienta (confirmación, despacho) + carrito abandonado por WhatsApp. Requiere instancia **always-on** (reutilizar la de Elite Padel OS o un VPS). **Hoy:** email (Resend). *(El botón wa.me manual en la web ya está en v1.)*
 - [ ] **Sentry** (monitoreo de errores). Hoy: Cloudflare logs + PostHog.
