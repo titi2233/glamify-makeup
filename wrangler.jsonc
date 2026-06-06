@@ -12,9 +12,13 @@
     "binding": "ASSETS",
   },
   "vars": {
-    "NEXT_PUBLIC_APP_URL": "http://localhost:3000",
+    "NEXT_PUBLIC_APP_URL": "https://glamifymakeup.site",
     "NEXT_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
     "NEXT_PUBLIC_WELCOME_COUPON_CODE": "BIENVENIDA10",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://yrskhxzynvgvheovyjro.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyc2toeHp5bnZndmhlb3Z5anJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MzIzOTIsImV4cCI6MjA5NjEwODM5Mn0.uZBwJLyXPJQsYfq_jvfH8fwl2ACheoDu-ky2dBy1FAE",
+    "NEXT_PUBLIC_POSTHOG_KEY": "phc_uYyw5ygsxv2chpvTw8L3RrJbDRsZAt6NLXz8LMkafJxT",
+    "NEXT_PUBLIC_MP_PUBLIC_KEY": "APP_USR-b95f3943-aec6-43c7-ab6d-5e4e5656c365"
   },
   "observability": {
     "enabled": true,
