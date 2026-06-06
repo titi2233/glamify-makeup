@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { quoteShipping } from "@/lib/shipping/index";
 import { getShippingZonesForQuote, getFreeShippingThreshold } from "@/lib/orders/checkout-data";
 import { createCheckout, defaultCheckoutDeps } from "@/lib/orders/checkout-service";
+import { getCustomer } from "@/lib/customer/auth";
 import type { ActionResult } from "@/lib/forms/action-result";
 
 export type { ActionResult };
@@ -65,8 +66,16 @@ export async function applyCouponAction(code: string): Promise<ActionResult> {
   const cartId = await getCartIdFromCookie();
   const { lines } = await loadCart(cartId);
   const subtotal = cartSubtotal(lines);
+  const customer = await getCustomer();
+  let customerRedemptions = 0;
+  if (customer && coupon.perCustomerLimit != null) {
+    const r = await prisma.couponRedemption.findUnique({
+      where: { customerId_couponId: { customerId: customer.id, couponId: coupon.id } },
+    });
+    customerRedemptions = r?.redeemedCount ?? 0;
+  }
   const validatable = { ...coupon, minSubtotal: coupon.minSubtotal != null ? toNumber(coupon.minSubtotal) : null };
-  const v = validateCoupon(validatable, { subtotal, now: new Date() });
+  const v = validateCoupon(validatable, { subtotal, now: new Date(), customerRedemptions });
   if (!v.ok) return { ok: false, error: v.reason };
   // No "aplicar" un cupón con scope a producto/categoría que no rinde descuento sobre este carrito.
   const applicable = { ...coupon, value: toNumber(coupon.value) };
