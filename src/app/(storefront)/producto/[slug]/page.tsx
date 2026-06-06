@@ -16,7 +16,7 @@ import { getCustomer } from "@/lib/customer/auth";
 import { prisma } from "@/lib/prisma";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { ReviewCard } from "@/components/catalog/review-card";
-import { buildProductJsonLd } from "@/lib/seo/jsonld";
+import { buildProductJsonLd, serializeJsonLd } from "@/lib/seo/jsonld";
 import { absoluteUrl } from "@/lib/seo/url";
 import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { ReviewForm } from "./review-form";
@@ -98,7 +98,7 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
 
   return (
     <article className="space-y-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <TrackOnMount event="product_viewed" props={{ productId: product.id, slug: product.slug, name: product.name }} />
       <CatalogBreadcrumbs items={crumbs} />
       <div className="grid gap-8 lg:grid-cols-2">

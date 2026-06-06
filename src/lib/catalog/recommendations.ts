@@ -38,6 +38,7 @@ export async function getRelatedProducts(productId: string, categoryId: string, 
   const rows = await prisma.product.findMany({
     where: { active: true, deletedAt: null, categoryId, id: { not: productId } },
     include: PRODUCT_INCLUDE,
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     take: limit * 3,
   });
   return rankRelated(rows as CatalogProduct[], limit);
@@ -58,6 +59,7 @@ export async function getCartCrossSell(
       id: { notIn: excludeProductIds.length ? excludeProductIds : [NIL_UUID] },
     },
     include: PRODUCT_INCLUDE,
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     take: limit * 3,
   });
   return rankRelated(rows as CatalogProduct[], limit);

@@ -49,6 +49,11 @@ export function buildProductJsonLd(p: ProductLdInput, rating: { average: number;
   return ld;
 }
 
+/** Serializa JSON-LD para inyectar en <script>, escapando `<` (evita romper la etiqueta). */
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
 export function buildWebSiteJsonLd(url: string) {
   return { "@context": "https://schema.org", "@type": "WebSite", name: "Glamify Makeup", url };
 }

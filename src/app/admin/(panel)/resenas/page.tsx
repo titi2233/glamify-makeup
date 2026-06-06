@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { getModerationQueue } from "@/lib/reviews/queries";
 import { PageHeader } from "@/components/admin/page-header";
-import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ReviewActionsButtons } from "./review-actions-buttons";
@@ -57,9 +56,6 @@ export default async function ResenasPage() {
                 </TableCell>
                 <TableCell>
                   <span className="text-sm">{r.authorName}</span>
-                  {r.verifiedPurchase && (
-                    <Badge variant="secondary" className="mt-1 block w-fit">Compra verificada</Badge>
-                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{dateLabel(r.createdAt)}</TableCell>
                 <TableCell className="text-right">

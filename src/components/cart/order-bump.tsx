@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Plus, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ export function OrderBump({ offer }: { offer: BumpOffer | null }) {
   const router = useRouter();
   const [added, setAdded] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Si tras agregar el refresh trae otra oferta a este slot, reseteamos el estado "Agregado".
+  useEffect(() => setAdded(false), [offer?.variantId]);
 
   if (!offer) return null;
 
