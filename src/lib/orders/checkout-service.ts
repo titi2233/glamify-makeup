@@ -52,11 +52,15 @@ export interface CouponRow {
   validTo: Date | null;
   maxUses: number | null;
   usedCount: number;
+  perCustomerLimit: number | null;
 }
 
 /** Superficie mínima de DB que necesita el servicio (para inyectar fakes en tests). */
 export interface CheckoutDb {
   coupon: { findUnique: (args: { where: { code: string } }) => Promise<CouponRow | null> };
+  couponRedemption: {
+    findUnique: (args: { where: { customerId_couponId: { customerId: string; couponId: string } } }) => Promise<{ redeemedCount: number } | null>;
+  };
   $transaction: <T>(fn: (tx: PrismaTransactionClient) => Promise<T>) => Promise<T>;
 }
 export interface CreateCheckoutDeps {
@@ -102,7 +106,14 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
   if (input.couponCode) {
     const coupon = await deps.db.coupon.findUnique({ where: { code: input.couponCode } });
     if (coupon) {
-      const v = validateCoupon(coupon, { subtotal, now });
+      let customerRedemptions = 0;
+      if (input.customerId && coupon.perCustomerLimit != null) {
+        const r = await deps.db.couponRedemption.findUnique({
+          where: { customerId_couponId: { customerId: input.customerId, couponId: coupon.id } },
+        });
+        customerRedemptions = r?.redeemedCount ?? 0;
+      }
+      const v = validateCoupon(coupon, { subtotal, now, customerRedemptions });
       if (v.ok) {
         const res = applyCoupon(coupon, cartLines);
         discount = res.discount;
