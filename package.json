@@ -54,6 +54,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.49.1",
     "@types/node": "^20.17.12",
     "@types/pg": "^8.20.0",
