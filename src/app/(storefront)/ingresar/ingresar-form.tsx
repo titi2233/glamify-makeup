@@ -26,7 +26,7 @@ export function IngresarForm() {
       if (mode === "in") {
         const res = await signInAction({ email, password });
         if (!res.ok) { setError(res.error ?? "Error"); return; }
-        router.push("/cuenta");
+        router.push("/cuenta"); router.refresh();
       } else {
         const res = await signUpAction({
           email, password,
@@ -35,7 +35,7 @@ export function IngresarForm() {
         });
         if (!res.ok) { setError(res.error ?? "Error"); return; }
         if (res.needsConfirmation) setInfo("¡Listo! Revisá tu correo para confirmar tu cuenta.");
-        else router.push("/cuenta");
+        else { router.push("/cuenta"); router.refresh(); }
       }
     } finally { setPending(false); }
   }

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCustomer } from "@/lib/customer/auth";
-import { mergeGuestCartIntoCustomer } from "@/lib/cart/merge";
+import { mergeGuestCartIntoCustomer, type MergeCartDb } from "@/lib/cart/merge";
 import { getCartIdFromCookie, setCartIdCookie } from "@/lib/cart/cart-cookie";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/forms/action-result";
@@ -20,7 +20,7 @@ export async function mergeCartForCurrentCustomer(): Promise<void> {
   const cookieCartId = await getCartIdFromCookie();
   const { canonicalCartId } = await mergeGuestCartIntoCustomer(
     { cookieCartId, customerId: customer.id, marketingConsent: row?.marketingConsent ?? false },
-    { db: prisma as never },
+    { db: prisma as unknown as MergeCartDb },
   );
   if (canonicalCartId && canonicalCartId !== cookieCartId) await setCartIdCookie(canonicalCartId);
 }
