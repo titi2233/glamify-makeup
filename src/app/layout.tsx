@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Nunito_Sans } from "next/font/google";
+import { appBaseUrl } from "@/lib/seo/url";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -16,10 +17,30 @@ const nunito = Nunito_Sans({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "Glam accesible: maquillaje y accesorios lindos, en tendencia y a buen precio. Envíos a todo el país.";
+
 export const metadata: Metadata = {
-  title: "Glamify Makeup — Maquillaje y accesorios",
-  description:
-    "Glam accesible: maquillaje y accesorios lindos, en tendencia y a buen precio. Envíos a todo el país.",
+  metadataBase: new URL(appBaseUrl()),
+  title: {
+    default: "Glamify Makeup — Maquillaje y accesorios",
+    template: "%s — Glamify Makeup",
+  },
+  description: DESCRIPTION,
+  applicationName: "Glamify Makeup",
+  openGraph: {
+    type: "website",
+    siteName: "Glamify Makeup",
+    locale: "es_AR",
+    title: "Glamify Makeup — Maquillaje y accesorios",
+    description: "Glam accesible, a precio real. Envíos a todo el país.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Glamify Makeup",
+    description: "Glam accesible, a precio real.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
