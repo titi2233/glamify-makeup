@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Mail, MessageCircle, Instagram, Music2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/legal/business-info";
+import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Contacto",
@@ -16,7 +17,7 @@ export default async function ContactoPage() {
     where: { id: "default" },
     select: { whatsappNumber: true, instagramUrl: true, tiktokUrl: true },
   });
-  const waDigits = setting?.whatsappNumber?.replace(/[^\d]/g, "") ?? "";
+  const waHref = whatsappLink(setting?.whatsappNumber);
   const emailIsSet = !businessInfo.email.includes("[COMPLETAR");
 
   return (
@@ -40,10 +41,10 @@ export default async function ContactoPage() {
           </a>
         </li>
 
-        {waDigits && (
+        {waHref && (
           <li>
             <a
-              href={`https://wa.me/${waDigits}?text=${encodeURIComponent("¡Hola! Tengo una consulta sobre Glamify Makeup 💄")}`}
+              href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               className={itemClass}

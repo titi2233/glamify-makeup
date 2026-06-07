@@ -1,7 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-
-const WA_MESSAGE = "¡Hola! Tengo una consulta sobre Glamify Makeup 💄";
+import { whatsappLink } from "@/lib/whatsapp";
 
 /** Botón flotante de WhatsApp (blueprint 02 §6). No renderiza si no hay número en Setting. */
 export async function WhatsAppFab() {
@@ -9,10 +8,9 @@ export async function WhatsAppFab() {
     where: { id: "default" },
     select: { whatsappNumber: true },
   });
-  const num = setting?.whatsappNumber?.replace(/[^\d]/g, "") ?? "";
-  if (!num) return null;
+  const href = whatsappLink(setting?.whatsappNumber);
+  if (!href) return null;
 
-  const href = `https://wa.me/${num}?text=${encodeURIComponent(WA_MESSAGE)}`;
   return (
     <a
       href={href}
