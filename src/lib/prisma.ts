@@ -12,8 +12,9 @@ const globalForPrisma = globalThis as unknown as {
 // Driver adapter (@prisma/adapter-pg) para compatibilidad con Cloudflare Workers
 // Limitamos el max a 1 para no exceder el límite de sockets TCP simultáneos (6) de Cloudflare Workers.
 function createPrismaClient() {
+  const dbUrl = process.env.DATABASE_URL?.replace(':6543', ':5432').replace('?pgbouncer=true', '');
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: dbUrl,
     max: 2,
     idleTimeoutMillis: 500, // Cerrar rápido para evitar que el Worker intente reusar sockets "congelados" y falle con Connection terminated
     connectionTimeoutMillis: 5000,
