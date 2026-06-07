@@ -2,6 +2,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 
 /** Alias de Prisma.TransactionClient para usar en callbacks de $transaction sin escribir `any`. */
 export type PrismaTransactionClient = Prisma.TransactionClient;
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
@@ -9,9 +10,13 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 // Driver adapter (@prisma/adapter-pg) para compatibilidad con Cloudflare Workers
-// (blueprint 07 §1.3). DATABASE_URL apunta al pooler de Supabase (puerto 6543).
+// Limitamos el max a 1 para no exceder el límite de sockets TCP simultáneos (6) de Cloudflare Workers.
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+  });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
