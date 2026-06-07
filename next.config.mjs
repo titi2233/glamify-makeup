@@ -3,6 +3,7 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg"],
   images: {
     remotePatterns: [
       // Supabase Storage público (host real se setea por env en M1)
