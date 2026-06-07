@@ -1,3 +1,4 @@
+import "./db/fs-polyfill";
 import { PrismaClient, Prisma } from "@prisma/client";
 
 /** Alias de Prisma.TransactionClient para usar en callbacks de $transaction sin escribir `any`. */
