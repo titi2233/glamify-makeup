@@ -48,3 +48,6 @@ coverage/
 # Cloudflare (OpenNext + Wrangler)
 .open-next/
 .wrangler/
+
+# Claude agent temporary files
+.claude/

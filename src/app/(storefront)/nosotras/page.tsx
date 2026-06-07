@@ -4,7 +4,7 @@ import { Prose } from "@/components/legal/prose";
 
 export const metadata: Metadata = {
   title: "Nosotras",
-  description: "Glam accesible, no humo. Conocé la propuesta de Glamify Makeup.",
+  description: "Maquillaje bueno, bonito y barato. Conocé la propuesta de Glamify Makeup.",
 };
 
 export default function NosotrasPage() {
@@ -13,7 +13,7 @@ export default function NosotrasPage() {
       <h1>Nosotras</h1>
       <p>
         Glamify Makeup nació para acercar maquillaje y accesorios lindos, en tendencia y a un precio real. Creemos en
-        el <strong>glam accesible, no humo</strong>: productos que te hacen sentir bien, sin promesas exageradas ni
+        el <strong>maquillaje bueno, bonito y barato</strong>: productos de calidad que te hacen sentir bien, sin
         precios inflados.
       </p>
 

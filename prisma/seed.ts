@@ -12,33 +12,34 @@ interface SeedCategory {
   name: string;
   skuPrefix: string;
   order: number;
+  image?: string;
   children?: SeedCategory[];
 }
 
 const CATEGORIES: SeedCategory[] = [
   {
-    slug: "labios", name: "Labios", skuPrefix: "LAB", order: 0,
+    slug: "labios", name: "Labios", skuPrefix: "LAB", order: 0, image: "/images/category_labios.png",
     children: [
       { slug: "labiales", name: "Labiales", skuPrefix: "LAB", order: 0 },
       { slug: "gloss", name: "Gloss", skuPrefix: "GLO", order: 1 },
     ],
   },
   {
-    slug: "ojos", name: "Ojos", skuPrefix: "OJO", order: 1,
+    slug: "ojos", name: "Ojos", skuPrefix: "OJO", order: 1, image: "/images/category_ojos.png",
     children: [
       { slug: "mascaras", name: "Máscaras de pestañas", skuPrefix: "MAS", order: 0 },
       { slug: "sombras", name: "Sombras", skuPrefix: "SOM", order: 1 },
     ],
   },
   {
-    slug: "rostro", name: "Rostro", skuPrefix: "ROS", order: 2,
+    slug: "rostro", name: "Rostro", skuPrefix: "ROS", order: 2, image: "/images/category_rostro.png",
     children: [
       { slug: "rubores", name: "Rubores", skuPrefix: "RUB", order: 0 },
       { slug: "bases", name: "Bases", skuPrefix: "BAS", order: 1 },
     ],
   },
   {
-    slug: "accesorios", name: "Accesorios", skuPrefix: "ACC", order: 3,
+    slug: "accesorios", name: "Accesorios", skuPrefix: "ACC", order: 3, image: "/images/category_accesorios.png",
     children: [{ slug: "brochas", name: "Brochas y esponjas", skuPrefix: "BRO", order: 0 }],
   },
 ];
@@ -62,6 +63,7 @@ interface SeedProduct {
   isFeatured?: boolean;
   heroRank?: number;
   tags?: string[];
+  images?: string[];
   variants: SeedVariant[];
 }
 
@@ -70,6 +72,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "labial-mate-larga-duracion", name: "Labial Mate Larga Duración", categorySlug: "labiales",
     description: "Color intenso que dura todo el día, acabado mate aterciopelado y cómodo.",
     basePrice: 3200, compareAtPrice: 3990, cost: 1400, weightGr: 25, isFeatured: true, heroRank: 1, tags: ["mate", "larga duración"],
+    images: ["/images/product_lipstick.png"],
     variants: [
       { name: "Rojo Pasión", swatchHex: "#C0392B", stock: 18 },
       { name: "Fucsia Glam", swatchHex: "#FF2E93", stock: 9 },
@@ -81,6 +84,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "gloss-brillo-humedo", name: "Gloss Brillo Húmedo", categorySlug: "gloss",
     description: "Brillo espejo no pegajoso con un toque de color. Efecto labios jugosos.",
     basePrice: 2500, cost: 1000, weightGr: 22, isFeatured: true, heroRank: 2, tags: ["brillo"],
+    images: ["/images/product_lipstick.png"],
     variants: [
       { name: "Transparente", swatchHex: "#F4E7EE", stock: 25 },
       { name: "Rosa Bebé", swatchHex: "#FF9ED1", stock: 14 },
@@ -91,6 +95,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "mascara-volumen-extremo", name: "Máscara de Pestañas Volumen Extremo", categorySlug: "mascaras",
     description: "Pestañas con volumen dramático sin grumos. Cepillo de fibras finas.",
     basePrice: 4100, cost: 1800, weightGr: 30, isFeatured: true, heroRank: 3, tags: ["volumen"],
+    images: ["/images/product_mascara.png"],
     variants: [
       { name: "Negro Intenso", swatchHex: "#111111", stock: 20 },
       { name: "Marrón", swatchHex: "#5B3A29", stock: 3, lowStockThreshold: 3 },
@@ -100,12 +105,14 @@ const PRODUCTS: SeedProduct[] = [
     slug: "paleta-sombras-glam-12", name: "Paleta de Sombras Glam 12 Tonos", categorySlug: "sombras",
     description: "12 tonos mate y shimmer altamente pigmentados para looks de día y noche.",
     basePrice: 6900, compareAtPrice: 8500, cost: 3000, weightGr: 120, isFeatured: true, heroRank: 4, tags: ["paleta", "shimmer"],
+    images: ["/images/product_eyeshadow.png"],
     variants: [{ name: "Único", swatchHex: "#C8A27C", stock: 11 }],
   },
   {
     slug: "rubor-compacto-sedoso", name: "Rubor Compacto Sedoso", categorySlug: "rubores",
     description: "Color natural y difuminable, acabado satinado que ilumina el rostro.",
     basePrice: 2990, cost: 1200, weightGr: 28, tags: ["rubor"],
+    images: ["/images/product_blush.png"],
     variants: [
       { name: "Durazno", swatchHex: "#F4A07A", stock: 16 },
       { name: "Rosa Suave", swatchHex: "#FF9ED1", stock: 8 },
@@ -116,6 +123,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "base-fluida-hd", name: "Base Fluida HD", categorySlug: "bases",
     description: "Cobertura media a alta, acabado natural HD de larga duración.",
     basePrice: 5500, cost: 2400, weightGr: 60, tags: ["base", "hd"],
+    images: ["/images/product_foundation.png"],
     variants: [
       { name: "Tono 01 Claro", swatchHex: "#F2D6C2", stock: 12 },
       { name: "Tono 02 Natural", swatchHex: "#E3B89A", stock: 12 },
@@ -127,18 +135,21 @@ const PRODUCTS: SeedProduct[] = [
     slug: "set-brochas-x5", name: "Set de Brochas Profesionales x5", categorySlug: "brochas",
     description: "5 brochas esenciales de cerda suave para rostro y ojos. Incluye estuche.",
     basePrice: 7800, compareAtPrice: 9900, cost: 3500, weightGr: 200, tags: ["set", "brochas", "order-bump"],
+    images: ["/images/product_brushes.png"],
     variants: [{ name: "Rosa", swatchHex: "#FF2E93", stock: 5 }],
   },
   {
     slug: "delineador-liquido-precision", name: "Delineador Líquido Precisión", categorySlug: "mascaras",
     description: "Punta ultrafina para un trazo preciso. Negro intenso a prueba de smudge.",
     basePrice: 3300, cost: 1300, weightGr: 18, tags: ["delineador"],
+    images: ["/images/product_mascara.png"],
     variants: [{ name: "Negro", swatchHex: "#111111", stock: 22 }],
   },
   {
     slug: "iluminador-liquido-glow", name: "Iluminador Líquido Glow", categorySlug: "rubores",
     description: "Glow húmedo de acabado dorado-rosado. Solo o mezclado con la base.",
     basePrice: 4200, cost: 1700, weightGr: 35, tags: ["glow", "iluminador"],
+    images: ["/images/product_blush.png"],
     variants: [
       { name: "Champagne", swatchHex: "#EAD3A2", stock: 10 },
       { name: "Oro Rosa", swatchHex: "#E6B7A9", stock: 0 },
@@ -148,6 +159,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "labial-cremoso-nude", name: "Labial Cremoso Nude", categorySlug: "labiales",
     description: "Textura cremosa hidratante con tonos nude versátiles para todos los días.",
     basePrice: 3000, cost: 1250, weightGr: 24, tags: ["cremoso", "nude"],
+    images: ["/images/product_lipstick.png"],
     variants: [
       { name: "Nude Cálido", swatchHex: "#C8927A", stock: 13 },
       { name: "Rosa Maquillaje", swatchHex: "#D98E9E", stock: 9 },
@@ -158,6 +170,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "esponja-maquillaje-blender", name: "Esponja de Maquillaje Blender", categorySlug: "brochas",
     description: "Esponja sin látex que difumina la base para un acabado impecable.",
     basePrice: 1800, cost: 600, weightGr: 12, tags: ["esponja", "order-bump"],
+    images: ["/images/product_brushes.png"],
     variants: [
       { name: "Rosa", swatchHex: "#FF9ED1", stock: 30 },
       { name: "Violeta", swatchHex: "#8B5CF6", stock: 17 },
@@ -167,6 +180,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "primer-facial-poro-cero", name: "Primer Facial Poro Cero", categorySlug: "bases",
     description: "Prebase matificante que difumina poros y prolonga la duración del maquillaje.",
     basePrice: 4800, cost: 2000, weightGr: 40, tags: ["primer"],
+    images: ["/images/product_foundation.png"],
     variants: [{ name: "Único", swatchHex: "#F4E7EE", stock: 6 }],
   },
 ];
@@ -176,8 +190,8 @@ async function upsertCategories(): Promise<Map<string, string>> {
   for (const parent of CATEGORIES) {
     const p = await prisma.category.upsert({
       where: { slug: parent.slug },
-      update: { name: parent.name, skuPrefix: parent.skuPrefix, order: parent.order, parentId: null, active: true },
-      create: { slug: parent.slug, name: parent.name, skuPrefix: parent.skuPrefix, order: parent.order },
+      update: { name: parent.name, skuPrefix: parent.skuPrefix, order: parent.order, image: parent.image ?? null, parentId: null, active: true },
+      create: { slug: parent.slug, name: parent.name, skuPrefix: parent.skuPrefix, order: parent.order, image: parent.image ?? null },
     });
     idBySlug.set(parent.slug, p.id);
   }
@@ -185,8 +199,8 @@ async function upsertCategories(): Promise<Map<string, string>> {
     for (const child of parent.children ?? []) {
       const c = await prisma.category.upsert({
         where: { slug: child.slug },
-        update: { name: child.name, skuPrefix: child.skuPrefix, order: child.order, parentId: idBySlug.get(parent.slug)!, active: true },
-        create: { slug: child.slug, name: child.name, skuPrefix: child.skuPrefix, order: child.order, parentId: idBySlug.get(parent.slug)! },
+        update: { name: child.name, skuPrefix: child.skuPrefix, order: child.order, image: child.image ?? null, parentId: idBySlug.get(parent.slug)!, active: true },
+        create: { slug: child.slug, name: child.name, skuPrefix: child.skuPrefix, order: child.order, image: child.image ?? null, parentId: idBySlug.get(parent.slug)! },
       });
       idBySlug.set(child.slug, c.id);
     }
@@ -213,11 +227,13 @@ async function upsertProducts(idBySlug: Map<string, string>): Promise<void> {
         name: p.name, description: p.description, categoryId,
         basePrice: p.basePrice, compareAtPrice: p.compareAtPrice ?? null, cost: p.cost, weightGr: p.weightGr,
         isFeatured: p.isFeatured ?? false, heroRank: p.heroRank ?? null, tags: p.tags ?? [], active: true, deletedAt: null,
+        images: p.images ?? [],
       },
       create: {
         slug: p.slug, name: p.name, description: p.description, categoryId,
         basePrice: p.basePrice, compareAtPrice: p.compareAtPrice ?? null, cost: p.cost, weightGr: p.weightGr,
-        isFeatured: p.isFeatured ?? false, heroRank: p.heroRank ?? null, tags: p.tags ?? [], images: [],
+        isFeatured: p.isFeatured ?? false, heroRank: p.heroRank ?? null, tags: p.tags ?? [],
+        images: p.images ?? [],
       },
     });
     const prefix = prefixForSlug(p.categorySlug);

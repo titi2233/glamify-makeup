@@ -23,7 +23,7 @@ export function getProductStockState(variants: StockableVariant[]): StockState {
   return "out_of_stock";
 }
 
-/** Etiqueta legible (datos reales — "no humo"). */
+/** Etiqueta legible (datos reales). */
 export function stockLabel(state: StockState, stock?: number): string {
   switch (state) {
     case "in_stock":

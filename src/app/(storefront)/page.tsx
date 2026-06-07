@@ -16,14 +16,27 @@ export default async function HomePage() {
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       {/* Hero */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-muted to-surface-alt p-8 text-center md:p-16">
-        <h1 className="font-display text-heading-sm font-bold text-foreground md:text-heading-lg">Glam accesible, no humo</h1>
-        <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Maquillaje y accesorios que te hacen sentir bien, a precio real.
-        </p>
-        <Button asChild size="lg" className="mt-6">
-          <Link href="/tienda">Ver tienda</Link>
-        </Button>
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-muted to-surface-alt grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8 md:p-12">
+        <div className="text-center md:text-left space-y-4">
+          <h1 className="font-display text-heading-sm font-bold text-foreground md:text-heading-lg leading-tight">
+            Maquillaje bueno, bonito y barato
+          </h1>
+          <p className="max-w-md text-muted-foreground mx-auto md:mx-0">
+            Maquillaje y accesorios que te hacen sentir bien, a precio real.
+          </p>
+          <div className="pt-2">
+            <Button asChild size="lg">
+              <Link href="/tienda">Ver tienda</Link>
+            </Button>
+          </div>
+        </div>
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl shadow-soft">
+          <img
+            src="/images/hero_banner.png"
+            alt="Glamify Makeup - Maquillaje bueno, bonito y barato"
+            className="h-full w-full object-cover"
+          />
+        </div>
       </section>
 
       {/* Categorías destacadas */}

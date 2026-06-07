@@ -33,11 +33,27 @@ export async function signInAction(input: { email: string; password: string }): 
   return { ok: true };
 }
 
+/** Narrow de error de unicidad de Prisma (P2002) sin acoplar tipos del client. */
+function isUniqueConstraintError(e: unknown): boolean {
+  return (
+    typeof e === "object" && e !== null && "code" in e &&
+    (e as { code?: unknown }).code === "P2002"
+  );
+}
+
 export async function signUpAction(input: {
   email: string; password: string; name: string; marketingConsent: boolean;
 }): Promise<ActionResult & { needsConfirmation?: boolean }> {
   const supabase = await createClient();
   const email = input.email.trim().toLowerCase();
+
+  // Email ya registrado: cortamos ANTES de signUp para devolver un error
+  // amigable. Si no lo hacemos, Supabase (anti-enumeración, con "Confirm email"
+  // ON) devuelve un user obfuscado con un id NUEVO y sin mandar mail; el upsert
+  // por ese id chocaría con el @unique de `email` → error 500 no controlado.
+  const existing = await prisma.customer.findUnique({ where: { email }, select: { id: true } });
+  if (existing) return { ok: false, error: "El correo electrónico ya está registrado." };
+
   const baseUrl = await getAuthBaseUrl();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -47,11 +63,17 @@ export async function signUpAction(input: {
   if (error) return { ok: false, error: error.message };
   // Persistir consentimiento si la fila ya existe (confirmación ON → puede no haber sesión aún).
   if (data.user) {
-    await prisma.customer.upsert({
-      where: { id: data.user.id },
-      create: { id: data.user.id, email, name: input.name.trim(), marketingConsent: input.marketingConsent },
-      update: { marketingConsent: input.marketingConsent },
-    });
+    try {
+      await prisma.customer.upsert({
+        where: { id: data.user.id },
+        create: { id: data.user.id, email, name: input.name.trim(), marketingConsent: input.marketingConsent },
+        update: { marketingConsent: input.marketingConsent },
+      });
+    } catch (e) {
+      // Carrera: otra request creó la fila con este email entre el check y el upsert.
+      if (isUniqueConstraintError(e)) return { ok: false, error: "El correo electrónico ya está registrado." };
+      throw e;
+    }
   }
   return { ok: true, needsConfirmation: !data.session };
 }
