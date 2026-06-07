@@ -6,7 +6,7 @@ export const businessInfo = {
   legalName: "Glamify Makeup",
   taxId: "No aplica (Emprendimiento local)",
   taxCondition: "Emprendedor",
-  address: "Buenos Aires, Argentina",
+  address: "Luján, Buenos Aires, Argentina",
   email: "gglamifymakeup@gmail.com",
   whatsapp: "5492323582495",
   jurisdiction: "Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires",
