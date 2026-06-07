@@ -11,9 +11,11 @@ type Mode = "in" | "up";
 
 interface IngresarFormProps {
   initialError?: string | null;
+  /** Solo mostrar "Continuar con Google" si el provider está habilitado en Supabase. */
+  googleEnabled?: boolean;
 }
 
-export function IngresarForm({ initialError = null }: IngresarFormProps) {
+export function IngresarForm({ initialError = null, googleEnabled = false }: IngresarFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("in");
   const [error, setError] = useState<string | null>(initialError);
@@ -86,12 +88,16 @@ export function IngresarForm({ initialError = null }: IngresarFormProps) {
         </Button>
       </form>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" /> o <span className="h-px flex-1 bg-border" />
-      </div>
-      <Button type="button" variant="outline" className="w-full" onClick={onGoogle}>
-        Continuar con Google
-      </Button>
+      {googleEnabled && (
+        <>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> o <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button type="button" variant="outline" className="w-full" onClick={onGoogle}>
+            Continuar con Google
+          </Button>
+        </>
+      )}
     </div>
   );
 }

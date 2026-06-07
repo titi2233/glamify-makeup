@@ -16,10 +16,11 @@ export default async function IngresarPage({ searchParams }: IngresarPageProps) 
   const errorParam = typeof params.error === "string" ? params.error : null;
   const initialError =
     errorParam === "oauth" ? "No pudimos ingresar con Google. Intentá de nuevo." : null;
+  const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true";
   return (
     <section className="py-8">
       <h1 className="mb-6 text-center font-display text-2xl font-bold">Tu cuenta Glamify</h1>
-      <IngresarForm initialError={initialError} />
+      <IngresarForm initialError={initialError} googleEnabled={googleEnabled} />
     </section>
   );
 }

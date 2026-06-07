@@ -104,10 +104,7 @@ export function ExitIntent() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent
-        side="bottom"
-        className="mx-auto max-w-md rounded-t-2xl sm:bottom-1/2 sm:left-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
-      >
+      <SheetContent side="center">
         <SheetHeader>
           <Gift className="mx-auto size-10 text-primary sm:mx-0" aria-hidden />
           <SheetTitle>Llevate 10% OFF en tu primera compra</SheetTitle>

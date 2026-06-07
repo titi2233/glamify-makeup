@@ -6,11 +6,8 @@ import { getCustomer } from "@/lib/customer/auth";
 import { mergeGuestCartIntoCustomer, type MergeCartDb } from "@/lib/cart/merge";
 import { getCartIdFromCookie, setCartIdCookie } from "@/lib/cart/cart-cookie";
 import { prisma } from "@/lib/prisma";
+import { getAuthBaseUrl } from "@/lib/http/base-url";
 import type { ActionResult } from "@/lib/forms/action-result";
-
-function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-}
 
 /** Tras autenticar, asocia el carrito de la cookie a la clienta. */
 export async function mergeCartForCurrentCustomer(): Promise<void> {
@@ -41,10 +38,11 @@ export async function signUpAction(input: {
 }): Promise<ActionResult & { needsConfirmation?: boolean }> {
   const supabase = await createClient();
   const email = input.email.trim().toLowerCase();
+  const baseUrl = await getAuthBaseUrl();
   const { data, error } = await supabase.auth.signUp({
     email,
     password: input.password,
-    options: { data: { name: input.name.trim() }, emailRedirectTo: `${appUrl()}/auth/callback` },
+    options: { data: { name: input.name.trim() }, emailRedirectTo: `${baseUrl}/auth/callback` },
   });
   if (error) return { ok: false, error: error.message };
   // Persistir consentimiento si la fila ya existe (confirmación ON → puede no haber sesión aún).
@@ -60,9 +58,10 @@ export async function signUpAction(input: {
 
 export async function signInWithGoogleAction(): Promise<ActionResult & { url?: string }> {
   const supabase = await createClient();
+  const baseUrl = await getAuthBaseUrl();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${appUrl()}/auth/callback` },
+    options: { redirectTo: `${baseUrl}/auth/callback` },
   });
   if (error || !data.url) return { ok: false, error: "No se pudo iniciar sesión con Google." };
   return { ok: true, url: data.url };

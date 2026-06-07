@@ -75,7 +75,8 @@
     color: #fff;
     border-radius: 0 0 0.5rem 0;
   }
-  .skip-link:focus {
+  /* Solo visible con foco de teclado (no cuando el router le pasa foco tras un click). */
+  .skip-link:focus-visible {
     left: 0;
   }
 }

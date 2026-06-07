@@ -128,10 +128,13 @@ export async function createCheckoutAction(input: {
     if (!cart || cart.items.length === 0) return { ok: false, error: "Tu carrito está vacío." };
     const lines = cartToCheckoutLines(cart);
     const couponCode = await getCouponCodeFromCookie();
+    // Asociar el pedido a la clienta logueada (historial en /cuenta/pedidos + límite de cupón por clienta).
+    const customer = await getCustomer();
     const result = await createCheckout(
       {
         contactName: input.contactName, contactEmail: input.contactEmail, contactPhone: input.contactPhone,
         shippingMethod: input.shippingMethod, address: input.address, lines, couponCode, cartId,
+        customerId: customer?.id ?? null,
       },
       defaultCheckoutDeps(appUrl()),
     );
