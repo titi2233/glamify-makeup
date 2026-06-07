@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client/edge";
 
 /** Alias de Prisma.TransactionClient para usar en callbacks de $transaction sin escribir `any`. */
 export type PrismaTransactionClient = Prisma.TransactionClient;
