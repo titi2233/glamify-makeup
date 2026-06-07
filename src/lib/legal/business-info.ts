@@ -8,8 +8,8 @@ export const businessInfo = {
   taxCondition: "Emprendedor",
   address: "Luján, Buenos Aires, Argentina",
   email: "gglamifymakeup@gmail.com",
-  whatsapp: "5492323582495",
-  jurisdiction: "Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires",
+  // El nº de WhatsApp se sirve desde Setting.whatsappNumber (DB); no duplicar acá.
+  jurisdiction: "tribunales ordinarios correspondientes al domicilio de la parte consumidora",
   retractionDays: 10,
   paymentMethods: "Mercado Pago: tarjetas de crédito, débito y dinero en cuenta",
   consumerDefenseUrl: "https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario",

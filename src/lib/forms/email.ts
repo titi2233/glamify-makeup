@@ -1,0 +1,6 @@
+/** Validación de email compartida por los formularios (single source of truth). */
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(value: string): boolean {
+  return EMAIL_RE.test(value);
+}

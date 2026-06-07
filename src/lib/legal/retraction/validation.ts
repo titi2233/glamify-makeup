@@ -1,4 +1,4 @@
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { isValidEmail } from "@/lib/forms/email";
 
 export interface RetractionInput {
   contactName: string;
@@ -29,7 +29,7 @@ export function validateRetraction(input: RetractionInput): ValidationResult {
   const contactName = (input.contactName ?? "").trim();
   if (contactName.length < 2 || contactName.length > 80) return { ok: false, error: "Ingresá tu nombre completo." };
   const contactEmail = (input.contactEmail ?? "").trim().toLowerCase();
-  if (!EMAIL_RE.test(contactEmail)) return { ok: false, error: "Ingresá un email válido." };
+  if (!isValidEmail(contactEmail)) return { ok: false, error: "Ingresá un email válido." };
   return {
     ok: true,
     value: {

@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getActiveProductSlugs, getCategoryTree } from "@/lib/catalog/queries";
-
-export const dynamic = "force-dynamic";
 import { absoluteUrl } from "@/lib/seo/url";
+
+// La home/sitemap consultan la DB (Prisma); evitar prerender estático en el build de Workers.
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [slugs, tree] = await Promise.all([getActiveProductSlugs(), getCategoryTree()]);

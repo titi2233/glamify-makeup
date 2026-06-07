@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Mail, MessageCircle, Instagram, Music2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { businessInfo } from "@/lib/legal/business-info";
+import { businessInfo, PLACEHOLDER_PREFIX } from "@/lib/legal/business-info";
 import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default async function ContactoPage() {
     select: { whatsappNumber: true, instagramUrl: true, tiktokUrl: true },
   });
   const waHref = whatsappLink(setting?.whatsappNumber);
-  const emailIsSet = !businessInfo.email.includes("[COMPLETAR");
+  const emailIsSet = !businessInfo.email.includes(PLACEHOLDER_PREFIX);
 
   return (
     <section className="mx-auto max-w-prose space-y-6 py-6">

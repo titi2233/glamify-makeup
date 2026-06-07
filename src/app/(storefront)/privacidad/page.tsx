@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Prose } from "@/components/legal/prose";
 import { businessInfo } from "@/lib/legal/business-info";
 
@@ -55,8 +54,9 @@ export default function PrivacidadPage() {
       <h2>6. Tus derechos (ARCO)</h2>
       <p>
         Tenés derecho a acceder, rectificar, actualizar y suprimir tus datos. Para ejercerlos, escribinos a{" "}
-        {businessInfo.email}. El titular de los datos puede ejercer el derecho de acceso en forma gratuita a
-        intervalos no inferiores a seis meses (art. 14, inc. 3, Ley 25.326).
+        {businessInfo.email}. El acceso es gratuito a intervalos no inferiores a seis meses (art. 14, inc. 3, Ley
+        25.326). El responsable debe responder el pedido de acceso dentro de los <strong>10 días corridos</strong>{" "}
+        (art. 14) y la rectificación o supresión dentro de los <strong>5 días hábiles</strong> (art. 16).
       </p>
 
       <h2>7. Conservación</h2>
@@ -79,10 +79,13 @@ export default function PrivacidadPage() {
 
       <h2>10. Autoridad de control</h2>
       <p>
-        La Agencia de Acceso a la Información Pública (AAIP), órgano de control de la Ley 25.326, tiene la atribución
-        de atender denuncias y reclamos respecto del incumplimiento de las normas sobre protección de datos
-        personales. Más información y nuestra{" "}
-        <Link href="/terminos">información de contacto</Link> están disponibles en el sitio.
+        La{" "}
+        <a href="https://www.argentina.gob.ar/aaip" target="_blank" rel="noopener noreferrer">
+          Agencia de Acceso a la Información Pública (AAIP)
+        </a>
+        , órgano de control de la Ley 25.326, tiene la atribución de atender denuncias y reclamos respecto del
+        incumplimiento de las normas sobre protección de datos personales. Para consultas sobre tus datos,
+        escribinos a {businessInfo.email}.
       </p>
     </Prose>
   );

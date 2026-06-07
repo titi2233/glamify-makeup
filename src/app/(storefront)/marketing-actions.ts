@@ -4,8 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCartIdFromCookie, setCartIdCookie } from "@/lib/cart/cart-cookie";
 import { createCart } from "@/lib/cart/cart-service";
 import type { ActionResult } from "@/lib/forms/action-result";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { isValidEmail } from "@/lib/forms/email";
 
 export interface ExitIntentResult extends ActionResult {
   couponCode?: string | null;
@@ -17,7 +16,7 @@ export interface ExitIntentResult extends ActionResult {
  */
 export async function captureExitIntentAction(input: { email: string }): Promise<ExitIntentResult> {
   const email = input.email.trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) return { ok: false, error: "Ingresá un email válido." };
+  if (!isValidEmail(email)) return { ok: false, error: "Ingresá un email válido." };
 
   let cartId = await getCartIdFromCookie();
   const existing = cartId
