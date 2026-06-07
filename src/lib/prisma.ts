@@ -14,7 +14,9 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 3,
+    max: 2,
+    idleTimeoutMillis: 500, // Cerrar rápido para evitar que el Worker intente reusar sockets "congelados" y falle con Connection terminated
+    connectionTimeoutMillis: 5000,
     ssl: { rejectUnauthorized: false },
   });
   const adapter = new PrismaPg(pool);
