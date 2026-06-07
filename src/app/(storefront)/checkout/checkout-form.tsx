@@ -19,13 +19,15 @@ interface Props {
   couponCode: string | null;
   couponFreeShipping: boolean;
   items: ItemView[];
+  defaultName?: string;
+  defaultEmail?: string;
 }
 
 type Method = "domicilio" | "sucursal";
 
-export function CheckoutForm({ subtotal, discount, couponFreeShipping, items }: Props) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+export function CheckoutForm({ subtotal, discount, couponFreeShipping, items, defaultName = "", defaultEmail = "" }: Props) {
+  const [name, setName] = useState(defaultName);
+  const [email, setEmail] = useState(defaultEmail);
   const [phone, setPhone] = useState("");
   const [method, setMethod] = useState<Method>("domicilio");
   const [province, setProvince] = useState("Buenos Aires");

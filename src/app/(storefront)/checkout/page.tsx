@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCartView } from "@/lib/cart/cart-view";
+import { getCustomer } from "@/lib/customer/auth";
 import { CheckoutForm } from "@/app/(storefront)/checkout/checkout-form";
 import { OrderBump } from "@/components/cart/order-bump";
 import { getOrderBumpOffers } from "@/lib/catalog/recommendations";
@@ -12,6 +13,7 @@ export default async function CheckoutPage() {
   const { cart, count, subtotal, coupon } = await getCartView();
   if (!cart || count === 0) redirect("/carrito");
 
+  const customer = await getCustomer();
   const cartVariantIds = cart.items.map((i) => i.variantId).filter((v): v is string => Boolean(v));
   const bump = selectOrderBump(await getOrderBumpOffers(), cartVariantIds);
 
@@ -24,6 +26,8 @@ export default async function CheckoutPage() {
         discount={coupon?.discount ?? 0}
         couponCode={coupon?.code ?? null}
         couponFreeShipping={coupon?.freeShipping ?? false}
+        defaultName={customer?.name ?? ""}
+        defaultEmail={customer?.email ?? ""}
         items={cart.items.map((item) => ({
           id: item.id,
           name: item.combo ? item.combo.name : item.variant!.product.name,
