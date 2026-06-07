@@ -1,5 +1,15 @@
 import { formatARS } from "@/lib/money";
 
+/** Escapa HTML para interpolar texto del usuario en cuerpos de email (anti-inyección). */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export interface OrderEmailItem {
   name: string;
   variantName?: string | null;
@@ -135,7 +145,7 @@ export interface RetractionEmailData {
 export function retractionAlertEmail(d: RetractionEmailData): EmailContent {
   const subject = `📨 Solicitud de arrepentimiento ${d.ticket}`;
   const row = (k: string, v?: string | null) =>
-    v ? `<tr><td><strong>${k}</strong></td><td>${v}</td></tr>` : "";
+    v ? `<tr><td><strong>${k}</strong></td><td>${escapeHtml(v)}</td></tr>` : "";
   const html = `<div style="font-family:sans-serif;color:#6E0B3F">
     <h1 style="color:#FF2E93">Solicitud de arrepentimiento ${d.ticket}</h1>
     <p>Un/a consumidor/a ejerció el derecho de arrepentimiento (art. 34 Ley 24.240). Contactalo/a para coordinar la devolución y el reintegro.</p>
@@ -144,5 +154,25 @@ export function retractionAlertEmail(d: RetractionEmailData): EmailContent {
     </table>
   </div>`;
   const text = `Solicitud de arrepentimiento ${d.ticket}\nNombre: ${d.contactName}\nEmail: ${d.contactEmail}\nTeléfono: ${d.contactPhone ?? "-"}\nPedido: ${d.orderNumber ?? "-"}\nMotivo: ${d.reason ?? "-"}`;
+  return { subject, html, text };
+}
+
+export interface RetractionReceiptData {
+  ticket: string;
+  date: string;
+  contactName: string;
+}
+
+/** Constancia al consumidor: comprobante del ejercicio del derecho de arrepentimiento. */
+export function retractionReceiptEmail(d: RetractionReceiptData): EmailContent {
+  const name = escapeHtml(d.contactName);
+  const subject = `Constancia de arrepentimiento ${d.ticket} — Glamify Makeup`;
+  const html = `<div style="font-family:sans-serif;color:#6E0B3F">
+    <h1 style="color:#FF2E93">Recibimos tu solicitud 💄</h1>
+    <p>Hola ${name}, registramos tu solicitud de arrepentimiento.</p>
+    <p>Constancia: <strong>${escapeHtml(d.ticket)}</strong><br/>Fecha: ${escapeHtml(d.date)}</p>
+    <p>Te vamos a contactar para coordinar la devolución del producto y el reintegro del importe. Guardá este correo como comprobante.</p>
+  </div>`;
+  const text = `Recibimos tu solicitud de arrepentimiento.\nConstancia: ${d.ticket}\nFecha: ${d.date}\nTe contactaremos para coordinar la devolución y el reintegro. Guardá este correo como comprobante.`;
   return { subject, html, text };
 }

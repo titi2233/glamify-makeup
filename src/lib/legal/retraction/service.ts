@@ -1,6 +1,6 @@
 import { validateRetraction, type RetractionInput } from "./validation";
-import { formatRetractionTicket } from "./ticket";
-import { retractionAlertEmail } from "@/lib/email/templates";
+import { formatRetractionTicket, formatRetractionDate } from "./ticket";
+import { retractionAlertEmail, retractionReceiptEmail } from "@/lib/email/templates";
 import { sendEmail as defaultSendEmail } from "@/lib/email/resend";
 
 export interface RetractionDb {
@@ -13,8 +13,8 @@ export interface RetractionDb {
         orderNumber: string | null;
         reason: string | null;
       };
-      select: { seq: true };
-    }): Promise<{ seq: number }>;
+      select: { seq: true; createdAt: true };
+    }): Promise<{ seq: number; createdAt: Date }>;
   };
 }
 export interface RetractionDeps {
@@ -22,7 +22,7 @@ export interface RetractionDeps {
   sendEmail?: typeof defaultSendEmail;
   ownerEmail?: string;
 }
-export type RetractionResult = { ok: true; ticket: string } | { ok: false; error: string };
+export type RetractionResult = { ok: true; ticket: string; date: string } | { ok: false; error: string };
 
 export async function createRetractionRequest(
   input: RetractionInput,
@@ -32,7 +32,7 @@ export async function createRetractionRequest(
   if (!parsed.ok) return { ok: false, error: parsed.error };
   const v = parsed.value;
 
-  const { seq } = await deps.db.retractionRequest.create({
+  const { seq, createdAt } = await deps.db.retractionRequest.create({
     data: {
       contactName: v.contactName,
       contactEmail: v.contactEmail,
@@ -40,11 +40,22 @@ export async function createRetractionRequest(
       orderNumber: v.orderNumber,
       reason: v.reason,
     },
-    select: { seq: true },
+    select: { seq: true, createdAt: true },
   });
   const ticket = formatRetractionTicket(seq);
+  const date = formatRetractionDate(createdAt);
 
   const send = deps.sendEmail ?? defaultSendEmail;
+
+  // Constancia al consumidor (comprobante propio del ejercicio del derecho).
+  try {
+    const receipt = retractionReceiptEmail({ ticket, date, contactName: v.contactName });
+    await send({ to: v.contactEmail, subject: receipt.subject, html: receipt.html, text: receipt.text });
+  } catch (err) {
+    console.error("retraction receipt email failed", err);
+  }
+
+  // Alerta a la dueña.
   const ownerEmail = deps.ownerEmail ?? process.env.RESEND_OWNER_EMAIL ?? "";
   if (ownerEmail) {
     try {
@@ -62,5 +73,5 @@ export async function createRetractionRequest(
     }
   }
 
-  return { ok: true, ticket };
+  return { ok: true, ticket, date };
 }

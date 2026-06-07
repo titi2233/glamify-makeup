@@ -7,9 +7,10 @@ import type { ActionResult } from "@/lib/forms/action-result";
 
 export interface RetractionActionResult extends ActionResult {
   ticket?: string;
+  date?: string;
 }
 
 export async function requestRetractionAction(input: RetractionInput): Promise<RetractionActionResult> {
   const r = await createRetractionRequest(input, { db: prisma });
-  return r.ok ? { ok: true, ticket: r.ticket } : { ok: false, error: r.error };
+  return r.ok ? { ok: true, ticket: r.ticket, date: r.date } : { ok: false, error: r.error };
 }

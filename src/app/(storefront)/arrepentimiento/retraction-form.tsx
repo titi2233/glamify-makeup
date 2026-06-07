@@ -10,6 +10,7 @@ import { requestRetractionAction } from "./actions";
 export function RetractionForm() {
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<string | null>(null);
+  const [date, setDate] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -26,16 +27,19 @@ export function RetractionForm() {
       website: String(fd.get("website") ?? ""),
     });
     setPending(false);
-    if (res.ok) setTicket(res.ticket ?? "—");
-    else setError(res.error ?? "No se pudo procesar la solicitud.");
+    if (res.ok) {
+      setTicket(res.ticket ?? "—");
+      setDate(res.date ?? null);
+    } else setError(res.error ?? "No se pudo procesar la solicitud.");
   }
 
   if (ticket) {
     return (
       <div role="status" className="rounded-2xl border border-border bg-surface-alt p-4">
-        <p className="font-medium text-primary-hover">Recibimos tu solicitud de arrepentimiento.</p>
-        <p className="mt-1 text-sm">
-          Tu número de constancia es <strong>{ticket}</strong>. Te vamos a contactar por email para coordinar la
+        <p className="font-semibold text-foreground">Recibimos tu solicitud de arrepentimiento.</p>
+        <p className="mt-1 text-sm text-foreground/90">
+          Tu número de constancia es <strong>{ticket}</strong>
+          {date ? <> del {date}</> : null}. Te enviamos una copia por email y te vamos a contactar para coordinar la
           devolución y el reintegro.
         </p>
       </div>
