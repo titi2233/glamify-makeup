@@ -96,16 +96,44 @@ https://glamifymakeup.site/auth/confirm?token_hash={{ .TokenHash }}&type=signup
 
 > `/auth/callback` (PKCE) se mantiene para **Google OAuth** y como degradación:
 > si todavía NO actualizaste la plantilla, el flujo viejo sigue andando.
+> **El cambio de plantilla es OBLIGATORIO** para que la confirmación sea
+> device-independent: `emailRedirectTo` del código no decide el link del mail,
+> lo decide la plantilla.
+
+Notas de hardening / pendientes menores:
+- La allowlist de `type` solo admite `signup`/`email_change`/`email`.
+  `recovery` y `magiclink` quedan fuera hasta que exista su UX (recovery exige
+  pantalla de cambio de contraseña).
+- En error, la ruta redirige a `/ingresar?error=oauth`, que hoy muestra el
+  mensaje de Google ("No pudimos ingresar con Google"). Mejora futura: param
+  propio (`error=confirm_expired`) + acción "reenviar mail de confirmación"
+  (`supabase.auth.resend({ type: 'signup', email })`).
+- Recomendado: deshabilitar la ruta `*.workers.dev` del Worker (dashboard →
+  Worker → Settings → Domains & Routes) para que el flujo de auth solo viva en
+  `glamifymakeup.site`.
 
 ---
 
 ## 3. Evitar 500 al registrar un email ya existente
-`signUpAction` (`src/app/(storefront)/ingresar/actions.ts`) ahora consulta
-`prisma.customer` por email **antes** de `signUp`. Si ya existe, devuelve
-`{ ok: false, error: "El correo electrónico ya está registrado." }` en vez de
-caer en el `upsert` que chocaba con el `@unique` de `email` (Supabase, por
-anti-enumeración, devolvía un user con id NUEVO) → ya no hay 500. Además se
-captura defensivamente el `P2002` por si dos requests corren en paralelo.
+Con "Confirm email" ON, Supabase no devuelve error para un email ya registrado
+y **confirmado** (anti-enumeración): devuelve un user ofuscado con id NUEVO,
+`identities: []` y no manda mail. El `upsert` por ese id falso chocaba con el
+`@unique` de `email` → 500 no controlado.
+
+`signUpAction` (`src/app/(storefront)/ingresar/actions.ts`) ahora detecta ese
+caso con el patrón canónico `data.user.identities.length === 0` y devuelve
+`{ ok: false, error: "El correo electrónico ya está registrado." }` antes del
+upsert. Además captura defensivamente el `P2002` por carreras.
+
+Por qué **no** se usa un pre-check sobre `prisma.customer`:
+- La fila `Customer` se crea ya en el primer `signUp` (sin confirmar). Un
+  pre-check bloquearía a una clienta no confirmada que reintenta registrarse —
+  justo el caso masivo cuando los mails no llegaban — y le impediría el
+  **reenvío automático** del mail de confirmación que Supabase hace en ese
+  re-registro. Con `identities` el reenvío sigue funcionando.
+- No cubre emails que existen en Supabase Auth pero no en Prisma (OAuth-only,
+  creados por dashboard, DB reseed): ahí igual se creaba una fila huérfana con
+  el id falso. El check por `identities` también cubre ese camino.
 
 ---
 

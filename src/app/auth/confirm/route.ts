@@ -19,17 +19,25 @@ import { mergeCartForCurrentCustomer } from "@/app/(storefront)/ingresar/actions
  */
 
 // Subconjunto de EmailOtpType de @supabase/supabase-js (estructuralmente
-// asignable a verifyOtp); validar acá saneamos el query param `type`.
-const EMAIL_OTP_TYPES = ["signup", "invite", "magiclink", "recovery", "email_change", "email"] as const;
+// asignable a verifyOtp); validar acá sanea el query param `type`.
+// Solo los tipos con flujo soportado hoy: `recovery`/`magiclink` quedan FUERA
+// a propósito — aterrizarían en /cuenta con sesión viva sin UX dedicada
+// (p. ej. recovery exige pantalla de cambio de contraseña). Agregar el tipo
+// acá recién cuando exista su flujo.
+const EMAIL_OTP_TYPES = ["signup", "email_change", "email"] as const;
 type EmailOtpType = (typeof EMAIL_OTP_TYPES)[number];
 
 function parseOtpType(value: string | null): EmailOtpType | null {
   return EMAIL_OTP_TYPES.includes(value as EmailOtpType) ? (value as EmailOtpType) : null;
 }
 
-/** Solo paths internos relativos (anti open-redirect). Default: `/cuenta`. */
+/**
+ * Solo paths internos relativos (anti open-redirect). Default: `/cuenta`.
+ * Rechaza `//` y `\` (los navegadores normalizan backslash a slash, así que
+ * `/\evil.com` se comportaría como `//evil.com` si el origin no antecediera).
+ */
 function sanitizeNext(next: string | null): string {
-  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  if (next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\")) return next;
   return "/cuenta";
 }
 

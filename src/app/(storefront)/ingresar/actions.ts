@@ -61,6 +61,18 @@ export async function signUpAction(input: {
     options: { data: { name: input.name.trim() }, emailRedirectTo: `${baseUrl}/auth/callback` },
   });
   if (error) return { ok: false, error: error.message };
+
+  // Email ya registrado Y CONFIRMADO: Supabase (anti-enumeración, "Confirm
+  // email" ON) no devuelve error — devuelve un user ofuscado con id NUEVO,
+  // `identities: []` y sin mandar mail. Detectarlo acá evita el upsert por ese
+  // id falso, que chocaba con el @unique de `email` → 500 no controlado (o
+  // peor: creaba una fila Customer huérfana si el email solo existía en Auth).
+  // Nota: un re-registro de una clienta NO confirmada sí pasa (identities no
+  // vacío) y Supabase le reenvía el mail de confirmación — comportamiento
+  // deseado, no bloquear.
+  if (data.user && (data.user.identities?.length ?? 0) === 0) {
+    return { ok: false, error: "El correo electrónico ya está registrado." };
+  }
   // Persistir consentimiento si la fila ya existe (confirmación ON → puede no haber sesión aún).
   if (data.user) {
     try {
