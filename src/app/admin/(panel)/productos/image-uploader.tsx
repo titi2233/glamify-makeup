@@ -7,6 +7,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { uploadProductImageAction } from "@/app/admin/(panel)/productos/actions";
 
+// Igual al límite del server (lib/admin/products/images.ts) y al bodySizeLimit de
+// Server Actions. Pre-chequeo en el cliente: un archivo más grande muestra un
+// mensaje inline en vez de reventar el body de la action.
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
 interface Props {
   value: string[];
   onChange: (paths: string[]) => void;
@@ -27,6 +32,12 @@ export function ImageUploader({ value, onChange, publicBase, max = 6, className 
     setError(null);
     const remaining = max - value.length;
     const selected = Array.from(files).slice(0, Math.max(0, remaining));
+    const tooBig = selected.find((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig) {
+      setError(`"${tooBig.name}" supera el límite de 5 MB. Reducí el tamaño o elegí otra imagen.`);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     startUpload(async () => {
       const next: string[] = [];
       for (const file of selected) {
