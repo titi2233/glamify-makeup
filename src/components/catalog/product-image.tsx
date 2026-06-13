@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { productImageUrl } from "@/lib/images";
 
 interface ProductImageProps {
   src?: string | null;
@@ -11,23 +12,14 @@ interface ProductImageProps {
   priority?: boolean;
 }
 
-/** Convierte un path relativo del bucket product-images a su URL pública completa. */
-function resolveImageSrc(src?: string | null): string | null {
-  if (!src) return null;
-  // Ya es una URL absoluta
-  if (/^https?:\/\//.test(src)) return src;
-  // Path relativo de Supabase Storage → construir URL pública
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/product-images/${src}`;
-}
-
 export function ProductImage({ src, alt, fallbackLabel, className, sizes, priority }: ProductImageProps) {
-  const resolved = resolveImageSrc(src);
-  if (resolved) {
+  // src puede ser un path de Storage (ej. `products/uuid.jpg`) o una URL absoluta;
+  // productImageUrl resuelve ambos. Si no hay imagen, cae al placeholder de marca.
+  const url = productImageUrl(src);
+  if (url) {
     return (
       <div className={cn("relative aspect-square overflow-hidden bg-muted", className)}>
-        <Image src={resolved} alt={alt} fill sizes={sizes ?? "(max-width:768px) 50vw, 25vw"} className="object-cover" priority={priority} />
+        <Image src={url} alt={alt} fill sizes={sizes ?? "(max-width:768px) 50vw, 25vw"} className="object-cover" priority={priority} />
       </div>
     );
   }
@@ -47,4 +39,3 @@ export function ProductImage({ src, alt, fallbackLabel, className, sizes, priori
     </div>
   );
 }
-

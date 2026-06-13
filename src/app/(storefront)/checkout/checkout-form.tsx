@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CartSummary } from "@/components/cart/cart-summary";
+import { CouponInput } from "@/components/cart/coupon-input";
 import { AR_PROVINCES } from "@/lib/ar-provinces";
 import { quoteShippingAction, createCheckoutAction } from "@/app/(storefront)/actions";
 
@@ -25,7 +26,7 @@ interface Props {
 
 type Method = "domicilio" | "sucursal";
 
-export function CheckoutForm({ subtotal, discount, couponFreeShipping, items, defaultName = "", defaultEmail = "" }: Props) {
+export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShipping, items, defaultName = "", defaultEmail = "" }: Props) {
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
   const [phone, setPhone] = useState("");
@@ -143,13 +144,14 @@ export function CheckoutForm({ subtotal, discount, couponFreeShipping, items, de
           ))}
         </ul>
         <Separator />
+        <CouponInput applied={couponCode} />
         <CartSummary subtotal={subtotal} discount={discount} shippingCost={shippingCost} total={total} freeShipping={couponFreeShipping || shipping?.free} />
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-          Continuar compra
+          Pagar con Mercado Pago
         </Button>
-        <p className="text-center text-xs text-muted-foreground">Pago seguro procesado por Mercado Pago.</p>
+        <p className="text-center text-xs text-muted-foreground">Pago seguro. Te redirigimos a Mercado Pago.</p>
       </aside>
     </form>
   );

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getCartView } from "@/lib/cart/cart-view";
 import { round2 } from "@/lib/money";
+import { productImageUrl } from "@/lib/images";
+import { CouponInput } from "@/components/cart/coupon-input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CartLineItem } from "@/components/cart/cart-line-item";
@@ -35,13 +37,14 @@ export async function CartContents() {
               variantName: item.combo ? null : item.variant!.name,
               unitPrice: Number(item.unitPriceSnapshot),
               qty: item.qty,
-              image: item.combo ? item.combo.images[0] ?? null : item.variant!.image ?? item.variant!.product.images[0] ?? null,
+              image: productImageUrl(item.combo ? item.combo.images[0] ?? null : item.variant!.image ?? item.variant!.product.images[0] ?? null),
             }}
           />
         ))}
       </div>
       {bump && <OrderBump offer={bump} />}
       <Separator />
+      <CouponInput applied={coupon?.code ?? null} />
       <CartSummary subtotal={subtotal} discount={discount} shippingCost={null} total={total} freeShipping={coupon?.freeShipping} />
       <div className="grid gap-2">
         <Button asChild size="lg"><Link href="/checkout">Iniciar compra</Link></Button>

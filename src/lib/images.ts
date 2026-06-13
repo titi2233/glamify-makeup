@@ -1,0 +1,20 @@
+/**
+ * URL pública de una imagen de producto/combo/variante a partir del path guardado en DB.
+ *
+ * En DB se guarda solo el path del objeto (ej. `products/uuid.jpg`), no la URL completa
+ * (ver lib/admin/products/images.ts). Para renderizarla en el storefront hay que
+ * anteponerle la base pública del bucket. Función pura y client-safe (lee la env
+ * NEXT_PUBLIC_, que Next inlinea en el bundle).
+ *
+ * - Devuelve `null` si no hay path.
+ * - Si el valor ya es una URL absoluta (http/https), la devuelve tal cual.
+ */
+const PRODUCT_IMAGES_BUCKET = "product-images";
+
+export function productImageUrl(path?: string | null): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+  if (!base) return null;
+  return `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${path.replace(/^\//, "")}`;
+}

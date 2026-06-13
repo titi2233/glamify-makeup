@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getCartView } from "@/lib/cart/cart-view";
 import { round2 } from "@/lib/money";
+import { productImageUrl } from "@/lib/images";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -55,7 +56,7 @@ export default async function CarritoPage() {
                   variantName: item.combo ? null : item.variant!.name,
                   unitPrice: Number(item.unitPriceSnapshot),
                   qty: item.qty,
-                  image: item.combo ? item.combo.images[0] ?? null : item.variant!.image ?? item.variant!.product.images[0] ?? null,
+                  image: productImageUrl(item.combo ? item.combo.images[0] ?? null : item.variant!.image ?? item.variant!.product.images[0] ?? null),
                 }}
               />
             ))}
