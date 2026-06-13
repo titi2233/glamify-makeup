@@ -147,9 +147,9 @@ export function CheckoutForm({ subtotal, discount, couponFreeShipping, items, de
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-          Pagar con Mercado Pago
+          Continuar compra
         </Button>
-        <p className="text-center text-xs text-muted-foreground">Pago seguro. Te redirigimos a Mercado Pago.</p>
+        <p className="text-center text-xs text-muted-foreground">Pago seguro procesado por Mercado Pago.</p>
       </aside>
     </form>
   );

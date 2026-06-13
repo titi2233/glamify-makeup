@@ -12,8 +12,8 @@ export function emptyVariant(order: number): VariantFormInput {
     name: "",
     swatchHex: null,
     sku: "",
-    stock: 0,
-    lowStockThreshold: 3,
+    stock: "",
+    lowStockThreshold: "",
     priceOverride: null,
     weightGrOverride: null,
     image: null,
@@ -101,11 +101,11 @@ export function VariantFields({ variants, onChange }: Props) {
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`v-stock-${i}`}>Stock</Label>
-                <Input id={`v-stock-${i}`} type="number" inputMode="numeric" min={0} value={v.stock} onChange={(e) => update(i, { stock: Number(e.target.value) })} />
+                <Input id={`v-stock-${i}`} type="number" inputMode="numeric" min={0} value={v.stock} onChange={(e) => update(i, { stock: e.target.value === "" ? "" : Number(e.target.value) })} placeholder="Ej: 10" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`v-low-${i}`}>Aviso de bajo stock</Label>
-                <Input id={`v-low-${i}`} type="number" inputMode="numeric" min={0} value={v.lowStockThreshold} onChange={(e) => update(i, { lowStockThreshold: Number(e.target.value) })} />
+                <Input id={`v-low-${i}`} type="number" inputMode="numeric" min={0} value={v.lowStockThreshold} onChange={(e) => update(i, { lowStockThreshold: e.target.value === "" ? "" : Number(e.target.value) })} placeholder="Ej: 3" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`v-price-${i}`}>Precio especial (opcional)</Label>
@@ -113,7 +113,7 @@ export function VariantFields({ variants, onChange }: Props) {
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`v-weight-${i}`}>Peso especial en gramos (opcional)</Label>
-                <Input id={`v-weight-${i}`} type="number" inputMode="numeric" min={0} value={v.weightGrOverride ?? ""} onChange={(e) => update(i, { weightGrOverride: numOrNull(e.target.value) })} />
+                <Input id={`v-weight-${i}`} type="number" inputMode="numeric" min={0} value={v.weightGrOverride ?? ""} onChange={(e) => update(i, { weightGrOverride: numOrNull(e.target.value) })} placeholder="Ej: 80" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`v-hex-${i}`}>Color del tono (hex, opcional)</Label>

@@ -40,10 +40,10 @@ function blank(): ProductFormInput {
     slug: "",
     description: null,
     categoryId: "",
-    basePrice: 0,
+    basePrice: "",
     compareAtPrice: null,
-    cost: 0,
-    weightGr: 0,
+    cost: "",
+    weightGr: "",
     images: [],
     isFeatured: false,
     heroRank: null,
@@ -153,19 +153,19 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="basePrice">Precio (ARS)</Label>
-            <Input id="basePrice" type="number" inputMode="decimal" min={0} step="0.01" value={form.basePrice} onChange={(e) => set("basePrice", Number(e.target.value))} />
+            <Input id="basePrice" type="number" inputMode="decimal" min={0} step="0.01" value={form.basePrice} onChange={(e) => set("basePrice", e.target.value === "" ? "" : Number(e.target.value))} placeholder="Ej: 3500" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="compareAtPrice">Precio anterior / oferta (opcional, mayor al actual)</Label>
-            <Input id="compareAtPrice" type="number" inputMode="decimal" min={0} step="0.01" value={form.compareAtPrice ?? ""} onChange={(e) => set("compareAtPrice", numOrNull(e.target.value))} />
+            <Input id="compareAtPrice" type="number" inputMode="decimal" min={0} step="0.01" value={form.compareAtPrice ?? ""} onChange={(e) => set("compareAtPrice", numOrNull(e.target.value))} placeholder="Ej: 5000" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="cost">Costo (ARS)</Label>
-            <Input id="cost" type="number" inputMode="decimal" min={0} step="0.01" value={form.cost} onChange={(e) => set("cost", Number(e.target.value))} />
+            <Input id="cost" type="number" inputMode="decimal" min={0} step="0.01" value={form.cost} onChange={(e) => set("cost", e.target.value === "" ? "" : Number(e.target.value))} placeholder="Ej: 1200" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="weightGr">Peso en gramos</Label>
-            <Input id="weightGr" type="number" inputMode="numeric" min={0} value={form.weightGr} onChange={(e) => set("weightGr", Number(e.target.value))} />
+            <Input id="weightGr" type="number" inputMode="numeric" min={0} value={form.weightGr} onChange={(e) => set("weightGr", e.target.value === "" ? "" : Number(e.target.value))} placeholder="Ej: 150" />
           </div>
         </div>
       </FormSection>

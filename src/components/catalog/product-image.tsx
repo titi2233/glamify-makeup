@@ -11,13 +11,23 @@ interface ProductImageProps {
   priority?: boolean;
 }
 
-const isRemote = (src?: string | null): src is string => !!src && /^https?:\/\//.test(src);
+/** Convierte un path relativo del bucket product-images a su URL pública completa. */
+function resolveImageSrc(src?: string | null): string | null {
+  if (!src) return null;
+  // Ya es una URL absoluta
+  if (/^https?:\/\//.test(src)) return src;
+  // Path relativo de Supabase Storage → construir URL pública
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  return `${base}/storage/v1/object/public/product-images/${src}`;
+}
 
 export function ProductImage({ src, alt, fallbackLabel, className, sizes, priority }: ProductImageProps) {
-  if (isRemote(src)) {
+  const resolved = resolveImageSrc(src);
+  if (resolved) {
     return (
       <div className={cn("relative aspect-square overflow-hidden bg-muted", className)}>
-        <Image src={src} alt={alt} fill sizes={sizes ?? "(max-width:768px) 50vw, 25vw"} className="object-cover" priority={priority} />
+        <Image src={resolved} alt={alt} fill sizes={sizes ?? "(max-width:768px) 50vw, 25vw"} className="object-cover" priority={priority} />
       </div>
     );
   }
@@ -37,3 +47,4 @@ export function ProductImage({ src, alt, fallbackLabel, className, sizes, priori
     </div>
   );
 }
+

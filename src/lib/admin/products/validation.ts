@@ -7,8 +7,8 @@ export interface VariantFormInput {
   name: string;
   swatchHex: string | null;
   sku: string;
-  stock: number;
-  lowStockThreshold: number;
+  stock: number | "";
+  lowStockThreshold: number | "";
   priceOverride: number | null;
   weightGrOverride: number | null;
   image: string | null;
@@ -21,10 +21,10 @@ export interface ProductFormInput {
   slug: string;
   description: string | null;
   categoryId: string;
-  basePrice: number;
+  basePrice: number | "";
   compareAtPrice: number | null;
-  cost: number;
-  weightGr: number;
+  cost: number | "";
+  weightGr: number | "";
   images: string[];
   isFeatured: boolean;
   heroRank: number | null;
@@ -69,11 +69,11 @@ export interface ProductClean {
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
-function isPositiveInt(n: number): boolean {
-  return Number.isInteger(n) && n > 0;
+function isPositiveInt(n: number | ""): boolean {
+  return typeof n === "number" && Number.isInteger(n) && n > 0;
 }
-function isNonNegativeInt(n: number): boolean {
-  return Number.isInteger(n) && n >= 0;
+function isNonNegativeInt(n: number | ""): boolean {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0;
 }
 
 export function validateVariant(input: VariantFormInput): Validated<VariantClean> {
@@ -116,8 +116,8 @@ export function validateVariant(input: VariantFormInput): Validated<VariantClean
       name,
       swatchHex,
       sku,
-      stock: input.stock,
-      lowStockThreshold: input.lowStockThreshold,
+      stock: typeof input.stock === "number" ? input.stock : 0,
+      lowStockThreshold: typeof input.lowStockThreshold === "number" ? input.lowStockThreshold : 0,
       priceOverride,
       weightGrOverride,
       image,
@@ -136,8 +136,8 @@ export function validateProduct(input: ProductFormInput): Validated<ProductClean
 
   if (!input.categoryId.trim()) return { ok: false, error: "Elegí una categoría para el producto." };
 
-  if (!(input.basePrice > 0)) return { ok: false, error: "El precio debe ser mayor a 0." };
-  if (input.cost < 0) return { ok: false, error: "El costo no puede ser negativo." };
+  if (typeof input.basePrice !== "number" || !(input.basePrice > 0)) return { ok: false, error: "El precio debe ser mayor a 0." };
+  if (typeof input.cost !== "number" || input.cost < 0) return { ok: false, error: "El costo no puede ser negativo." };
   if (!isPositiveInt(input.weightGr)) return { ok: false, error: "El peso (en gramos) debe ser un entero mayor a 0." };
 
   let compareAtPrice: number | null = null;
@@ -183,10 +183,10 @@ export function validateProduct(input: ProductFormInput): Validated<ProductClean
       slug,
       description: input.description != null && input.description.trim() !== "" ? input.description.trim() : null,
       categoryId: input.categoryId.trim(),
-      basePrice: input.basePrice,
+      basePrice: typeof input.basePrice === "number" ? input.basePrice : 0,
       compareAtPrice,
-      cost: input.cost,
-      weightGr: input.weightGr,
+      cost: typeof input.cost === "number" ? input.cost : 0,
+      weightGr: typeof input.weightGr === "number" ? input.weightGr : 0,
       images,
       isFeatured: input.isFeatured,
       heroRank,
