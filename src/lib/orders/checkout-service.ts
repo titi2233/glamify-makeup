@@ -189,5 +189,10 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
     await tx.payment.update({ where: { id: order.payments[0].id }, data: { mpPreferenceId: preference.id } });
   });
 
-  return { orderId: order.id, orderNumber: order.orderNumber, initPoint: preference.sandbox_init_point ?? preference.init_point };
+  const isSandbox = process.env.MP_ACCESS_TOKEN?.startsWith("TEST-");
+  const initPoint = isSandbox && preference.sandbox_init_point 
+    ? preference.sandbox_init_point 
+    : preference.init_point;
+
+  return { orderId: order.id, orderNumber: order.orderNumber, initPoint };
 }
