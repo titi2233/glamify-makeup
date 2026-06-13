@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { TicketPercent } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/catalog/pricing";
 import { PageHeader } from "@/components/admin/page-header";
@@ -37,8 +38,12 @@ export default async function EditarCuponPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={`Editar cupón ${coupon.code}`} subtitle="Cambiá las condiciones del descuento. El conteo de usos no se puede editar." />
+    <div className="stagger space-y-6">
+      <PageHeader
+        icon={TicketPercent}
+        title={`Editar cupón ${coupon.code}`}
+        subtitle="Cambiá las condiciones del descuento. El conteo de usos no se puede editar."
+      />
       <CouponForm couponId={coupon.id} initial={initial} />
     </div>
   );

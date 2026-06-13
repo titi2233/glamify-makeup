@@ -2,6 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Clock,
+  CircleDollarSign,
+  PackageOpen,
+  Truck,
+  PackageCheck,
+  RotateCcw,
+  XCircle,
+  AlertCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { canTransition } from "@/lib/orders/state-machine";
@@ -16,6 +27,17 @@ const NEXT_LABELS: Record<OrderStatus, string> = {
   delivered: "Marcar como entregado",
   cancelled: "Cancelar pedido",
   refunded: "Marcar reembolsado",
+};
+
+/** Ícono lucide por estado destino, para reforzar el texto del botón (no solo color). */
+const NEXT_ICONS: Record<OrderStatus, LucideIcon> = {
+  pending_payment: Clock,
+  paid: CircleDollarSign,
+  preparing: PackageOpen,
+  shipped: Truck,
+  delivered: PackageCheck,
+  cancelled: XCircle,
+  refunded: RotateCcw,
 };
 
 const ALL: OrderStatus[] = [
@@ -65,15 +87,19 @@ export function OrderStatusControl({
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {nextStates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border bg-surface-alt/60 px-4 py-3 text-sm text-muted-foreground">
             Este pedido no tiene próximos estados disponibles.
           </p>
         ) : (
-          nextStates.map((s) => (
-            <Button key={s} type="button" onClick={() => change(s)} disabled={pending}>
-              {NEXT_LABELS[s]}
-            </Button>
-          ))
+          nextStates.map((s) => {
+            const Icon = NEXT_ICONS[s];
+            return (
+              <Button key={s} type="button" onClick={() => change(s)} disabled={pending}>
+                <Icon className="size-4" aria-hidden />
+                {NEXT_LABELS[s]}
+              </Button>
+            );
+          })
         )}
         {canCancel ? (
           <ConfirmDialog
@@ -83,13 +109,19 @@ export function OrderStatusControl({
             onConfirm={cancel}
             trigger={
               <Button type="button" variant="destructive" disabled={pending}>
+                <XCircle className="size-4" aria-hidden />
                 Cancelar pedido
               </Button>
             }
           />
         ) : null}
       </div>
-      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+          <AlertCircle className="size-4 shrink-0" aria-hidden />
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

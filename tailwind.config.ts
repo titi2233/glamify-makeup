@@ -72,6 +72,8 @@ const config: Config = {
         // soft UI (blueprint 02 §4)
         soft: "0 2px 8px -2px rgba(110, 11, 63, 0.08), 0 4px 16px -4px rgba(255, 46, 147, 0.10)",
         "soft-lg": "0 8px 32px -8px rgba(255, 46, 147, 0.18)",
+        // glow glam para medallones/CTAs/cards activas del panel
+        glow: "0 14px 34px -12px rgba(255, 46, 147, 0.45)",
       },
       keyframes: {
         "accordion-down": {
@@ -82,10 +84,16 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        // entrada suave del panel admin: leve subida + fade (respeta reduced-motion vía globals.css)
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-up": "fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },

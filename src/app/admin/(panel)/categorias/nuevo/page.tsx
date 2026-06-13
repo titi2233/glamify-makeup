@@ -1,3 +1,4 @@
+import { FolderPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/admin/page-header";
 import { CategoryForm, type ParentOption } from "@/app/admin/(panel)/categorias/category-form";
@@ -16,8 +17,9 @@ async function loadRootParents(): Promise<ParentOption[]> {
 export default async function NuevaCategoriaPage() {
   const parents = await loadRootParents();
   return (
-    <div className="space-y-6">
+    <div className="stagger space-y-6">
       <PageHeader
+        icon={FolderPlus}
         title="Nueva categoría"
         subtitle="Cargá una categoría nueva. Si elegís una categoría padre, será una subcategoría."
       />

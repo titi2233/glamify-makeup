@@ -1,8 +1,21 @@
 import Link from "next/link";
+import {
+  ShoppingCart,
+  Search,
+  SlidersHorizontal,
+  Clock,
+  CircleDollarSign,
+  PackageOpen,
+  Truck,
+  PackageCheck,
+  XCircle,
+  RotateCcw,
+  type LucideIcon,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/admin/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { formatARS } from "@/lib/money";
 import { toNumber } from "@/lib/catalog/pricing";
 import { STATUS_LABELS } from "@/lib/admin/orders/service";
@@ -11,15 +24,30 @@ import type { OrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_CHIP: Record<OrderStatus, string> = {
-  pending_payment: "bg-amber-100 text-amber-800",
-  paid: "bg-emerald-100 text-emerald-800",
-  preparing: "bg-sky-100 text-sky-800",
-  shipped: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-rose-100 text-rose-800",
-  refunded: "bg-zinc-200 text-zinc-700",
+/**
+ * Presentación de cada estado de pedido: variante de Badge (color) + ícono lucide.
+ * El ícono+texto del Badge garantiza que el color NUNCA sea el único indicador (a11y).
+ * No cambia los valores de OrderStatus ni la máquina de estados.
+ */
+const STATUS_PRESENTATION: Record<OrderStatus, { variant: BadgeProps["variant"]; icon: LucideIcon }> = {
+  pending_payment: { variant: "warning", icon: Clock },
+  paid: { variant: "success", icon: CircleDollarSign },
+  preparing: { variant: "secondary", icon: PackageOpen },
+  shipped: { variant: "default", icon: Truck },
+  delivered: { variant: "success", icon: PackageCheck },
+  cancelled: { variant: "destructive", icon: XCircle },
+  refunded: { variant: "muted", icon: RotateCcw },
 };
+
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  const { variant, icon: Icon } = STATUS_PRESENTATION[status];
+  return (
+    <Badge variant={variant} className="gap-1">
+      <Icon className="size-3" aria-hidden />
+      {STATUS_LABELS[status]}
+    </Badge>
+  );
+}
 
 const FILTERS: Array<{ value: OrderStatus | "todos"; label: string }> = [
   { value: "todos", label: "Todos" },
@@ -77,96 +105,107 @@ export default async function PedidosPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="stagger space-y-6">
       <PageHeader
+        icon={ShoppingCart}
         title="Pedidos"
         subtitle="Mirá los pedidos, cambiá su estado y cargá el seguimiento del envío."
       />
 
-      <form className="flex flex-wrap items-center gap-2" action="/admin/pedidos" method="get">
-        {estado && estado !== "todos" ? (
-          <input type="hidden" name="estado" value={estado} />
-        ) : null}
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Buscar por número, nombre o email"
-          className="h-11 min-w-[16rem] flex-1 rounded-xl border border-border px-4 text-base"
-          aria-label="Buscar pedidos"
-        />
-      </form>
+      {/* Filtros y búsqueda en una tarjeta */}
+      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <SlidersHorizontal className="size-4 text-primary" aria-hidden />
+          Filtrar y buscar
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => {
-          const active = (estado ?? "todos") === f.value;
-          const href =
-            f.value === "todos" ? "/admin/pedidos" : `/admin/pedidos?estado=${f.value}`;
-          return (
-            <Link
-              key={f.value}
-              href={href}
-              className={cn(
-                "inline-flex h-11 items-center rounded-full border px-4 text-sm font-semibold",
-                active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground hover:bg-muted",
-              )}
-            >
-              {f.label}
-            </Link>
-          );
-        })}
+        <form className="relative" action="/admin/pedidos" method="get">
+          {estado && estado !== "todos" ? (
+            <input type="hidden" name="estado" value={estado} />
+          ) : null}
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Buscar por número, nombre o email"
+            className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
+            aria-label="Buscar pedidos"
+          />
+        </form>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {FILTERS.map((f) => {
+            const active = (estado ?? "todos") === f.value;
+            const href =
+              f.value === "todos" ? "/admin/pedidos" : `/admin/pedidos?estado=${f.value}`;
+            return (
+              <Link
+                key={f.value}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "inline-flex h-11 items-center rounded-xl border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  active
+                    ? "border-transparent bg-primary-hover text-primary-foreground shadow-soft"
+                    : "border-border bg-background text-foreground hover:bg-muted",
+                )}
+              >
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-10 text-center">
-          <p className="text-lg font-semibold text-foreground">
-            Todavía no hay pedidos para mostrar
-          </p>
+        <div className="rounded-2xl border border-dashed border-border bg-card/60 p-12 text-center">
+          <span className="icon-medallion mx-auto grid size-14 place-items-center rounded-2xl" aria-hidden>
+            <ShoppingCart className="size-7" />
+          </span>
+          <p className="mt-4 font-display text-lg font-semibold">Todavía no hay pedidos para mostrar</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Cuando entre un pedido va a aparecer acá. Probá quitar el filtro o la búsqueda.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Estado</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-surface-alt/60 hover:bg-surface-alt/60">
+              <TableHead>Número</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead>Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.map((o) => (
+              <TableRow key={o.id}>
+                <TableCell>
+                  <Link
+                    href={`/admin/pedidos/${o.id}`}
+                    className="font-semibold text-primary-hover tabular-nums hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {o.orderNumber}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {ART_FMT.format(o.createdAt)}
+                </TableCell>
+                <TableCell>{o.contactName}</TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">
+                  {formatARS(toNumber(o.total))}
+                </TableCell>
+                <TableCell>
+                  <OrderStatusBadge status={o.status} />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell>
-                    <Link
-                      href={`/admin/pedidos/${o.id}`}
-                      className="font-semibold text-primary hover:underline"
-                    >
-                      {o.orderNumber}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {ART_FMT.format(o.createdAt)}
-                  </TableCell>
-                  <TableCell>{o.contactName}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatARS(toNumber(o.total))}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={cn("font-semibold", STATUS_CHIP[o.status])}>
-                      {STATUS_LABELS[o.status]}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

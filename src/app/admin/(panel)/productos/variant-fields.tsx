@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Palette } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -42,29 +42,49 @@ export function VariantFields({ variants, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-display text-lg">Variantes</h3>
-          <p className="text-sm text-muted-foreground">
-            Cada tono o color es una variante. Si no agregás ninguna, creamos una llamada &quot;Único&quot;.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-foreground tabular-nums">
+            {variants.length}
+          </span>
+          {variants.length === 1 ? "variante cargada" : "variantes cargadas"}
+        </p>
         <Button type="button" variant="outline" size="sm" onClick={add}>
           <Plus className="size-4" aria-hidden /> Agregar variante
         </Button>
       </div>
 
       {variants.length === 0 && (
-        <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-          Sin variantes: se creará una sola llamada &quot;Único&quot; con stock 0.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center">
+          <span className="icon-medallion mx-auto grid size-14 place-items-center rounded-2xl" aria-hidden>
+            <Palette className="size-7" />
+          </span>
+          <p className="mt-4 font-display text-lg font-semibold">Todavía no hay variantes</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Si no agregás ninguna, creamos una sola llamada &quot;Único&quot; con stock 0.
+          </p>
+          <Button type="button" variant="outline" size="sm" className="mt-5" onClick={add}>
+            <Plus className="size-4" aria-hidden /> Agregar la primera variante
+          </Button>
+        </div>
       )}
 
       <div className="space-y-4">
         {variants.map((v, i) => (
-          <div key={i} className="space-y-3 rounded-2xl border border-border p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Variante {i + 1}</span>
+          <div key={i} className="admin-card space-y-3 rounded-2xl border border-border/70 bg-surface-alt/40 p-4 shadow-soft">
+            <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+              <span className="flex min-w-0 items-center gap-2.5">
+                <span
+                  className="grid size-7 shrink-0 place-items-center rounded-lg border border-border/70 bg-background"
+                  aria-hidden
+                  style={v.swatchHex ? { backgroundColor: v.swatchHex } : undefined}
+                >
+                  {v.swatchHex ? null : <Palette className="size-3.5 text-primary" />}
+                </span>
+                <span className="truncate font-display text-base font-semibold text-foreground">
+                  {v.name.trim() ? v.name : `Variante ${i + 1}`}
+                </span>
+              </span>
               <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)} aria-label="Quitar variante">
                 <Trash2 className="size-4" aria-hidden /> Quitar
               </Button>
@@ -99,9 +119,9 @@ export function VariantFields({ variants, onChange }: Props) {
                 <Label htmlFor={`v-hex-${i}`}>Color del tono (hex, opcional)</Label>
                 <Input id={`v-hex-${i}`} value={v.swatchHex ?? ""} onChange={(e) => update(i, { swatchHex: e.target.value.trim() === "" ? null : e.target.value })} placeholder="#FF2E93" />
               </div>
-              <div className="flex items-center gap-3 pt-6">
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 sm:mt-[1.625rem] sm:py-0">
                 <Switch id={`v-active-${i}`} checked={v.active} onCheckedChange={(checked) => update(i, { active: checked })} />
-                <Label htmlFor={`v-active-${i}`}>Variante activa</Label>
+                <Label htmlFor={`v-active-${i}`} className="cursor-pointer">Variante activa</Label>
               </div>
             </div>
           </div>

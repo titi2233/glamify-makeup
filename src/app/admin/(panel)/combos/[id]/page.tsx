@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Layers } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/catalog/pricing";
 import { PageHeader } from "@/components/admin/page-header";
@@ -49,8 +50,12 @@ export default async function EditarComboPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Editar combo" subtitle="Cambiá productos, precio o vigencia del combo." />
+    <div className="stagger space-y-6">
+      <PageHeader
+        icon={Layers}
+        title="Editar combo"
+        subtitle="Cambiá productos, precio o vigencia del combo."
+      />
       <ComboForm variantOptions={variantOptions} initial={initial} />
     </div>
   );

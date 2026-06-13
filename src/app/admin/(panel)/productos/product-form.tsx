@@ -2,7 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  ClipboardList,
+  Tag,
+  ImageIcon,
+  Palette,
+  Sparkles,
+  AlertCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +61,34 @@ function numOrNull(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Sección del formulario como card: cabecera con medallón + título serif y ayuda opcional. */
+function FormSection({
+  icon: Icon,
+  title,
+  hint,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-soft">
+      <header className="border-b border-border/70 bg-surface-alt/60 px-5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-primary" aria-hidden>
+            <Icon className="size-[18px]" />
+          </span>
+          <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
+        </div>
+        {hint ? <p className="mt-1.5 pl-[2.625rem] text-xs text-muted-foreground">{hint}</p> : null}
+      </header>
+      <div className="space-y-4 p-5">{children}</div>
+    </section>
+  );
+}
+
 export function ProductForm({ categories, publicBase, productId, initial }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<ProductFormInput>(initial ?? blank());
@@ -82,8 +119,7 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
 
   return (
     <form onSubmit={submit} className="space-y-8">
-      <section className="space-y-4 rounded-2xl border border-border p-5">
-        <h2 className="font-display text-lg">Datos básicos</h2>
+      <FormSection icon={ClipboardList} title="Datos básicos" hint="Nombre, categoría y descripción que verá la clienta.">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="name">Nombre</Label>
@@ -102,19 +138,18 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-3 pt-6">
+          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-surface-alt/40 px-4 py-3 sm:mt-[1.625rem] sm:py-0">
             <Switch id="active" checked={form.active} onCheckedChange={(checked) => set("active", checked)} />
-            <Label htmlFor="active">Producto activo (visible en la tienda)</Label>
+            <Label htmlFor="active" className="cursor-pointer">Producto activo (visible en la tienda)</Label>
           </div>
         </div>
         <div className="space-y-1">
           <Label htmlFor="description">Descripción</Label>
           <Textarea id="description" value={form.description ?? ""} onChange={(e) => set("description", e.target.value === "" ? null : e.target.value)} placeholder="Contale a la clienta de qué se trata" rows={4} />
         </div>
-      </section>
+      </FormSection>
 
-      <section className="space-y-4 rounded-2xl border border-border p-5">
-        <h2 className="font-display text-lg">Precio y peso</h2>
+      <FormSection icon={Tag} title="Precio y peso" hint="El peso define el costo de envío: cargá el real con packaging.">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="basePrice">Precio (ARS)</Label>
@@ -133,23 +168,21 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
             <Input id="weightGr" type="number" inputMode="numeric" min={0} value={form.weightGr} onChange={(e) => set("weightGr", Number(e.target.value))} />
           </div>
         </div>
-      </section>
+      </FormSection>
 
-      <section className="space-y-4 rounded-2xl border border-border p-5">
-        <h2 className="font-display text-lg">Imágenes</h2>
+      <FormSection icon={ImageIcon} title="Imágenes" hint="Hasta 6 fotos. La primera es la principal; cuadradas (1:1) se ven mejor.">
         <ImageUploader value={form.images} onChange={(paths) => set("images", paths)} publicBase={publicBase} />
-      </section>
+      </FormSection>
 
-      <section className="space-y-4 rounded-2xl border border-border p-5">
+      <FormSection icon={Palette} title="Variantes" hint="Cada tono o color es una variante. Si no agregás ninguna, creamos una llamada «Único».">
         <VariantFields variants={form.variants} onChange={setVariants} />
-      </section>
+      </FormSection>
 
-      <section className="space-y-4 rounded-2xl border border-border p-5">
-        <h2 className="font-display text-lg">Destacado y SEO</h2>
+      <FormSection icon={Sparkles} title="Destacado y SEO" hint="Qué sale en la portada y cómo aparece el producto en Google.">
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-surface-alt/40 px-4 py-3">
             <Switch id="isFeatured" checked={form.isFeatured} onCheckedChange={(checked) => set("isFeatured", checked)} />
-            <Label htmlFor="isFeatured">Destacar en portada</Label>
+            <Label htmlFor="isFeatured" className="cursor-pointer">Destacar en portada</Label>
           </div>
           <div className="space-y-1">
             <Label htmlFor="heroRank">Orden en portada (opcional)</Label>
@@ -168,10 +201,18 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
             <Input id="seoDescription" value={form.seoDescription ?? ""} onChange={(e) => set("seoDescription", e.target.value === "" ? null : e.target.value)} />
           </div>
         </div>
-      </section>
+      </FormSection>
 
-      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-      <div className="flex gap-3">
+      {error && (
+        <p
+          className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-red-700"
+          role="alert"
+        >
+          <AlertCircle className="size-4 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
         <Button type="submit" size="lg" disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
           {productId ? "Guardar cambios" : "Crear producto"}

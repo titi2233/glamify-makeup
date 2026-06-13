@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Package } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/catalog/pricing";
 import { PageHeader } from "@/components/admin/page-header";
@@ -59,8 +60,12 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={`Editar: ${product.name}`} subtitle="Cambiá datos, precios, stock o variantes." />
+    <div className="stagger space-y-6">
+      <PageHeader
+        icon={Package}
+        title={`Editar: ${product.name}`}
+        subtitle="Cambiá datos, precios, stock o variantes."
+      />
       <ProductForm categories={options} publicBase={publicBase()} productId={product.id} initial={initial} />
     </div>
   );

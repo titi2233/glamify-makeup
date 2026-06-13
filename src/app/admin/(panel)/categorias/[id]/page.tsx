@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { FolderPen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/admin/page-header";
 import {
@@ -50,8 +51,9 @@ export default async function EditarCategoriaPage({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="stagger space-y-6">
       <PageHeader
+        icon={FolderPen}
         title={`Editar: ${category.name}`}
         subtitle="Cambiá los datos de la categoría. El slug afecta la dirección en la web."
       />
