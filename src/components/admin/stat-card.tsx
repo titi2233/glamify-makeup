@@ -33,7 +33,7 @@ export function StatCard({ title, value, hint, icon: Icon, className }: StatCard
           <Icon className="size-5" />
         </span>
       </div>
-      <p className="relative mt-3 font-display text-3xl font-bold leading-tight text-foreground tabular-nums">
+      <p className="relative mt-3 font-sans text-3xl font-bold leading-tight text-foreground tabular-nums">
         {value}
       </p>
       {hint ? <p className="relative mt-1.5 text-xs text-muted-foreground">{hint}</p> : null}
