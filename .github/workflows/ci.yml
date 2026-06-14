@@ -52,3 +52,40 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
           DATABASE_URL: postgresql://placeholder
           DIRECT_URL: postgresql://placeholder
+
+  # Deploy a producción (Cloudflare Workers) solo al pushear a main, después de que
+  # `quality` pase. El build corre en Linux, donde NO se da el bug de esbuild con
+  # `cloudflare:sockets` que rompe el build en Windows. Esto reemplaza el deploy
+  # manual local (que no se puede hacer desde Windows de forma confiable).
+  deploy:
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # `pnpm run deploy` = build:worker && wrangler deploy.
+      # - build:worker hornea los NEXT_PUBLIC_* reales desde .env.production
+      #   (commiteado, solo valores públicos), no placeholders.
+      # - wrangler deploy sube el Worker. Los secretos del Worker
+      #   (MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, DATABASE_URL, etc.) ya están
+      #   seteados con `wrangler secret put` y PERSISTEN entre deploys.
+      - name: Build worker & deploy to Cloudflare
+        run: pnpm run deploy
+        env:
+          # next build no toca la DB real; placeholders para que no falle.
+          DATABASE_URL: postgresql://placeholder
+          DIRECT_URL: postgresql://placeholder
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
