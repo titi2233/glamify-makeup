@@ -46,6 +46,7 @@ async function main(): Promise<void> {
       createPreference: async () => ({ id: "pref-sim", init_point: "sim", sandbox_init_point: "sim" }),
       quoteShipping: (i) => quoteShipping(i, { getZones: getShippingZonesForQuote, getThreshold: getFreeShippingThreshold }),
       appUrl: APP_URL,
+      isSandboxToken: process.env.MP_ACCESS_TOKEN?.startsWith("TEST-") ?? false,
     },
   );
   const order = await prisma.order.findUnique({ where: { id: orderId } });

@@ -1,5 +1,5 @@
 import { prisma, type PrismaTransactionClient } from "@/lib/prisma";
-import { canTransition } from "@/lib/orders/state-machine";
+import { canTransition, canTransitionShipment } from "@/lib/orders/state-machine";
 import type { ShipmentStatus, ShipmentCarrier, OrderStatus } from "@prisma/client";
 
 /** Datos de envío que carga la admin en el detalle del pedido. */
@@ -51,6 +51,9 @@ export async function upsertShipment(
   await deps.db.$transaction(async (tx) => {
     const existing = await tx.shipment.findUnique({ where: { orderId } });
     if (existing) {
+      if (!canTransitionShipment(existing.status, input.status)) {
+        throw new Error(`No se puede pasar el envío de "${existing.status}" a "${input.status}" directamente.`);
+      }
       await tx.shipment.update({ where: { orderId }, data });
     } else {
       await tx.shipment.create({ data: { orderId, ...data } });

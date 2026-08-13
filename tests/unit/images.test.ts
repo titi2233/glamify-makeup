@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { productImageUrl } from "@/lib/images";
+import { productImageUrl, productImagesPublicBase } from "@/lib/images";
 
 const ORIG = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -44,5 +44,27 @@ describe("productImageUrl", () => {
   it("devuelve null si falta la env (no rompe el render)", () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     expect(productImageUrl("products/abc.jpg")).toBeNull();
+  });
+});
+
+describe("productImagesPublicBase", () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://xyz.supabase.co";
+  });
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = ORIG;
+  });
+
+  it("devuelve la base pública del bucket con barra final — única fuente (antes duplicada en 2 páginas admin)", () => {
+    expect(productImagesPublicBase()).toBe("https://xyz.supabase.co/storage/v1/object/public/product-images/");
+  });
+
+  it('es la MISMA base que usa productImageUrl (no puede desincronizarse: es la misma función)', () => {
+    expect(productImageUrl("products/abc.jpg")).toBe(`${productImagesPublicBase()}products/abc.jpg`);
+  });
+
+  it("devuelve '' si falta la env", () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    expect(productImagesPublicBase()).toBe("");
   });
 });

@@ -25,6 +25,7 @@ function makeDeps(over: Partial<CreateCheckoutDeps> = {}): { deps: CreateCheckou
     createPreference: vi.fn(async () => ({ id: "pref-1", init_point: "https://mp/ip", sandbox_init_point: "https://mp/sbx" })),
     quoteShipping: vi.fn(async () => ({ cost: 2500, free: false, zoneId: "z-amba", source: "zone" as const })),
     appUrl: "https://app.test",
+    isSandboxToken: true,
     now: new Date("2026-06-04T12:00:00Z"),
     ...over,
   };
@@ -54,6 +55,12 @@ describe("createCheckout", () => {
     expect(orderData.status).toBe("pending_payment");
     expect(orderData.items.create).toHaveLength(1);
     expect(orderData.items.create[0]).toMatchObject({ skuSnapshot: "LAB-0001", qty: 2, lineTotal: 6400 });
+  });
+
+  it("con token de producción (isSandboxToken:false) devuelve el init_point real, no el sandbox", async () => {
+    const { deps } = makeDeps({ isSandboxToken: false });
+    const r = await createCheckout(baseInput, deps);
+    expect(r.initPoint).toBe("https://mp/ip");
   });
 
   it("aplica el cupón y descuenta del total", async () => {

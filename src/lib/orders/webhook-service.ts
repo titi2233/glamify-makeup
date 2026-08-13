@@ -2,8 +2,8 @@
 import { prisma, type PrismaTransactionClient } from "@/lib/prisma";
 import { verifyMpSignature } from "@/lib/payments/signature";
 import { getPayment as realGetPayment, mpStatusToPaymentStatus } from "@/lib/payments/mercadopago";
-import { decideWebhookEffects } from "@/lib/payments/webhook-effects";
-import { computeStockDecrements, checkAvailability } from "@/lib/orders/stock";
+import { decideWebhookEffects, paymentStatusAdvances } from "@/lib/payments/webhook-effects";
+import { computeStockDecrements, type Shortage } from "@/lib/orders/stock";
 import { sendEmail as realSendEmail } from "@/lib/email/resend";
 import { orderConfirmationEmail, newOrderAlertEmail, type OrderEmailData } from "@/lib/email/templates";
 import { toNumber } from "@/lib/catalog/pricing";
@@ -122,7 +122,12 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       orderBy: { createdAt: "asc" },
     });
     if (existingPayment) {
-      await tx.payment.update({ where: { id: existingPayment.id }, data: { mpPaymentId: mpId, status: effects.updatePaymentTo, amount, rawPayload: mpPayment as unknown as object } });
+      // Monotonía: un webhook reordenado (ej. "in_process" viejo reintentado después de que ya
+      // llegó "approved") no debe hacer retroceder el status — solo se pisa si avanza o iguala.
+      const nextStatus = paymentStatusAdvances(existingPayment.status, effects.updatePaymentTo)
+        ? effects.updatePaymentTo
+        : existingPayment.status;
+      await tx.payment.update({ where: { id: existingPayment.id }, data: { mpPaymentId: mpId, status: nextStatus, amount, rawPayload: mpPayment as unknown as object } });
     } else {
       await tx.payment.create({ data: { orderId: order.id, provider: "mercadopago", mpPaymentId: mpId, status: effects.updatePaymentTo, amount, rawPayload: mpPayment as unknown as object } });
     }
@@ -133,42 +138,78 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
       const res = await tx.order.updateMany({ where: { id: order.id, status: "pending_payment" }, data: { status: "paid" } });
       wonPaidTransition = res.count === 1;
     } else if (effects.setOrderStatusTo) {
-      await tx.order.update({ where: { id: order.id }, data: { status: effects.setOrderStatusTo } });
+      // Misma guarda atómica que la transición a "paid": precondición sobre el status con el que
+      // se calcularon los `effects` (order.status, leído fuera de la tx). Si otra invocación ya
+      // movió el pedido a otro estado mientras tanto, esta escritura pierde la carrera (count 0)
+      // en vez de pisar ciegamente — evita que un webhook "cancelled"/"refunded" desactualizado
+      // sobrescriba un pedido que ya está "paid".
+      await tx.order.updateMany({ where: { id: order.id, status: order.status }, data: { status: effects.setOrderStatusTo } });
     }
 
     // Efectos de una sola vez: SOLO si este webhook ganó la transición a paid.
     if (wonPaidTransition) {
       const lines = order.items.map(orderItemToLine);
       const decrements = computeStockDecrements(lines);
-      const ids = [...decrements.keys()];
-      const current = await tx.productVariant.findMany({ where: { id: { in: ids } }, select: { id: true, stock: true } });
-      const stockMap = new Map<string, number>((current as Array<{ id: string; stock: number }>).map((v) => [v.id, v.stock]));
-      const avail = checkAvailability(decrements, stockMap);
+      // Update atómico CON precondición de stock real (stock >= qty) por variante — a diferencia
+      // de leer un snapshot con findMany y decrementar después, esto evita que dos pedidos que
+      // compiten por la misma variante lean el mismo stock y ambos decrementen (oversell, stock
+      // negativo). count===0 es la señal real de faltante (reemplaza el chequeo contra el snapshot
+      // stale de checkAvailability).
+      const shortages: Shortage[] = [];
       for (const [variantId, qty] of decrements) {
-        const have = stockMap.get(variantId) ?? 0;
-        const dec = Math.min(have, qty); // no bajar de 0 (oversell)
-        if (dec > 0) await tx.productVariant.update({ where: { id: variantId }, data: { stock: { decrement: dec } } });
+        const res = await tx.productVariant.updateMany({ where: { id: variantId, stock: { gte: qty } }, data: { stock: { decrement: qty } } });
+        if (res.count === 0) shortages.push({ variantId, needed: qty, available: 0 });
       }
-      if (!avail.ok) {
+      if (shortages.length > 0) {
         oversoldLines = order.items
           .filter((it) =>
             it.variantId
-              ? avail.shortages.some((s) => s.variantId === it.variantId)
+              ? shortages.some((s) => s.variantId === it.variantId)
               : // línea de combo: matchea si algún componente está en falta
-                (it.combo?.items.some((ci) => avail.shortages.some((s) => s.variantId === ci.variantId)) ?? false),
+                (it.combo?.items.some((ci) => shortages.some((s) => s.variantId === ci.variantId)) ?? false),
           )
           .map((it) => ({ name: it.variantNameSnapshot ? `${it.productNameSnapshot} (${it.variantNameSnapshot})` : it.productNameSnapshot }));
       }
       await tx.shipment.create({ data: { orderId: order.id, status: "pending", cost: toNumber(order.shippingCost) } });
 
       if (order.couponId) {
-        await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
-        if (order.customerId) {
-          await tx.couponRedemption.upsert({
-            where: { customerId_couponId: { customerId: order.customerId, couponId: order.couponId } },
-            create: { customerId: order.customerId, couponId: order.couponId, redeemedCount: 1, lastRedeemedAt: deps.now ?? new Date() },
-            update: { redeemedCount: { increment: 1 }, lastRedeemedAt: deps.now ?? new Date() },
-          });
+        // TOCTOU: perCustomerLimit/maxUses se validan en el checkout (lectura, antes de pagar), pero
+        // el incremento real pasa acá. Reafirmar de forma atómica (mismo patrón que el stock: update
+        // condicionado al valor leído en este momento) evita que dos pedidos que ganaron la carrera
+        // del checkout con el mismo cupón terminen superando el límite al pagar ambos.
+        const coupon = await tx.coupon.findUnique({ where: { id: order.couponId }, select: { maxUses: true, perCustomerLimit: true } });
+        if (coupon?.maxUses != null) {
+          await tx.coupon.updateMany({ where: { id: order.couponId, usedCount: { lt: coupon.maxUses } }, data: { usedCount: { increment: 1 } } });
+        } else {
+          await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
+        }
+
+        if (order.customerId && coupon) {
+          if (coupon.perCustomerLimit != null) {
+            const res = await tx.couponRedemption.updateMany({
+              where: { customerId: order.customerId, couponId: order.couponId, redeemedCount: { lt: coupon.perCustomerLimit } },
+              data: { redeemedCount: { increment: 1 }, lastRedeemedAt: deps.now ?? new Date() },
+            });
+            if (res.count === 0) {
+              // No había fila todavía (primer uso de esta clienta) → crearla si el límite lo permite.
+              // Si ya existía, es que esta clienta ya está en el límite: no incrementar más (igual que
+              // el stock, "no pasarse" en vez de sobrescribir un límite ya alcanzado).
+              const exists = await tx.couponRedemption.findUnique({
+                where: { customerId_couponId: { customerId: order.customerId, couponId: order.couponId } },
+              });
+              if (!exists && coupon.perCustomerLimit > 0) {
+                await tx.couponRedemption.create({
+                  data: { customerId: order.customerId, couponId: order.couponId, redeemedCount: 1, lastRedeemedAt: deps.now ?? new Date() },
+                });
+              }
+            }
+          } else {
+            await tx.couponRedemption.upsert({
+              where: { customerId_couponId: { customerId: order.customerId, couponId: order.couponId } },
+              create: { customerId: order.customerId, couponId: order.couponId, redeemedCount: 1, lastRedeemedAt: deps.now ?? new Date() },
+              update: { redeemedCount: { increment: 1 }, lastRedeemedAt: deps.now ?? new Date() },
+            });
+          }
         }
       }
     }

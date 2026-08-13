@@ -69,6 +69,8 @@ export interface CreateCheckoutDeps {
   createPreference: typeof realCreatePreference;
   quoteShipping: (input: Parameters<typeof realQuoteShipping>[0]) => Promise<ShippingQuote>;
   appUrl: string;
+  /** true si MP_ACCESS_TOKEN es de sandbox (TEST-...) — decide qué init_point devolver. */
+  isSandboxToken: boolean;
   now?: Date;
 }
 export interface CreateCheckoutResult {
@@ -90,6 +92,7 @@ export function defaultCheckoutDeps(appUrl: string): CreateCheckoutDeps {
     createPreference: realCreatePreference,
     quoteShipping: (input) => realQuoteShipping(input, { getZones: getShippingZonesForQuote, getThreshold: getFreeShippingThreshold }),
     appUrl,
+    isSandboxToken: process.env.MP_ACCESS_TOKEN?.startsWith("TEST-") ?? false,
   };
 }
 
@@ -189,9 +192,8 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
     await tx.payment.update({ where: { id: order.payments[0].id }, data: { mpPreferenceId: preference.id } });
   });
 
-  const isSandbox = process.env.MP_ACCESS_TOKEN?.startsWith("TEST-");
-  const initPoint = isSandbox && preference.sandbox_init_point 
-    ? preference.sandbox_init_point 
+  const initPoint = deps.isSandboxToken && preference.sandbox_init_point
+    ? preference.sandbox_init_point
     : preference.init_point;
 
   return { orderId: order.id, orderNumber: order.orderNumber, initPoint };

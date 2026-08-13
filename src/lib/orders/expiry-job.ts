@@ -22,10 +22,15 @@ export async function runOrderExpiryJob(deps: ExpiryJobDeps): Promise<{ cancelle
     select: { id: true, status: true, createdAt: true },
   });
   const expired = findExpiredOrderIds(orders, deps.now, deps.hours ?? 24);
+  let cancelled = 0;
   for (const id of expired) {
     await deps.db.$transaction(async (tx) => {
-      await tx.order.update({ where: { id }, data: { status: "cancelled" } });
+      // Guarda ATÓMICA (mismo patrón que el webhook de MP): precondición de estado en el where.
+      // Sin esto, un webhook que apruebe el pago en la ventana entre el findMany de arriba y este
+      // update cancelaría un pedido que ya está "paid" — dinero cobrado, pedido marcado cancelado.
+      const res = await tx.order.updateMany({ where: { id, status: "pending_payment" }, data: { status: "cancelled" } });
+      if (res.count === 1) cancelled++;
     });
   }
-  return { cancelled: expired.length };
+  return { cancelled };
 }

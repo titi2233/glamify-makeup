@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canTransition, orderStatusForPayment } from "@/lib/orders/state-machine";
+import { canTransition, orderStatusForPayment, canTransitionShipment } from "@/lib/orders/state-machine";
 
 describe("canTransition", () => {
   it("permite el camino feliz", () => {
@@ -29,5 +29,34 @@ describe("orderStatusForPayment", () => {
     expect(orderStatusForPayment("rejected")).toBeNull();
     expect(orderStatusForPayment("pending")).toBeNull();
     expect(orderStatusForPayment("in_process")).toBeNull();
+  });
+});
+
+describe("canTransitionShipment", () => {
+  it("permite el camino feliz", () => {
+    expect(canTransitionShipment("pending", "ready")).toBe(true);
+    expect(canTransitionShipment("ready", "dispatched")).toBe(true);
+    expect(canTransitionShipment("dispatched", "in_transit")).toBe(true);
+    expect(canTransitionShipment("in_transit", "delivered")).toBe(true);
+  });
+  it("permite 'returned' una vez que ya salió (dispatched/in_transit), no antes", () => {
+    expect(canTransitionShipment("dispatched", "returned")).toBe(true);
+    expect(canTransitionShipment("in_transit", "returned")).toBe(true);
+    expect(canTransitionShipment("pending", "returned")).toBe(false);
+    expect(canTransitionShipment("ready", "returned")).toBe(false);
+  });
+  it("el no-op (mismo status) siempre es válido", () => {
+    expect(canTransitionShipment("pending", "pending")).toBe(true);
+    expect(canTransitionShipment("delivered", "delivered")).toBe(true);
+  });
+  it("rechaza saltar pasos o retroceder", () => {
+    expect(canTransitionShipment("pending", "delivered")).toBe(false);
+    expect(canTransitionShipment("pending", "dispatched")).toBe(false);
+    expect(canTransitionShipment("in_transit", "ready")).toBe(false);
+    expect(canTransitionShipment("delivered", "in_transit")).toBe(false);
+  });
+  it("delivered/returned son terminales", () => {
+    expect(canTransitionShipment("delivered", "returned")).toBe(false);
+    expect(canTransitionShipment("returned", "pending")).toBe(false);
   });
 });

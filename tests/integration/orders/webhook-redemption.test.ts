@@ -16,7 +16,7 @@ function makeDeps(order: WebhookOrder) {
     order: { updateMany: vi.fn(async () => ({ count: 1 })), update: vi.fn() },
     productVariant: { findMany: vi.fn(async () => []), update: vi.fn() },
     shipment: { create: vi.fn(async () => ({})) },
-    coupon: { update: vi.fn(async () => ({})) },
+    coupon: { findUnique: vi.fn(async () => ({ maxUses: null, perCustomerLimit: null })), update: vi.fn(async () => ({})) },
     couponRedemption: { upsert: couponUpsert },
   };
   const deps: ProcessWebhookDeps = {

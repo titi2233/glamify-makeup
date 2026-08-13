@@ -42,9 +42,3 @@ export async function uploadProductImage(file: File): Promise<UploadResult> {
 
   return { path };
 }
-
-/** URL pública del path guardado (el bucket es público). */
-export function productImagePublicUrl(path: string): string {
-  const supabase = createAdminClient();
-  return supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
-}

@@ -25,6 +25,7 @@ function makeDeps(redemptions: number): { deps: CreateCheckoutDeps; createOrder:
     createPreference: vi.fn(async () => ({ id: "pref1", init_point: "http://mp", sandbox_init_point: "http://mp" })) as never,
     quoteShipping: vi.fn(async () => ({ cost: 2500, free: false, source: "zone" as const, zoneId: "z1" })),
     appUrl: "http://localhost:3000",
+    isSandboxToken: true,
     now: new Date("2026-06-06T12:00:00Z"),
   };
   return { deps, createOrder };

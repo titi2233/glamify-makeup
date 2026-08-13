@@ -4,13 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/catalog/pricing";
 import { PageHeader } from "@/components/admin/page-header";
 import { ProductForm, type CategoryOption } from "@/app/admin/(panel)/productos/product-form";
-import { PRODUCT_IMAGES_BUCKET } from "@/lib/admin/products/images";
+import { productImagesPublicBase } from "@/lib/images";
 import type { ProductFormInput } from "@/lib/admin/products/validation";
-
-function publicBase(): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  return `${url}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
-}
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,6 +41,7 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
     seoDescription: product.seoDescription,
     active: product.active,
     variants: product.variants.map((v) => ({
+      id: v.id,
       name: v.name,
       swatchHex: v.swatchHex,
       sku: v.sku,
@@ -66,7 +62,7 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
         title={`Editar: ${product.name}`}
         subtitle="Cambiá datos, precios, stock o variantes."
       />
-      <ProductForm categories={options} publicBase={publicBase()} productId={product.id} initial={initial} />
+      <ProductForm categories={options} publicBase={productImagesPublicBase()} productId={product.id} initial={initial} />
     </div>
   );
 }
