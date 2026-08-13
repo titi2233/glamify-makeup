@@ -77,6 +77,7 @@ La carpeta `blueprints/` contiene 10 documentos aprobados que son la fuente de v
 - Íconos: Lucide (SVG), nada de emojis como íconos
 - Mobile-first, breakpoints: 375 / 768 / 1024 / 1440
 - Touch targets ≥ 44px, contraste ≥ 4.5:1
+- Regla explícita del dueño: tan simple que un niño lo entienda — compradora no técnica, flujos de un paso, nada de opciones "por las dudas"
 
 ## Deploy y CI
 - Deploy: Cloudflare Workers (auto-deploy desde `main`)

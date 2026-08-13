@@ -45,17 +45,29 @@ export async function addToCartAction(input: { variantId?: string; comboId?: str
 }
 
 export async function updateCartItemAction(itemId: string, qty: number): Promise<ActionResult> {
-  await updateItem(itemId, qty);
-  revalidatePath("/", "layout");
-  revalidatePath("/carrito");
-  return { ok: true };
+  try {
+    const cartId = await getCartIdFromCookie();
+    if (!cartId) return { ok: false, error: "No hay un carrito activo." };
+    await updateItem(cartId, itemId, qty);
+    revalidatePath("/", "layout");
+    revalidatePath("/carrito");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo actualizar el carrito." };
+  }
 }
 
 export async function removeCartItemAction(itemId: string): Promise<ActionResult> {
-  await removeItem(itemId);
-  revalidatePath("/", "layout");
-  revalidatePath("/carrito");
-  return { ok: true };
+  try {
+    const cartId = await getCartIdFromCookie();
+    if (!cartId) return { ok: false, error: "No hay un carrito activo." };
+    await removeItem(cartId, itemId);
+    revalidatePath("/", "layout");
+    revalidatePath("/carrito");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo quitar del carrito." };
+  }
 }
 
 export async function applyCouponAction(code: string): Promise<ActionResult> {

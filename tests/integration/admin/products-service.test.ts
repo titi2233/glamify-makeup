@@ -47,10 +47,14 @@ interface FakeOpts {
   existingSkus?: string[];
   slugTaken?: boolean;
   failCreateOnce?: boolean; // simula P2002 en la primera tx.product.create
+  existingVariantIds?: string[]; // variantes que YA tiene el producto en DB (para updateProduct)
+  comboRefs?: string[]; // ids de variante referenciadas por algún ComboItem
 }
 
 function makeDeps(opts: FakeOpts = {}): { deps: CreateProductDeps; tx: any; db: any } {
   let createCalls = 0;
+  const existingVariantIds = opts.existingVariantIds ?? [];
+  const comboRefs = opts.comboRefs ?? [];
   const tx = {
     product: {
       create: vi.fn(async ({ data }: any) => {
@@ -64,8 +68,17 @@ function makeDeps(opts: FakeOpts = {}): { deps: CreateProductDeps; tx: any; db: 
       update: vi.fn(async ({ data }: any) => ({ id: "prod-1", ...data })),
     },
     productVariant: {
-      findMany: vi.fn(async () => (opts.existingSkus ?? []).map((sku) => ({ sku }))),
+      findMany: vi.fn(async ({ where }: any) =>
+        where.productId ? existingVariantIds.map((id) => ({ id })) : (opts.existingSkus ?? []).map((sku) => ({ sku })),
+      ),
+      create: vi.fn(async ({ data }: any) => ({ id: "new-variant-id", ...data })),
+      update: vi.fn(async ({ where, data }: any) => ({ id: where.id, ...data })),
       deleteMany: vi.fn(async () => ({ count: 0 })),
+    },
+    comboItem: {
+      findMany: vi.fn(async ({ where }: any) =>
+        comboRefs.filter((v) => where.variantId.in.includes(v)).map((variantId) => ({ variantId })),
+      ),
     },
   };
   const db = {
@@ -136,12 +149,40 @@ describe("createProduct", () => {
 });
 
 describe("updateProduct", () => {
-  it("actualiza el producto y reemplaza variantes con SKU consistente", async () => {
-    const { deps, tx } = makeDeps({ prefix: "LAB", existingSkus: ["LAB-0001"] });
-    const res = await updateProduct("prod-1", clean({ variants: [variant({ name: "Nueva", sku: "" })] }), deps);
+  it("actualiza una variante existente in-place (no la borra ni la recrea)", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB", existingSkus: ["LAB-0001"], existingVariantIds: ["v1"] });
+    const res = await updateProduct("prod-1", clean({ variants: [variant({ id: "v1", name: "Rojo Nuevo" })] }), deps);
     expect(res.id).toBe("prod-1");
-    expect(tx.productVariant.deleteMany).toHaveBeenCalled();
-    expect(tx.product.update).toHaveBeenCalled();
+    expect(tx.productVariant.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: expect.objectContaining({ name: "Rojo Nuevo" }) });
+    expect(tx.productVariant.create).not.toHaveBeenCalled();
+    expect(tx.productVariant.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("crea una variante nueva (sin id) sin tocar las existentes", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB", existingSkus: ["LAB-0001"], existingVariantIds: ["v1"] });
+    await updateProduct(
+      "prod-1",
+      clean({ variants: [variant({ id: "v1", name: "Rojo" }), variant({ name: "Rosa", sku: "" })] }),
+      deps,
+    );
+    expect(tx.productVariant.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: expect.objectContaining({ name: "Rojo" }) });
+    expect(tx.productVariant.create).toHaveBeenCalledWith({ data: expect.objectContaining({ name: "Rosa", productId: "prod-1" }) });
+    expect(tx.productVariant.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("borra una variante que ya no viene en el form, si ningún combo la referencia", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB", existingSkus: ["LAB-0001"], existingVariantIds: ["v1", "v2"] });
+    await updateProduct("prod-1", clean({ variants: [variant({ id: "v1" })] }), deps); // v2 ya no viene
+    expect(tx.productVariant.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ["v2"] } } });
+  });
+
+  it("bloquea el borrado de una variante que está en un combo (FK ComboItem RESTRICT)", async () => {
+    const { deps, tx } = makeDeps({
+      prefix: "LAB", existingSkus: ["LAB-0001"], existingVariantIds: ["v1", "v2"], comboRefs: ["v2"],
+    });
+    await expect(updateProduct("prod-1", clean({ variants: [variant({ id: "v1" })] }), deps)).rejects.toThrow(/combo/i);
+    expect(tx.productVariant.deleteMany).not.toHaveBeenCalled();
+    expect(tx.product.update).not.toHaveBeenCalled();
   });
 
   it("falla si el slug pertenece a otro producto", async () => {

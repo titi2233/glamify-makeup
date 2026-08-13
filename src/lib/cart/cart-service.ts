@@ -89,15 +89,18 @@ export async function addItem(input: AddItemInput): Promise<void> {
   throw new Error("addItem requiere variantId o comboId.");
 }
 
-/** Actualiza la cantidad de una línea (0 o menos → elimina). */
-export async function updateItem(itemId: string, qty: number): Promise<void> {
-  if (qty <= 0) { await removeItem(itemId); return; }
-  await prisma.cartItem.update({ where: { id: itemId }, data: { qty: Math.floor(qty) } });
+/** Actualiza la cantidad de una línea (0 o menos → elimina). Scopeada a `cartId`: un itemId que no
+ *  pertenece a ese carrito no matchea (evita que una clienta toque el carrito de otra por id). */
+export async function updateItem(cartId: string, itemId: string, qty: number): Promise<void> {
+  if (qty <= 0) { await removeItem(cartId, itemId); return; }
+  const res = await prisma.cartItem.updateMany({ where: { id: itemId, cartId }, data: { qty: Math.floor(qty) } });
+  if (res.count === 0) throw new Error("Esa línea no pertenece a este carrito.");
 }
 
-/** Elimina una línea. */
-export async function removeItem(itemId: string): Promise<void> {
-  await prisma.cartItem.delete({ where: { id: itemId } });
+/** Elimina una línea. Scopeada a `cartId` (mismo motivo que `updateItem`). */
+export async function removeItem(cartId: string, itemId: string): Promise<void> {
+  const res = await prisma.cartItem.deleteMany({ where: { id: itemId, cartId } });
+  if (res.count === 0) throw new Error("Esa línea no pertenece a este carrito.");
 }
 
 import type { CheckoutLineInput } from "@/lib/orders/checkout-service";

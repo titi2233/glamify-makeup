@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decideWebhookEffects } from "@/lib/payments/webhook-effects";
+import { decideWebhookEffects, paymentStatusAdvances } from "@/lib/payments/webhook-effects";
 
 describe("decideWebhookEffects", () => {
   it("approved sobre pending_payment → paga, descuenta, cupón, emails", () => {
@@ -37,5 +37,23 @@ describe("decideWebhookEffects", () => {
     const e = decideWebhookEffects({ currentOrderStatus: "paid", mpStatus: "refunded", hasCoupon: false });
     expect(e.setOrderStatusTo).toBe("refunded");
     expect(e.decrementStock).toBe(false);
+  });
+});
+
+describe("paymentStatusAdvances (monotonía de Payment.status)", () => {
+  it("approved → in_process (un webhook viejo reordenado) NO avanza", () => {
+    expect(paymentStatusAdvances("approved", "in_process")).toBe(false);
+  });
+  it("pending → approved SÍ avanza", () => {
+    expect(paymentStatusAdvances("pending", "approved")).toBe(true);
+  });
+  it("approved → refunded SÍ avanza (reversión siempre se refleja)", () => {
+    expect(paymentStatusAdvances("approved", "refunded")).toBe(true);
+  });
+  it("refunded → approved (webhook viejo tras la reversión) NO avanza", () => {
+    expect(paymentStatusAdvances("refunded", "approved")).toBe(false);
+  });
+  it("mismo status → avanza (idempotente, no bloquea el no-op)", () => {
+    expect(paymentStatusAdvances("approved", "approved")).toBe(true);
   });
 });

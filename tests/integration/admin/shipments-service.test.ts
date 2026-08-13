@@ -9,7 +9,7 @@ const baseInput: ShipmentInput = {
   status: "dispatched",
 };
 
-function makeDeps(over: { orderStatus?: string; existingShipment?: { id: string } | null } = {}) {
+function makeDeps(over: { orderStatus?: string; existingShipment?: { id: string; status: string } | null } = {}) {
   const tx = {
     shipment: {
       findUnique: vi.fn(async () => over.existingShipment ?? null),
@@ -38,13 +38,31 @@ describe("upsertShipment", () => {
     expect(tx.order.update).toHaveBeenCalledWith({ where: { id: "ord-1" }, data: { status: "shipped" } });
   });
 
-  it("actualiza el shipment existente (upsert) sin duplicar", async () => {
-    const { deps, tx } = makeDeps({ orderStatus: "shipped", existingShipment: { id: "shp-1" } });
-    await upsertShipment("ord-1", baseInput, deps);
+  it("actualiza el shipment existente (upsert) sin duplicar — transición ready→dispatched válida", async () => {
+    const { deps, tx } = makeDeps({ orderStatus: "shipped", existingShipment: { id: "shp-1", status: "ready" } });
+    await upsertShipment("ord-1", baseInput, deps); // baseInput.status = "dispatched"
     expect(tx.shipment.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { orderId: "ord-1" }, data: expect.objectContaining({ trackingNumber: "CA123456789AR" }) }),
     );
     expect(tx.shipment.create).not.toHaveBeenCalled();
+  });
+
+  it("permite el no-op (mismo status, solo cambian otros campos)", async () => {
+    const { deps, tx } = makeDeps({ orderStatus: "shipped", existingShipment: { id: "shp-1", status: "dispatched" } });
+    await upsertShipment("ord-1", baseInput, deps); // baseInput.status = "dispatched" también
+    expect(tx.shipment.update).toHaveBeenCalled();
+  });
+
+  it("rechaza saltar pasos (pending directo a delivered, sin pasar por ready/dispatched/in_transit)", async () => {
+    const { deps, tx } = makeDeps({ orderStatus: "shipped", existingShipment: { id: "shp-1", status: "pending" } });
+    await expect(upsertShipment("ord-1", { ...baseInput, status: "delivered" }, deps)).rejects.toThrow(/no se puede/i);
+    expect(tx.shipment.update).not.toHaveBeenCalled();
+  });
+
+  it("rechaza retroceder (in_transit a ready)", async () => {
+    const { deps, tx } = makeDeps({ orderStatus: "shipped", existingShipment: { id: "shp-1", status: "in_transit" } });
+    await expect(upsertShipment("ord-1", { ...baseInput, status: "ready" }, deps)).rejects.toThrow(/no se puede/i);
+    expect(tx.shipment.update).not.toHaveBeenCalled();
   });
 
   it("sin trackingNumber NO mueve el pedido a shipped", async () => {

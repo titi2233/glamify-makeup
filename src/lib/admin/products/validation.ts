@@ -4,6 +4,8 @@ import { isValidSku } from "@/lib/sku";
 export type Validated<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export interface VariantFormInput {
+  /** Id de la fila existente en DB — ausente si es una variante nueva (todavía sin crear). */
+  id?: string;
   name: string;
   swatchHex: string | null;
   sku: string;
@@ -36,6 +38,7 @@ export interface ProductFormInput {
 }
 
 export interface VariantClean {
+  id?: string;
   name: string;
   swatchHex: string | null;
   sku: string;
@@ -113,6 +116,7 @@ export function validateVariant(input: VariantFormInput): Validated<VariantClean
   return {
     ok: true,
     value: {
+      id: input.id,
       name,
       swatchHex,
       sku,

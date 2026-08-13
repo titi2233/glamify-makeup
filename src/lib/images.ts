@@ -11,10 +11,17 @@
  */
 const PRODUCT_IMAGES_BUCKET = "product-images";
 
+/** Base pública del bucket de imágenes de producto (con barra final), o "" sin env configurada.
+ *  Única fuente de esta URL — antes había 2 copias duplicadas de este mismo armado en admin. */
+export function productImagesPublicBase(): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+  return base ? `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/` : "";
+}
+
 export function productImageUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+  const base = productImagesPublicBase();
   if (!base) return null;
-  return `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${path.replace(/^\//, "")}`;
+  return `${base}${path.replace(/^\//, "")}`;
 }

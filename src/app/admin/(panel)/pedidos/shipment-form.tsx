@@ -6,6 +6,7 @@ import { Truck, Save, AlertCircle, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { upsertShipmentAction } from "./actions";
+import { canTransitionShipment } from "@/lib/orders/state-machine";
 import type { ShipmentStatus } from "@prisma/client";
 
 const fieldClass =
@@ -39,6 +40,10 @@ export function ShipmentForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
+
+  // Solo el estado actual + próximos válidos (mismo patrón que OrderStatusControl con canTransition)
+  // — no se puede saltar pasos ni retroceder desde el select.
+  const availableStates = SHIPMENT_STATES.filter((s) => canTransitionShipment(defaults.status, s.value));
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -123,7 +128,7 @@ export function ShipmentForm({
             defaultValue={defaults.status}
             className={fieldClass}
           >
-            {SHIPMENT_STATES.map((s) => (
+            {availableStates.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
