@@ -104,56 +104,79 @@ export function ExitIntent() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side="center">
-        <SheetHeader>
-          <Gift className="mx-auto size-10 text-primary sm:mx-0" aria-hidden />
-          <SheetTitle>Llevate 10% OFF en tu primera compra</SheetTitle>
-          <SheetDescription>
-            Dejanos tu email y te mandamos el código. Sin spam, baja cuando quieras.
-          </SheetDescription>
-        </SheetHeader>
-
-        {!done ? (
-          <form onSubmit={onSubmit} className="mt-4 space-y-3">
-            <div className="space-y-1 text-left">
-              <Label htmlFor="exit-email">Tu email</Label>
-              <Input
-                id="exit-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="vos@ejemplo.com"
-                autoComplete="email"
-              />
+      <SheetContent side="center" className="sm:max-w-lg p-0 overflow-hidden rounded-3xl border border-border/80 bg-card shadow-soft-lg">
+        <div className="grid grid-cols-1 md:grid-cols-12">
+          <div className="hidden md:block md:col-span-5 relative bg-secondary">
+            <img
+              src="/images/exit_modal_visual.jpg"
+              alt="Glamify Makeup Especial"
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 text-white">
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary px-2 py-0.5 rounded-full">
+                Exclusivo
+              </span>
             </div>
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? "Enviando…" : "Quiero mi descuento"}
-            </Button>
-          </form>
-        ) : (
-          <div className="mt-4 space-y-3 text-center">
-            {coupon ? (
-              <>
-                <p className="text-sm text-muted-foreground">Usá este código al pagar:</p>
-                <div className="flex items-center justify-center gap-2">
-                  <code className="rounded-xl border border-border bg-muted px-4 py-2 font-mono text-lg font-bold tracking-wide">
-                    {coupon}
-                  </code>
-                  <Button type="button" variant="outline" size="icon" onClick={copyCode} aria-label="Copiar código">
-                    {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-primary">¡Listo! Te vamos a avisar las novedades. 💕</p>
-            )}
-            <Button type="button" variant="ghost" className="w-full" onClick={() => setOpen(false)}>
-              Seguir comprando
-            </Button>
           </div>
-        )}
+
+          <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center">
+            <SheetHeader className="text-left space-y-2">
+              <div className="inline-flex size-9 items-center justify-center rounded-2xl bg-secondary text-primary">
+                <Gift className="size-4.5" aria-hidden />
+              </div>
+              <SheetTitle className="font-display text-2xl font-bold leading-tight text-foreground">
+                10% OFF en tu primer pedido
+              </SheetTitle>
+              <SheetDescription className="text-xs text-muted-foreground leading-relaxed">
+                Dejanos tu email para recibir tu cupón de bienvenida. Fórmulas limpias, sin spam.
+              </SheetDescription>
+            </SheetHeader>
+
+            {!done ? (
+              <form onSubmit={onSubmit} className="mt-5 space-y-3">
+                <div className="space-y-1.5 text-left">
+                  <Label htmlFor="exit-email" className="text-xs font-semibold text-foreground">Tu correo electrónico</Label>
+                  <Input
+                    id="exit-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ejemplo@correo.com"
+                    autoComplete="email"
+                    className="rounded-xl border-border/80 bg-background/50 focus-visible:ring-primary text-sm h-11"
+                  />
+                </div>
+                {error && <p role="alert" className="text-xs text-destructive font-medium">{error}</p>}
+                <Button type="submit" className="w-full rounded-xl bg-[#161413] text-white hover:bg-neutral-800 h-11 text-xs font-bold shadow-soft" disabled={pending}>
+                  {pending ? "Generando cupón…" : "Obtener mi 10% OFF"}
+                </Button>
+              </form>
+            ) : (
+              <div className="mt-5 space-y-4 text-center">
+                {coupon ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">Tu código de descuento exclusivo:</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <code className="rounded-xl border border-border bg-secondary/80 px-4 py-2 font-mono text-base font-bold tracking-widest text-foreground">
+                        {coupon}
+                      </code>
+                      <Button type="button" variant="outline" size="icon" onClick={copyCode} aria-label="Copiar código" className="rounded-xl size-10">
+                        {copied ? <Check className="size-4 text-emerald-600" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs font-semibold text-primary">¡Listo! Te avisaremos de promociones y novedades. ✨</p>
+                )}
+                <Button type="button" variant="ghost" className="w-full text-xs font-medium text-muted-foreground" onClick={() => setOpen(false)}>
+                  Continuar navegando
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

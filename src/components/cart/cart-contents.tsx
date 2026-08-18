@@ -46,9 +46,20 @@ export async function CartContents() {
       <Separator />
       <CouponInput applied={coupon?.code ?? null} />
       <CartSummary subtotal={subtotal} discount={discount} shippingCost={null} total={total} freeShipping={coupon?.freeShipping} />
-      <div className="grid gap-2">
-        <Button asChild size="lg"><Link href="/checkout">Iniciar compra</Link></Button>
-        <Button asChild variant="outline"><Link href="/carrito">Ver carrito</Link></Button>
+      
+      <div className="grid gap-2 pt-2">
+        <Button asChild size="lg" className="w-full rounded-2xl bg-[#161413] text-white hover:bg-neutral-800 py-6 text-sm font-semibold shadow-soft hover:shadow-soft-lg transition-all">
+          <Link href="/checkout">Iniciar Compra Segura</Link>
+        </Button>
+        <Button asChild variant="outline" className="w-full rounded-2xl border-border/80 text-xs font-semibold hover:bg-secondary">
+          <Link href="/carrito">Ver Resumen Completo</Link>
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 pt-1 text-[11px] text-muted-foreground">
+        <span>🔒 Pago 100% Protegido</span>
+        <span>•</span>
+        <span>✨ Garantía 30 Días</span>
       </div>
     </div>
   );

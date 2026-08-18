@@ -9,6 +9,9 @@ import { ProductGallery } from "@/components/catalog/product-gallery";
 import { PriceTag } from "@/components/catalog/price-tag";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { WishlistHeart } from "@/components/catalog/wishlist-heart";
+import { TrustBadges } from "@/components/catalog/trust-badges";
+import { PdpAccordions } from "@/components/catalog/pdp-accordions";
+import { MobileStickyBuyBar } from "@/components/catalog/mobile-sticky-buy-bar";
 import { CrossSell } from "@/components/catalog/cross-sell";
 import { isWishlisted } from "@/app/(storefront)/cuenta/favoritos/actions";
 import { getApprovedReviews } from "@/lib/reviews/queries";
@@ -97,19 +100,37 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
   );
 
   return (
-    <article className="space-y-6">
+    <article className="space-y-10 pb-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <TrackOnMount event="product_viewed" props={{ productId: product.id, slug: product.slug, name: product.name }} />
+      
       <CatalogBreadcrumbs items={crumbs} />
-      <div className="grid gap-8 lg:grid-cols-2">
-        <ProductGallery images={product.images} name={product.name} />
-        <div className="space-y-5">
-          <header className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">{product.category.name}</p>
-              <h1 className="font-display text-2xl font-bold md:text-3xl">{product.name}</h1>
+
+      {/* 50/50 Desktop Sticky Layout */}
+      <div className="grid gap-10 lg:grid-cols-12 items-start">
+        <div className="lg:col-span-7">
+          <ProductGallery images={product.images} name={product.name} />
+        </div>
+
+        <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-6">
+          <header className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">{product.category.name}</p>
+              <WishlistHeart productId={product.id} initial={wishlisted} />
             </div>
-            <WishlistHeart productId={product.id} initial={wishlisted} />
+            
+            <h1 className="font-display text-2xl font-bold md:text-3xl text-foreground leading-tight">
+              {product.name}
+            </h1>
+
+            {count > 0 && (
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <RatingStars value={average} size="sm" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {average.toFixed(1)} ({count} reseñas)
+                </span>
+              </div>
+            )}
           </header>
 
           <PriceTag
@@ -121,39 +142,55 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
 
           <AddToCart variants={product.variants} />
 
-          {product.description && (
-            <section className="border-t border-border pt-5">
-              <h2 className="mb-2 font-display text-lg">Descripción</h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">{product.description}</p>
-            </section>
-          )}
+          <TrustBadges />
+
+          <PdpAccordions description={product.description} />
         </div>
       </div>
 
-      <section className="border-t border-border pt-6">
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="font-display text-lg">Reseñas</h2>
+      {/* Sección de Reseñas */}
+      <section className="border-t border-border/80 pt-10">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="font-display text-2xl font-bold uppercase tracking-wide">Opiniones de la Comunidad</h2>
+            <p className="text-xs text-muted-foreground">Experiencias reales de clientas verificadas</p>
+          </div>
           {count > 0 && (
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <RatingStars value={average} size="sm" /> {average.toFixed(1)} ({count})
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <RatingStars value={average} size="sm" /> {average.toFixed(1)} ({count} reseñas)
             </span>
           )}
         </div>
 
         {customer && alreadyReviewed ? (
-          <p className="text-sm text-muted-foreground">Ya dejaste tu reseña. ¡Gracias!</p>
+          <p className="text-sm text-muted-foreground bg-secondary/50 rounded-xl p-3">
+            Ya dejaste tu reseña sobre este producto. ¡Muchas gracias por tu recomendación! ✨
+          </p>
         ) : (
           <ReviewForm productId={product.id} slug={product.slug} isLoggedIn={Boolean(customer)} />
         )}
 
-        <div className="mt-4 space-y-3">
-          {reviews.length === 0
-            ? <p className="text-sm text-muted-foreground">Todavía no hay reseñas. ¡Sé la primera!</p>
-            : reviews.map((r) => <ReviewCard key={r.id} review={r} />)}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {reviews.length === 0 ? (
+            <p className="col-span-full text-sm text-muted-foreground rounded-2xl border border-dashed border-border p-6 text-center">
+              Todavía no hay reseñas para este producto. ¡Sé la primera en compartir tu experiencia! ✨
+            </p>
+          ) : (
+            reviews.map((r) => <ReviewCard key={r.id} review={r} />)
+          )}
         </div>
       </section>
 
+      {/* Productos Relacionados */}
       <CrossSell products={related} />
+
+      {/* Barra de Compra Móvil (Thumb-Zone CRO) */}
+      <MobileStickyBuyBar
+        productName={product.name}
+        image={product.images[0]}
+        price={price}
+        variants={product.variants}
+      />
     </article>
   );
 }

@@ -69,11 +69,15 @@ const config: Config = {
         "heading-lg": ["3rem", { lineHeight: "1.05" }], // 48px hero desktop
       },
       boxShadow: {
-        // soft UI (blueprint 02 §4)
-        soft: "0 2px 8px -2px rgba(110, 11, 63, 0.08), 0 4px 16px -4px rgba(255, 46, 147, 0.10)",
-        "soft-lg": "0 8px 32px -8px rgba(255, 46, 147, 0.18)",
-        // glow glam para medallones/CTAs/cards activas del panel
-        glow: "0 14px 34px -12px rgba(255, 46, 147, 0.45)",
+        // soft UI luxury (Rhode / Glossier aesthetic)
+        soft: "0 2px 10px -2px rgba(22, 20, 19, 0.04), 0 4px 16px -4px rgba(201, 138, 118, 0.06)",
+        "soft-lg": "0 10px 30px -10px rgba(22, 20, 19, 0.08), 0 4px 20px -4px rgba(201, 138, 118, 0.12)",
+        // glow glam para medallones/CTAs
+        glow: "0 12px 30px -10px rgba(201, 138, 118, 0.45)",
+      },
+      transitionTimingFunction: {
+        luxury: "cubic-bezier(0.16, 1, 0.3, 1)",
+        spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
       keyframes: {
         "accordion-down": {
@@ -84,16 +88,23 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // entrada suave del panel admin: leve subida + fade (respeta reduced-motion vía globals.css)
+        // entrada suave: leve subida + fade
         "fade-up": {
           from: { opacity: "0", transform: "translateY(12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        // shimmer effect for skeleton loaders
+        shimmer: {
+          "100%": {
+            transform: "translateX(100%)",
+          },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-up": "fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "fade-up": "fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
+        shimmer: "shimmer 2s infinite",
       },
     },
   },

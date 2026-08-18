@@ -35,16 +35,22 @@ export function AddToCart({ variants }: { variants: CatalogVariant[] }) {
     });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {variants.length > 0 && <VariantSwatchSelector variants={variants} onChange={(v) => setVariantId(v.id)} />}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 pt-1">
         <QuantityStepper max={Math.max(1, selected?.stock ?? 99)} onChange={setQty} />
-        <Button size="lg" className="flex-1" onClick={add} disabled={pending || outOfStock}>
+        <Button
+          id="main-pdp-cta"
+          size="lg"
+          className="flex-1 rounded-2xl bg-[#161413] text-white hover:bg-neutral-800 py-6 text-sm font-semibold shadow-soft hover:shadow-soft-lg transition-all"
+          onClick={add}
+          disabled={pending || outOfStock}
+        >
           {pending ? <Loader2 className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
-          {outOfStock ? "Sin stock" : "Agregar al carrito"}
+          <span>{outOfStock ? "Sin stock disponible" : "Agregar al carrito"}</span>
         </Button>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive font-medium">{error}</p>}
     </div>
   );
 }

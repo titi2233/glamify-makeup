@@ -31,14 +31,24 @@ export function OrderBump({ offer }: { offer: BumpOffer | null }) {
     });
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-secondary bg-secondary/30 p-3">
-      <Sparkles className="size-5 shrink-0 text-primary" aria-hidden />
-      <p className="flex-1 text-sm">
-        Sumá <span className="font-semibold">{offer.name}</span> a {formatARS(offer.price)}
-      </p>
-      <Button size="sm" variant="secondary" onClick={add} disabled={pending || added} className="min-h-11 shrink-0">
-        {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : added ? <Check className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
-        {added ? "Agregado" : "Agregar"}
+    <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-secondary/60 p-3.5 shadow-2xs">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs text-primary">
+        <Sparkles className="size-4" aria-hidden />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Completá tu look</p>
+        <p className="truncate text-xs font-semibold text-foreground">
+          {offer.name} · <span className="font-bold text-foreground">{formatARS(offer.price)}</span>
+        </p>
+      </div>
+      <Button
+        size="sm"
+        onClick={add}
+        disabled={pending || added}
+        className="shrink-0 rounded-xl px-3.5 h-9 bg-white text-foreground border border-border hover:bg-neutral-50 text-xs font-semibold shadow-2xs"
+      >
+        {pending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : added ? <Check className="size-3.5 text-emerald-600" aria-hidden /> : <Plus className="size-3.5 text-primary" aria-hidden />}
+        <span>{added ? "Agregado" : "+ Agregar"}</span>
       </Button>
     </div>
   );
