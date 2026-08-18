@@ -40,6 +40,13 @@ export const metadata: Metadata = {
     title: "Glamify Makeup",
     description: "Glam accesible, a precio real.",
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", sizes: "any" },
+    ],
+    apple: [{ url: "/icon.svg" }],
+  },
   robots: { index: true, follow: true },
 };
 
