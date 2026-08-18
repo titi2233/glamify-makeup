@@ -18,7 +18,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
         if (e.key === "Escape") setOpenId(null);
       }}
     >
-      <ul className="flex items-center gap-8">
+      <ul className="flex items-center gap-4 lg:gap-6 flex-wrap">
         {tree.map((cat) => {
           const hasChildren = cat.children.length > 0;
           const isOpen = openId === cat.id;
@@ -38,7 +38,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
               <Link
                 href={`/tienda/${cat.slug}`}
                 aria-expanded={hasChildren ? isOpen : undefined}
-                className="group relative flex items-center py-2 text-[14px] font-medium text-foreground/80 hover:text-primary transition-colors select-none"
+                className="group relative flex items-center py-1.5 text-[13px] lg:text-[14px] font-medium text-foreground/80 hover:text-primary transition-colors whitespace-nowrap select-none"
               >
                 <span>{cat.name}</span>
                 {/* Indicador de barra inferior sutil al hover */}

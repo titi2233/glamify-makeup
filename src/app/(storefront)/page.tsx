@@ -90,7 +90,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {tree.map((cat) => (
             <li key={cat.id}>
               <Link

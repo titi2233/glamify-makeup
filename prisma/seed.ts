@@ -17,31 +17,15 @@ interface SeedCategory {
 }
 
 const CATEGORIES: SeedCategory[] = [
-  {
-    slug: "labios", name: "Labios", skuPrefix: "LAB", order: 0, image: "/images/category_labios.png",
-    children: [
-      { slug: "labiales", name: "Labiales", skuPrefix: "LAB", order: 0 },
-      { slug: "gloss", name: "Gloss", skuPrefix: "GLO", order: 1 },
-    ],
-  },
-  {
-    slug: "ojos", name: "Ojos", skuPrefix: "OJO", order: 1, image: "/images/category_ojos.png",
-    children: [
-      { slug: "mascaras", name: "Máscaras de pestañas", skuPrefix: "MAS", order: 0 },
-      { slug: "sombras", name: "Sombras", skuPrefix: "SOM", order: 1 },
-    ],
-  },
-  {
-    slug: "rostro", name: "Rostro", skuPrefix: "ROS", order: 2, image: "/images/category_rostro.png",
-    children: [
-      { slug: "rubores", name: "Rubores", skuPrefix: "RUB", order: 0 },
-      { slug: "bases", name: "Bases", skuPrefix: "BAS", order: 1 },
-    ],
-  },
-  {
-    slug: "accesorios", name: "Accesorios", skuPrefix: "ACC", order: 3, image: "/images/category_accesorios.png",
-    children: [{ slug: "brochas", name: "Brochas y esponjas", skuPrefix: "BRO", order: 0 }],
-  },
+  { slug: "brochas-y-esponjas", name: "Brochas y Esponjas", skuPrefix: "BRO", order: 0, image: "/images/category_brochas_esponjas.jpg" },
+  { slug: "rubor", name: "Rubor", skuPrefix: "RUB", order: 1, image: "/images/category_rubor.jpg" },
+  { slug: "iluminador", name: "Iluminador", skuPrefix: "ILU", order: 2, image: "/images/category_iluminador.jpg" },
+  { slug: "pestanas", name: "Pestañas", skuPrefix: "PES", order: 3, image: "/images/category_pestanas.jpg" },
+  { slug: "labios", name: "Labios", skuPrefix: "LAB", order: 4, image: "/images/category_labios.jpg" },
+  { slug: "delineador", name: "Delineador", skuPrefix: "DEL", order: 5, image: "/images/category_delineador.jpg" },
+  { slug: "bases-y-correctores", name: "Bases y Correctores", skuPrefix: "BAS", order: 6, image: "/images/category_bases_correctores.jpg" },
+  { slug: "contorno", name: "Contorno", skuPrefix: "CON", order: 7, image: "/images/category_contorno.jpg" },
+  { slug: "otros", name: "Otros", skuPrefix: "OTR", order: 8, image: "/images/category_otros.jpg" },
 ];
 
 interface SeedVariant {
@@ -69,7 +53,7 @@ interface SeedProduct {
 
 const PRODUCTS: SeedProduct[] = [
   {
-    slug: "labial-mate-larga-duracion", name: "Labial Mate Larga Duración", categorySlug: "labiales",
+    slug: "labial-mate-larga-duracion", name: "Labial Mate Larga Duración", categorySlug: "labios",
     description: "Color intenso que dura todo el día, acabado mate aterciopelado y cómodo.",
     basePrice: 3200, compareAtPrice: 3990, cost: 1400, weightGr: 25, isFeatured: true, heroRank: 1, tags: ["mate", "larga duración"],
     images: ["/images/product_lipstick.png"],
@@ -81,7 +65,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "gloss-brillo-humedo", name: "Gloss Brillo Húmedo", categorySlug: "gloss",
+    slug: "gloss-brillo-humedo", name: "Gloss Brillo Húmedo", categorySlug: "labios",
     description: "Brillo espejo no pegajoso con un toque de color. Efecto labios jugosos.",
     basePrice: 2500, cost: 1000, weightGr: 22, isFeatured: true, heroRank: 2, tags: ["brillo"],
     images: ["/images/product_lipstick.png"],
@@ -92,7 +76,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "mascara-volumen-extremo", name: "Máscara de Pestañas Volumen Extremo", categorySlug: "mascaras",
+    slug: "mascara-volumen-extremo", name: "Máscara de Pestañas Volumen Extremo", categorySlug: "pestanas",
     description: "Pestañas con volumen dramático sin grumos. Cepillo de fibras finas.",
     basePrice: 4100, cost: 1800, weightGr: 30, isFeatured: true, heroRank: 3, tags: ["volumen"],
     images: ["/images/product_mascara.png"],
@@ -102,14 +86,14 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "paleta-sombras-glam-12", name: "Paleta de Sombras Glam 12 Tonos", categorySlug: "sombras",
+    slug: "paleta-sombras-glam-12", name: "Paleta de Sombras Glam 12 Tonos", categorySlug: "otros",
     description: "12 tonos mate y shimmer altamente pigmentados para looks de día y noche.",
     basePrice: 6900, compareAtPrice: 8500, cost: 3000, weightGr: 120, isFeatured: true, heroRank: 4, tags: ["paleta", "shimmer"],
     images: ["/images/product_eyeshadow.png"],
     variants: [{ name: "Único", swatchHex: "#C8A27C", stock: 11 }],
   },
   {
-    slug: "rubor-compacto-sedoso", name: "Rubor Compacto Sedoso", categorySlug: "rubores",
+    slug: "rubor-compacto-sedoso", name: "Rubor Compacto Sedoso", categorySlug: "rubor",
     description: "Color natural y difuminable, acabado satinado que ilumina el rostro.",
     basePrice: 2990, cost: 1200, weightGr: 28, tags: ["rubor"],
     images: ["/images/product_blush.png"],
@@ -120,7 +104,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "base-fluida-hd", name: "Base Fluida HD", categorySlug: "bases",
+    slug: "base-fluida-hd", name: "Base Fluida HD", categorySlug: "bases-y-correctores",
     description: "Cobertura media a alta, acabado natural HD de larga duración.",
     basePrice: 5500, cost: 2400, weightGr: 60, tags: ["base", "hd"],
     images: ["/images/product_foundation.png"],
@@ -132,21 +116,21 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "set-brochas-x5", name: "Set de Brochas Profesionales x5", categorySlug: "brochas",
+    slug: "set-brochas-x5", name: "Set de Brochas Profesionales x5", categorySlug: "brochas-y-esponjas",
     description: "5 brochas esenciales de cerda suave para rostro y ojos. Incluye estuche.",
     basePrice: 7800, compareAtPrice: 9900, cost: 3500, weightGr: 200, tags: ["set", "brochas", "order-bump"],
     images: ["/images/product_brushes.png"],
     variants: [{ name: "Rosa", swatchHex: "#FF2E93", stock: 5 }],
   },
   {
-    slug: "delineador-liquido-precision", name: "Delineador Líquido Precisión", categorySlug: "mascaras",
+    slug: "delineador-liquido-precision", name: "Delineador Líquido Precisión", categorySlug: "delineador",
     description: "Punta ultrafina para un trazo preciso. Negro intenso a prueba de smudge.",
     basePrice: 3300, cost: 1300, weightGr: 18, tags: ["delineador"],
     images: ["/images/product_mascara.png"],
     variants: [{ name: "Negro", swatchHex: "#111111", stock: 22 }],
   },
   {
-    slug: "iluminador-liquido-glow", name: "Iluminador Líquido Glow", categorySlug: "rubores",
+    slug: "iluminador-liquido-glow", name: "Iluminador Líquido Glow", categorySlug: "iluminador",
     description: "Glow húmedo de acabado dorado-rosado. Solo o mezclado con la base.",
     basePrice: 4200, cost: 1700, weightGr: 35, tags: ["glow", "iluminador"],
     images: ["/images/product_blush.png"],
@@ -156,7 +140,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "labial-cremoso-nude", name: "Labial Cremoso Nude", categorySlug: "labiales",
+    slug: "labial-cremoso-nude", name: "Labial Cremoso Nude", categorySlug: "labios",
     description: "Textura cremosa hidratante con tonos nude versátiles para todos los días.",
     basePrice: 3000, cost: 1250, weightGr: 24, tags: ["cremoso", "nude"],
     images: ["/images/product_lipstick.png"],
@@ -167,7 +151,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "esponja-maquillaje-blender", name: "Esponja de Maquillaje Blender", categorySlug: "brochas",
+    slug: "esponja-maquillaje-blender", name: "Esponja de Maquillaje Blender", categorySlug: "brochas-y-esponjas",
     description: "Esponja sin látex que difumina la base para un acabado impecable.",
     basePrice: 1800, cost: 600, weightGr: 12, tags: ["esponja", "order-bump"],
     images: ["/images/product_brushes.png"],
@@ -177,7 +161,7 @@ const PRODUCTS: SeedProduct[] = [
     ],
   },
   {
-    slug: "primer-facial-poro-cero", name: "Primer Facial Poro Cero", categorySlug: "bases",
+    slug: "primer-facial-poro-cero", name: "Primer Facial Poro Cero", categorySlug: "bases-y-correctores",
     description: "Prebase matificante que difumina poros y prolonga la duración del maquillaje.",
     basePrice: 4800, cost: 2000, weightGr: 40, tags: ["primer"],
     images: ["/images/product_foundation.png"],
@@ -195,23 +179,12 @@ async function upsertCategories(): Promise<Map<string, string>> {
     });
     idBySlug.set(parent.slug, p.id);
   }
-  for (const parent of CATEGORIES) {
-    for (const child of parent.children ?? []) {
-      const c = await prisma.category.upsert({
-        where: { slug: child.slug },
-        update: { name: child.name, skuPrefix: child.skuPrefix, order: child.order, image: child.image ?? null, parentId: idBySlug.get(parent.slug)!, active: true },
-        create: { slug: child.slug, name: child.name, skuPrefix: child.skuPrefix, order: child.order, image: child.image ?? null, parentId: idBySlug.get(parent.slug)! },
-      });
-      idBySlug.set(child.slug, c.id);
-    }
-  }
   return idBySlug;
 }
 
 function prefixForSlug(slug: string): string {
   for (const parent of CATEGORIES) {
     if (parent.slug === slug) return parent.skuPrefix;
-    for (const child of parent.children ?? []) if (child.slug === slug) return child.skuPrefix;
   }
   throw new Error(`Sin skuPrefix para categoría ${slug}`);
 }
