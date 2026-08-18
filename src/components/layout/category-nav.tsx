@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import type { CategoryNode } from "@/lib/catalog/categories";
 
 /**
@@ -19,7 +18,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
         if (e.key === "Escape") setOpenId(null);
       }}
     >
-      <ul className="flex items-center gap-7">
+      <ul className="flex items-center gap-8">
         {tree.map((cat) => {
           const hasChildren = cat.children.length > 0;
           const isOpen = openId === cat.id;
@@ -39,20 +38,19 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
               <Link
                 href={`/tienda/${cat.slug}`}
                 aria-expanded={hasChildren ? isOpen : undefined}
-                className="group flex items-center gap-1.5 py-2 text-sm font-semibold tracking-wide uppercase text-neutral-800 hover:text-primary transition-colors"
+                className="group relative flex items-center py-2 text-[14px] font-medium text-foreground/80 hover:text-primary transition-colors select-none"
               >
                 <span>{cat.name}</span>
-                {hasChildren && (
-                  <ChevronDown className="size-3.5 opacity-50 transition-transform duration-200 group-hover:rotate-180" aria-hidden />
-                )}
+                {/* Indicador de barra inferior sutil al hover */}
+                <span className="absolute inset-x-0 -bottom-0.5 h-[2px] bg-primary scale-x-0 transition-transform duration-200 ease-out group-hover:scale-x-100" />
               </Link>
               {hasChildren && isOpen && (
-                <ul className="absolute left-0 top-full z-20 min-w-48 rounded-2xl border border-border bg-white/95 backdrop-blur-md p-2 text-foreground shadow-soft-lg animate-fade-up">
+                <ul className="absolute left-1/2 -translate-x-1/2 top-full z-20 min-w-48 rounded-2xl border border-border/80 bg-white/95 backdrop-blur-md p-2 text-foreground shadow-soft-lg animate-fade-up">
                   {cat.children.map((sub) => (
                     <li key={sub.id}>
                       <Link
                         href={`/tienda/${cat.slug}/${sub.slug}`}
-                        className="block rounded-xl px-3.5 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary transition-colors"
+                        className="block rounded-xl px-3.5 py-2 text-xs font-medium text-foreground/80 hover:bg-secondary hover:text-primary transition-colors"
                       >
                         {sub.name}
                       </Link>
