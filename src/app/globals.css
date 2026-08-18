@@ -51,7 +51,18 @@
   body {
     @apply bg-background font-sans text-foreground antialiased selection:bg-primary/20 selection:text-foreground;
     font-size: 16px;
-    background-color: #fbf9f6;
+    background-image: url("/images/bg-pattern-mobile.png");
+    background-repeat: repeat;
+    background-size: 400px auto;
+    background-attachment: fixed;
+    background-color: #fbfbfb;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      background-image: url("/images/bg-pattern-desktop.png");
+      background-size: 700px auto;
+    }
   }
 
   h1,
