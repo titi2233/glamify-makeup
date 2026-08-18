@@ -41,11 +41,11 @@ export function Logo({ size = "md", className, showSubtitle = true }: LogoProps)
       {showSubtitle && (
         <span
           className={cn(
-            "font-sans font-medium tracking-[0.4em] uppercase text-muted-foreground group-hover:text-primary transition-colors pl-[0.4em]",
+            "font-sans font-bold tracking-[0.38em] uppercase text-primary transition-colors pl-[0.38em]",
             size === "sm" && "text-[8px] mt-0.5",
-            size === "md" && "text-[9px] mt-1",
-            size === "lg" && "text-[11px] mt-1.5",
-            size === "xl" && "text-xs mt-2"
+            size === "md" && "text-[10px] mt-1",
+            size === "lg" && "text-xs mt-1.5",
+            size === "xl" && "text-sm mt-2"
           )}
         >
           MAKEUP

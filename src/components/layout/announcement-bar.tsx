@@ -30,7 +30,7 @@ export function AnnouncementBar() {
           key={index}
           className="inline-flex items-center justify-center gap-2 text-xs md:text-sm font-medium tracking-wide animate-fade-up"
         >
-          <Icon className="size-3.5 text-[#D49B88] shrink-0" aria-hidden="true" />
+          <Icon className="size-3.5 text-primary shrink-0" aria-hidden="true" />
           <span>{current.text}</span>
         </div>
       </div>
