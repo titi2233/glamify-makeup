@@ -24,6 +24,7 @@
     "db:cleanup": "tsx --env-file=.env prisma/cleanup-seed.ts",
     "set:whatsapp": "tsx --env-file=.env prisma/set-whatsapp.ts",
     "setup:storage": "tsx scripts/setup-storage.ts",
+    "catalog:import": "tsx --env-file=.env scripts/import-glamify-catalog.ts",
     "admin:create": "tsx --env-file=.env scripts/create-admin.ts",
     "customer:create": "tsx --env-file=.env scripts/create-customer.ts",
     "sim:webhook": "tsx --env-file=.env scripts/simulate-mp-webhook.ts",

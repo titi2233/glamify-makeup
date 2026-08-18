@@ -26,19 +26,19 @@ export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
   const { openCart } = useCartUI();
 
   return (
-    <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background md:hidden">
+    <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-30 border-t border-border/80 bg-white/95 backdrop-blur-md md:hidden">
       <ul className="grid grid-cols-5">
         {ITEMS.map((item) => {
           const isCart = item.label === "Carrito";
           const active = item.enabled && (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href));
           const Icon = item.icon;
           const content = (
-            <span className={cn("relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px]", active ? "text-primary-hover" : "text-muted-foreground")}>
-              <Icon className="size-5" aria-hidden />
+            <span className={cn("relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors", active ? "text-primary font-bold" : "text-muted-foreground")}>
+              <Icon className={cn("size-5 transition-transform", active && "scale-110")} aria-hidden />
               {isCart && cartCount > 0 && (
-                <span className="absolute right-1/4 top-1.5 grid min-w-4 place-items-center rounded-full bg-primary-hover px-1 text-[10px] font-bold text-primary-foreground tabular-nums">{cartCount}</span>
+                <span className="absolute right-1/4 top-1.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-white tabular-nums shadow-xs">{cartCount}</span>
               )}
-              {item.label}
+              <span>{item.label}</span>
             </span>
           );
 
@@ -56,7 +56,7 @@ export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
               {item.enabled ? (
                 <Link href={item.href} aria-current={active ? "page" : undefined}>{content}</Link>
               ) : (
-                <span aria-disabled="true" title="Próximamente" className="cursor-not-allowed opacity-50">
+                <span aria-disabled="true" title="Próximamente" className="cursor-not-allowed opacity-40">
                   {content}<span className="sr-only">Próximamente</span>
                 </span>
               )}

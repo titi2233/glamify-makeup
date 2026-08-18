@@ -6,10 +6,7 @@ import { ChevronDown } from "lucide-react";
 import type { CategoryNode } from "@/lib/catalog/categories";
 
 /**
- * Nav de categorías con submenús. Estado único `openId`: solo un dropdown abierto
- * a la vez (abrir uno cierra el otro), tanto por hover como por foco de teclado.
- * Evita la superposición que causaba `group-focus-within` (categoría clickeada
- * quedaba abierta mientras el hover abría otra).
+ * Nav de categorías con submenús estilo editorial.
  */
 export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -22,7 +19,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
         if (e.key === "Escape") setOpenId(null);
       }}
     >
-      <ul className="flex items-center gap-6">
+      <ul className="flex items-center gap-7">
         {tree.map((cat) => {
           const hasChildren = cat.children.length > 0;
           const isOpen = openId === cat.id;
@@ -42,18 +39,20 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
               <Link
                 href={`/tienda/${cat.slug}`}
                 aria-expanded={hasChildren ? isOpen : undefined}
-                className="flex items-center gap-1 py-2 text-sm font-medium hover:text-primary"
+                className="group flex items-center gap-1.5 py-2 text-sm font-semibold tracking-wide uppercase text-neutral-800 hover:text-primary transition-colors"
               >
-                {cat.name}
-                {hasChildren && <ChevronDown className="size-4 opacity-60" aria-hidden />}
+                <span>{cat.name}</span>
+                {hasChildren && (
+                  <ChevronDown className="size-3.5 opacity-50 transition-transform duration-200 group-hover:rotate-180" aria-hidden />
+                )}
               </Link>
               {hasChildren && isOpen && (
-                <ul className="absolute left-0 top-full z-20 min-w-44 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-soft-lg">
+                <ul className="absolute left-0 top-full z-20 min-w-48 rounded-2xl border border-border bg-white/95 backdrop-blur-md p-2 text-foreground shadow-soft-lg animate-fade-up">
                   {cat.children.map((sub) => (
                     <li key={sub.id}>
                       <Link
                         href={`/tienda/${cat.slug}/${sub.slug}`}
-                        className="block rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                        className="block rounded-xl px-3.5 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary transition-colors"
                       >
                         {sub.name}
                       </Link>

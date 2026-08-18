@@ -11,11 +11,14 @@ export function CartButton({ count, className }: { count: number; className?: st
       type="button"
       onClick={openCart}
       aria-label={`Carrito${count > 0 ? ` (${count})` : ""}`}
-      className={cn("relative grid size-11 place-items-center rounded-full hover:bg-muted", className)}
+      className={cn(
+        "relative grid size-11 place-items-center rounded-full text-neutral-800 hover:text-primary hover:bg-muted transition-colors",
+        className
+      )}
     >
       <ShoppingBag className="size-5" aria-hidden />
       {count > 0 && (
-        <span className="absolute right-1 top-1 grid min-w-5 place-items-center rounded-full bg-primary-hover px-1 text-[11px] font-bold text-primary-foreground tabular-nums">
+        <span className="absolute right-1 top-1 grid min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-bold text-white tabular-nums shadow-xs">
           {count}
         </span>
       )}

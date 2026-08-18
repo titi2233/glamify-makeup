@@ -4,44 +4,43 @@
 
 @layer base {
   :root {
-    /* === Glamify Makeup — tokens (blueprint 02 §2) ===
-       Light mode only (girly-clean, sin dark mode por ahora). */
-    --background: 0 0% 100%; /* #FFFFFF */
-    --foreground: 328 82% 24%; /* #6E0B3F vino oscuro */
+    /* === Glamify Makeup — Editorial Luxury Tokens === */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%; /* #1A1A1A negro ónix */
 
     --card: 0 0% 100%;
-    --card-foreground: 328 82% 24%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 328 82% 24%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 331 100% 59%; /* #FF2E93 rosa eléctrico */
-    --primary-hover: 331 76% 50%; /* #E01E7D */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --primary: 328 100% 45%; /* #E6007A magenta / frambuesa del logo */
+    --primary-hover: 328 95% 38%; /* #C20067 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 328 100% 81%; /* #FF9ED1 rosa suave */
-    --secondary-foreground: 328 82% 24%;
+    --secondary: 330 30% 96%; /* #FAF5F7 porcelana rosa suave */
+    --secondary-foreground: 0 0% 15%;
 
-    --accent: 258 90% 66%; /* #8B5CF6 lavanda (pop opcional) */
+    --accent: 328 100% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --muted: 324 60% 96%; /* #FBEFF6 */
-    --muted-foreground: 328 25% 45%;
+    --muted: 330 15% 96%; /* #F8F5F6 */
+    --muted-foreground: 0 0% 42%; /* #6B6B6B */
 
     --destructive: 0 72% 51%; /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 70% 26%; /* verde disponible (oscurecido para contraste AA sobre tint) */
+    --success: 152 70% 26%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%; /* #F59E0B ámbar bajo stock */
+    --warning: 38 92% 50%;
     --warning-foreground: 28 80% 16%;
 
-    --border: 326 84% 90%; /* #FBCFE8 */
-    --input: 326 84% 90%;
-    --ring: 331 100% 59%; /* focus rosa */
+    --border: 330 10% 91%; /* #ECE6E9 ultra fino */
+    --input: 330 10% 91%;
+    --ring: 328 100% 45%;
 
-    --surface-alt: 330 100% 98%; /* #FFF5FA secciones alternas */
+    --surface-alt: 330 20% 98%;
 
-    --radius: 0.75rem; /* botones ~12px; cards usan rounded-2xl (16px) */
+    --radius: 0.75rem;
   }
 }
 
@@ -51,74 +50,90 @@
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
-    /* body 16px mínimo en mobile (evita auto-zoom iOS) */
     font-size: 16px;
+    background-image: url("/images/bg-pattern-mobile.png");
+    background-repeat: repeat;
+    background-size: 400px auto;
+    background-attachment: fixed;
+    background-color: #fbfbfb;
   }
+
+  @media (min-width: 768px) {
+    body {
+      background-image: url("/images/bg-pattern-desktop.png");
+      background-size: 700px auto;
+    }
+  }
+
   h1,
   h2,
   h3,
   h4 {
     @apply font-display;
   }
-  /* Números tabulares para precios/totales (blueprint 02 §3) */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-  /* Skip-link (a11y): oculto hasta recibir foco por teclado */
   .skip-link {
     position: absolute;
     left: -9999px;
     top: 0;
     z-index: 100;
     padding: 0.5rem 1rem;
-    background: hsl(var(--primary-hover));
+    background: hsl(var(--primary));
     color: #fff;
     border-radius: 0 0 0.5rem 0;
   }
-  /* Solo visible con foco de teclado (no cuando el router le pasa foco tras un click). */
   .skip-link:focus-visible {
     left: 0;
   }
 }
 
 @layer utilities {
-  /* === Panel admin — atmósfera "Glam Studio" ===
-     Fondo con glows rosados suaves sobre casi-blanco: da profundidad sin pelear
-     con el contenido ni romper contraste (todo el texto sigue sobre tarjetas blancas). */
+  /* Fondo con patrón cosmético suave */
+  .bg-cosmetic-pattern {
+    background-image: url("/images/bg-pattern-desktop.png");
+    background-repeat: repeat;
+    background-size: 600px auto;
+  }
+
+  /* Tarjeta blanca pura con elevación moderna */
+  .card-luxury {
+    background-color: #ffffff;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.04), 0 8px 24px -6px rgba(230, 0, 122, 0.05);
+  }
+
+  /* Atmósfera del panel admin */
   .admin-surface {
-    background-color: hsl(330 100% 99%);
+    background-color: #faf8f9;
     background-image:
-      radial-gradient(48rem 36rem at 100% -8%, hsl(331 100% 59% / 0.08), transparent 60%),
-      radial-gradient(40rem 32rem at -8% 6%, hsl(328 100% 81% / 0.12), transparent 55%),
-      radial-gradient(46rem 46rem at 50% 118%, hsl(258 90% 66% / 0.06), transparent 60%);
+      radial-gradient(48rem 36rem at 100% -8%, hsl(328 100% 45% / 0.06), transparent 60%),
+      radial-gradient(40rem 32rem at -8% 6%, hsl(330 100% 85% / 0.10), transparent 55%);
     background-attachment: fixed;
   }
 
-  /* Medallón de ícono con degradé de marca + glow (stat cards, empty states, headers). */
   .icon-medallion {
-    background-image: linear-gradient(135deg, hsl(331 100% 59%), hsl(328 100% 72%));
-    color: hsl(var(--primary-foreground));
-    box-shadow: 0 8px 18px -6px hsl(331 100% 59% / 0.55);
+    background-image: linear-gradient(135deg, hsl(328 100% 45%), hsl(328 85% 60%));
+    color: #ffffff;
+    box-shadow: 0 8px 18px -6px hsl(328 100% 45% / 0.45);
   }
 
-  /* Texto con degradé glam para números/títulos destacados. */
   .text-glam {
-    background-image: linear-gradient(120deg, hsl(331 100% 52%), hsl(328 90% 62%));
+    background-image: linear-gradient(120deg, hsl(0 0% 10%), hsl(328 100% 45%));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  /* Card del panel: leve elevación al hover (las cards del storefront no la usan). */
   .admin-card {
     transition: transform 200ms ease-out, box-shadow 200ms ease-out;
   }
   .admin-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 28px -10px rgba(255, 46, 147, 0.28);
+    box-shadow: 0 10px 28px -10px rgba(230, 0, 122, 0.20);
   }
 
-  /* Escalonado de entrada: cada hijo entra un pelín después que el anterior. */
   .stagger > * {
     animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -137,7 +152,6 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-  /* Sin movimiento: las cards no se levantan y la entrada no desplaza. */
   .admin-card:hover {
     transform: none;
   }
