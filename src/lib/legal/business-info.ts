@@ -4,8 +4,8 @@ export const PLACEHOLDER_PREFIX = "[COMPLETAR";
 
 export const businessInfo = {
   legalName: "Glamify Makeup",
-  taxId: "No aplica (Emprendimiento local)",
-  taxCondition: "Emprendedor",
+  taxId: "27-44380532-5",
+  taxCondition: "Monotributista Social",
   address: "Luján, Buenos Aires, Argentina",
   email: "gglamifymakeup@gmail.com",
   // El nº de WhatsApp se sirve desde Setting.whatsappNumber (DB); no duplicar acá.
