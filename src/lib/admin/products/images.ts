@@ -34,10 +34,9 @@ export async function uploadProductImage(file: File): Promise<UploadResult> {
   const path = `products/${crypto.randomUUID()}.${ext}`;
 
   const supabase = createAdminClient();
-  const bytes = new Uint8Array(await file.arrayBuffer());
   const { error } = await supabase.storage
     .from(PRODUCT_IMAGES_BUCKET)
-    .upload(path, bytes, { contentType: file.type, upsert: false });
+    .upload(path, file, { contentType: file.type, upsert: false });
   if (error) throw new Error(`No se pudo subir la imagen: ${error.message}`);
 
   return { path };
