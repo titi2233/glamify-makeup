@@ -41,7 +41,7 @@ export function SiteFooter() {
             <Logo size="sm" />
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
-            Maquillaje y accesorios con fórmulas pensadas para vos. Envíos seguros a todo el país.
+            Envíos seguros a todo el país. Los mejores productos y tendencias para resaltar tu belleza.
           </p>
         </div>
         {columns.map((col) => (

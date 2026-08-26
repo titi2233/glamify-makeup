@@ -16,17 +16,12 @@ const PROPS = [
     title: "3 Cuotas Sin Interés",
     description: "Pagá de forma segura con Mercado Pago y todas las tarjetas de crédito.",
   },
-  {
-    icon: ShieldCheck,
-    title: "Garantía de Tono",
-    description: "Si no es tu tono perfecto, nuestro equipo te asiste para el cambio sin costo.",
-  },
 ];
 
 export function ValueProps() {
   return (
     <section className="rounded-3xl border border-border/80 bg-white/70 backdrop-blur-md p-6 md:p-8 shadow-soft">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 lg:grid-cols-3">
         {PROPS.map((p) => {
           const Icon = p.icon;
           return (

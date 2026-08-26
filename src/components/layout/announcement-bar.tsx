@@ -6,7 +6,6 @@ import { Sparkles, Truck, CreditCard, ShieldCheck } from "lucide-react";
 const MESSAGES = [
   { icon: Truck, text: "Envío gratis a todo el país en compras mayores a $47.500" },
   { icon: CreditCard, text: "3 cuotas sin interés con todas las tarjetas" },
-  { icon: Sparkles, text: "Garantía de Tono: 100% satisfacción en tu compra" },
   { icon: ShieldCheck, text: "Fórmulas Cruelty-Free y Testeadas Dermatológicamente" },
 ];
 

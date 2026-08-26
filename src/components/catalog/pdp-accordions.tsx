@@ -1,4 +1,4 @@
-import { Sparkles, HelpCircle, FileText, Truck } from "lucide-react";
+import { Sparkles, Truck } from "lucide-react";
 
 interface PdpAccordionsProps {
   description?: string | null;
@@ -32,54 +32,12 @@ export function PdpAccordions({ description }: PdpAccordionsProps) {
         </div>
       </details>
 
-      {/* 2. Modo de Aplicación */}
-      <details className="group py-3.5">
-        <summary className="flex cursor-pointer list-none items-center justify-between font-sans text-sm font-semibold text-foreground select-none">
-          <span className="flex items-center gap-2">
-            <HelpCircle className="size-4 text-primary" />
-            <span>Modo de Aplicación & Tips Pro</span>
-          </span>
-          <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
-            ▼
-          </span>
-        </summary>
-        <div className="mt-3 space-y-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          <p>
-            <strong>Para un acabado sutil de día:</strong> Aplicá una pequeña cantidad sobre el dorso de la mano y difuminá con la yema de los dedos o brocha suave desde el centro hacia afuera.
-          </p>
-          <p>
-            <strong>Para máxima intensidad o noche:</strong> Construí capas progresivas hasta lograr la cobertura y el tono deseado.
-          </p>
-        </div>
-      </details>
-
-      {/* 3. Ingredientes */}
-      <details className="group py-3.5">
-        <summary className="flex cursor-pointer list-none items-center justify-between font-sans text-sm font-semibold text-foreground select-none">
-          <span className="flex items-center gap-2">
-            <FileText className="size-4 text-primary" />
-            <span>Ingredientes & Transparencia</span>
-          </span>
-          <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
-            ▼
-          </span>
-        </summary>
-        <div className="mt-3 space-y-2 text-xs text-muted-foreground leading-relaxed">
-          <p>
-            Formulado sin parabenos, sulfatos ni ftalatos. Contiene micro-pigmentos minerales purificados, vitamina E y emolientes botánicos ligeros.
-          </p>
-          <p className="text-[11px] text-muted-foreground/80">
-            Aprobado por ANMAT. Apto para todo tipo de pieles, incluidas las sensibles.
-          </p>
-        </div>
-      </details>
-
-      {/* 4. Envíos y Garantía */}
+      {/* 2. Envíos y Medios de Pago */}
       <details className="group py-3.5">
         <summary className="flex cursor-pointer list-none items-center justify-between font-sans text-sm font-semibold text-foreground select-none">
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
-            <span>Envíos, Medios de Pago & Cambios</span>
+            <span>Envíos & Medios de Pago</span>
           </span>
           <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
             ▼
@@ -90,7 +48,7 @@ export function PdpAccordions({ description }: PdpAccordionsProps) {
             <strong>Envío gratis:</strong> En compras superiores a $47.500 a cualquier punto del país vía Correo Argentino.
           </p>
           <p>
-            <strong>Garantía de tono:</strong> Si al recibirlo notas que no es tu tono perfecto, te ayudamos a cambiarlo de inmediato.
+            <strong>Medios de pago:</strong> Hasta 3 cuotas sin interés con todas las tarjetas de crédito y débito a través de Mercado Pago.
           </p>
         </div>
       </details>

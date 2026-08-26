@@ -52,3 +52,7 @@ coverage/
 
 # Claude agent temporary files
 .claude/
+
+# Antigravity agent local configs
+.agents/
+
