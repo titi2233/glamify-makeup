@@ -1,4 +1,4 @@
-import { ShieldCheck, Truck, CreditCard, Sparkles } from "lucide-react";
+import { Truck, CreditCard, Sparkles } from "lucide-react";
 
 const PROPS = [
   {

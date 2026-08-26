@@ -42,12 +42,12 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
             <Button asChild size="lg" className="bg-[#161413] text-white hover:bg-neutral-800 rounded-2xl px-8 py-6 text-sm font-semibold shadow-soft hover:shadow-soft-lg transition-all">
               <Link href="/tienda" className="flex items-center gap-2">
-                <span>Quiero ver todo</span>
+                <span>Explorar Catálogo</span>
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="rounded-2xl px-6 py-6 text-sm font-semibold border-border/80 hover:bg-secondary">
-              <Link href="/tienda?filter=featured">Ver favoritos</Link>
+              <Link href="/tienda?filter=offers">Ver Novedades &amp; Ofertas</Link>
             </Button>
           </div>
 
