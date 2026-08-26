@@ -13,8 +13,16 @@ export interface CronEnv {
 
 /** Construye deps reales para los jobs del cron desde el `env` del Worker. */
 export function buildCronDeps(env: CronEnv): { abandoned: AbandonedJobDeps; expiry: ExpiryJobDeps } {
+  let ClientClass: typeof PrismaClient;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ClientClass = require("@prisma/client/wasm").PrismaClient;
+  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ClientClass = require("@prisma/client").PrismaClient;
+  }
   const adapter = new PrismaPg({ connectionString: env.DATABASE_URL ?? process.env.DATABASE_URL });
-  const db = new PrismaClient({ adapter });
+  const db = new ClientClass({ adapter });
   const now = new Date();
   const appUrl = env.NEXT_PUBLIC_APP_URL ?? "https://glamifymakeup.site";
   const sendEmail = (input: SendEmailInput) =>

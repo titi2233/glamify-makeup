@@ -52,6 +52,21 @@ function resolveConnectionString(): string {
   return url.replace("?pgbouncer=true", "");
 }
 
+function getPrismaClientConstructor(): typeof PrismaClient {
+  try {
+    // Si estamos en Cloudflare Workers / workerd runtime
+    if (typeof (globalThis as unknown as { WebSocketPair?: unknown }).WebSocketPair !== "undefined" || !(process as unknown as { versions?: { node?: string } }).versions?.node) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      return require("@prisma/client/wasm").PrismaClient;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("@prisma/client").PrismaClient;
+  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("@prisma/client").PrismaClient;
+  }
+}
+
 /**
  * Cliente Prisma por-request. `cache()` de React lo memoiza dentro de UN request
  * (dedupe en Server Components / Server Actions / Route Handlers) y NUNCA entre
@@ -62,11 +77,12 @@ function resolveConnectionString(): string {
  * (no hace falta importar `pg` ni `new Pool`). Mismo patrón que el cron.
  */
 export const getDb = cache((): PrismaClient => {
+  const Client = getPrismaClientConstructor();
   const adapter = new PrismaPg({ connectionString: resolveConnectionString() });
-  return new PrismaClient({
+  return new Client({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
+  }) as PrismaClient;
 });
 
 /**
