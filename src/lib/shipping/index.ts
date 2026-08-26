@@ -2,13 +2,22 @@
 // Es server por importar prisma indirectamente; ningún client component lo importa.
 import { round2 } from "@/lib/money";
 import { matchZone, isFreeShipping, methodFactor, orderWeightGr, type Zone } from "@/lib/shipping/quote";
-import { quoteZipnova, type ZipnovaQuote } from "@/lib/shipping/zipnova";
 import type { CartLine } from "@/lib/cart/types";
+
+/** Opción ganadora normalizada de un proveedor de cotización en vivo (forma genérica, no atada a un vendor). */
+export interface LiveQuote {
+  /** Precio final con impuestos, en ARS. Es lo que se le cobra a la clienta. */
+  cost: number;
+  /** Operador que gana la cotización (ej. "OCA", "Correo Argentino"). */
+  carrier: string;
+  /** Fecha estimada de entrega (ISO 8601) o null si el proveedor no la informa. */
+  estimatedDelivery: string | null;
+}
 
 export interface QuoteShippingInput {
   cp: string;
   province?: string | null;
-  /** Localidad: la API de Zipnova la exige junto con la provincia. Sin ella cae a zonas. */
+  /** Localidad: algunos proveedores en vivo la exigen junto con la provincia. Sin ella cae a zonas. */
   city?: string | null;
   method: "domicilio" | "sucursal";
   lines: CartLine[];
@@ -18,7 +27,7 @@ export interface ShippingQuote {
   cost: number;
   free: boolean;
   zoneId: string | null;
-  source: "free" | "zipnova" | "zone" | "none";
+  source: "free" | "live" | "zone" | "none";
   /** Sólo con cotización en vivo: operador y fecha estimada. */
   carrier?: string;
   estimatedDelivery?: string | null;
@@ -33,14 +42,19 @@ export interface QuoteShippingDeps {
     pesoGr: number;
     metodo: "domicilio" | "sucursal";
     valorDeclarado: number;
-  }) => Promise<ZipnovaQuote | null>;
+  }) => Promise<LiveQuote | null>;
 }
 
-/** Orquesta el costo de envío: gratis por umbral → Zipnova en vivo → tabla de zonas. */
+// Sin proveedor en vivo por defecto (ver docs/decisions/0001-shipping-provider.md: Zipnova
+// cancelado por markup ~2x vs. costo real; MiCorreo directo pendiente de credenciales de API).
+// Mientras tanto, todo pedido resuelve por la tabla de zonas de abajo.
+const NO_LIVE_QUOTE = async () => null;
+
+/** Orquesta el costo de envío: gratis por umbral → cotización en vivo (si se inyecta un proveedor) → tabla de zonas. */
 export async function quoteShipping(input: QuoteShippingInput, deps: QuoteShippingDeps = {}): Promise<ShippingQuote> {
   const getZones = deps.getZones ?? (async () => []);
   const getThreshold = deps.getThreshold ?? (async () => 0);
-  const liveQuote = deps.liveQuote ?? quoteZipnova;
+  const liveQuote = deps.liveQuote ?? NO_LIVE_QUOTE;
 
   const threshold = await getThreshold();
   if (isFreeShipping(input.subtotal, threshold)) {
@@ -57,14 +71,14 @@ export async function quoteShipping(input: QuoteShippingInput, deps: QuoteShippi
     metodo: input.method,
     valorDeclarado: input.subtotal,
   });
-  // Sin methodFactor: Zipnova ya cotiza domicilio y sucursal por separado con su
+  // Sin methodFactor: un proveedor en vivo cotiza domicilio y sucursal por separado con su
   // precio real. Aplicarlo encima descontaría dos veces.
   if (live) {
     return {
       cost: round2(live.cost),
       free: false,
       zoneId: null,
-      source: "zipnova",
+      source: "live",
       carrier: live.carrier,
       estimatedDelivery: live.estimatedDelivery,
     };
