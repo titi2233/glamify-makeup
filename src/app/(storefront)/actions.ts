@@ -113,14 +113,14 @@ export interface QuoteResult extends ActionResult {
   free?: boolean;
   source?: string;
 }
-export async function quoteShippingAction(input: { cp: string; province?: string; method: "domicilio" | "sucursal" }): Promise<QuoteResult> {
+export async function quoteShippingAction(input: { cp: string; province?: string; city?: string; method: "domicilio" | "sucursal" }): Promise<QuoteResult> {
   if (!/^\d{4}$/.test(input.cp)) return { ok: false, error: "CP inválido (4 dígitos)." };
   const cartId = await getCartIdFromCookie();
   const { lines } = await loadCart(cartId);
   if (lines.length === 0) return { ok: false, error: "El carrito está vacío." };
   const subtotal = cartSubtotal(lines);
   const quote = await quoteShipping(
-    { cp: input.cp, province: input.province ?? null, method: input.method, lines, subtotal },
+    { cp: input.cp, province: input.province ?? null, city: input.city ?? null, method: input.method, lines, subtotal },
     { getZones: getShippingZonesForQuote, getThreshold: getFreeShippingThreshold },
   );
   return { ok: true, cost: quote.cost, free: quote.free, source: quote.source };

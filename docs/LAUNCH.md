@@ -50,7 +50,15 @@ Variables públicas (`NEXT_PUBLIC_*`) van en `wrangler.jsonc → [vars]` o dashb
 
 - **Resend:** verificar el dominio `glamifymakeup.site` (registros SPF/DKIM) para entregabilidad.
 - **Mercado Pago:** configurar la URL del webhook de PROD apuntando a `https://glamifymakeup.site/api/webhooks/mercadopago` y excluir efectivo (Checkout Pro).
-- **MiCorreo:** si se activa la cotización en vivo, cargar credenciales (hoy hay fallback a tabla de zonas en `lib/shipping/correo.ts`).
+- **Zipnova (envíos):** cargar los secrets `ZIPNOVA_API_KEY`, `ZIPNOVA_API_SECRET` y `ZIPNOVA_ACCOUNT_ID`
+  (se generan en app.zipnova.com.ar → Configuración > Integraciones > API & Webhooks). Sin ellos, la
+  cotización cae a la tabla de zonas, que está muy por debajo del costo real. Verificar con
+  `pnpm zipnova:probe`.
+
+  Dos requisitos operativos que NO son de código y bloquean el primer despacho:
+  1. **Saldo prepago.** Zipnova debita el costo del envío al crearlo; sin saldo no se genera la
+     etiqueta. Cargar crédito (Mercado Pago o tarjeta) antes de la primera venta.
+  2. **Factura o remito legal por bulto.** Es obligatorio adjuntarlo a cada paquete.
 
 ### 4. Aplicar la migración M5 a la base
 La migración `20260606120000_m5_retraction_request` (tabla `RetractionRequest` del Botón de Arrepentimiento)

@@ -38,7 +38,7 @@
 - [x] **Logo vectorial real (SVG) o PNG transparente** — el actual es un JPEG envuelto en SVG (fondo blanco). Necesario para footer / secciones de color.
 
 ## Producto / features (Fase 2)
-- [ ] **MiCorreo API real** (cotización en vivo por CP) — hoy fallback a tabla de zonas (seam listo en `lib/shipping/correo.ts`).
+- [x] **Cotización en vivo por CP** — resuelto con **Zipnova** (agregador: cotiza contra Correo Argentino, OCA, Andreani y ~40 operadores). `lib/shipping/zipnova.ts`; la tabla de zonas queda como fallback. Se abandonó MiCorreo/PAQ.AR: la API directa exige acuerdo comercial previo que nunca destrabaron.
 - [x] **Cron de autocancelación 24h** (Cloudflare Cron Trigger) — cableado en M4 (`worker.ts` `scheduled` → `runOrderExpiryJob`, cron horario).
 - [x] **Cupones por cliente** (`perCustomerLimit`) — implementado en M4 (tabla `CouponRedemption`, enforcement en checkout + registro en webhook).
 - [ ] **Checkout embebido (MP Bricks)** — pago on-site sin redirección.

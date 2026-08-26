@@ -53,9 +53,9 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
   }, []);
 
   const quote = () => {
-    if (!/^\d{4}$/.test(cp)) { setShipping(null); return; }
+    if (!/^\d{4}$/.test(cp) || !city.trim()) { setShipping(null); return; }
     startQuote(async () => {
-      const r = await quoteShippingAction({ cp, province, method });
+      const r = await quoteShippingAction({ cp, province, city, method });
       if (r.ok) setShipping({ cost: r.cost ?? 0, free: Boolean(r.free) });
       else setShipping(null);
     });
@@ -66,6 +66,7 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return "Email inválido.";
     if (!phone.trim()) return "Ingresá un teléfono.";
     if (!/^\d{4}$/.test(cp)) return "Código postal inválido (4 dígitos).";
+    if (!city.trim()) return "Ingresá tu localidad.";
     if (method === "domicilio" && (!street.trim() || !number.trim())) return "Completá calle y número.";
     if (shippingCost == null) return "Calculá el envío con tu código postal.";
     return null;
@@ -112,12 +113,11 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
             <select value={province} onChange={(e) => { setProvince(e.target.value); setShipping(null); }} aria-label="Provincia" className="h-11 rounded-xl border border-border bg-background px-3 text-sm">
               {AR_PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-            <div className="flex gap-2">
-              <Input value={cp} onChange={(e) => { setCp(e.target.value.replace(/\D/g, "").slice(0, 4)); setShipping(null); }} onBlur={quote} inputMode="numeric" placeholder="CP" aria-label="Código postal" />
-              <Button type="button" variant="outline" onClick={quote} disabled={quoting || cp.length !== 4}>
-                {quoting ? <Loader2 className="size-4 animate-spin" /> : "Calcular"}
-              </Button>
-            </div>
+            <Input value={cp} onChange={(e) => { setCp(e.target.value.replace(/\D/g, "").slice(0, 4)); setShipping(null); }} inputMode="numeric" placeholder="CP" aria-label="Código postal" />
+            <Input value={city} onChange={(e) => { setCity(e.target.value); setShipping(null); }} onBlur={quote} placeholder="Localidad" autoComplete="address-level2" aria-label="Localidad" />
+            <Button type="button" variant="outline" onClick={quote} disabled={quoting || cp.length !== 4 || !city.trim()}>
+              {quoting ? <Loader2 className="size-4 animate-spin" /> : "Calcular envío"}
+            </Button>
           </div>
 
           {method === "domicilio" && (
@@ -125,7 +125,6 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
               <Input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Calle" autoComplete="address-line1" aria-label="Calle" />
               <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Número" aria-label="Número" />
               <Input value={floorApt} onChange={(e) => setFloorApt(e.target.value)} placeholder="Piso / Depto (opcional)" aria-label="Piso/Depto" />
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Localidad" autoComplete="address-level2" aria-label="Localidad" />
             </div>
           )}
           <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas para la entrega (opcional)" aria-label="Notas" />

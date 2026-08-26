@@ -29,7 +29,8 @@
     "customer:create": "tsx --env-file=.env scripts/create-customer.ts",
     "sim:webhook": "tsx --env-file=.env scripts/simulate-mp-webhook.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "zipnova:probe": "tsx --env-file=.env scripts/zipnova-probe.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.11",

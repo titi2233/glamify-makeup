@@ -128,7 +128,7 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
 
   // --- Envío ---
   const quote = await deps.quoteShipping({
-    cp: input.address.cp, province: input.address.province ?? null,
+    cp: input.address.cp, province: input.address.province ?? null, city: input.address.city ?? null,
     method: input.shippingMethod, lines: cartLines, subtotal,
   });
   const shippingCost = freeShippingByCoupon ? 0 : quote.cost;
