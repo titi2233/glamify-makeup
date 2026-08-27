@@ -7,6 +7,7 @@ import { validateCoupon, applyCoupon } from "@/lib/coupons/apply";
 import { formatOrderNumber } from "@/lib/orders/order-number";
 import { createPreference as realCreatePreference } from "@/lib/payments/mercadopago";
 import { quoteShipping as realQuoteShipping, type ShippingQuote } from "@/lib/shipping/index";
+import { orderWeightGr } from "@/lib/shipping/quote";
 import { getShippingZonesForQuote, getFreeShippingThreshold } from "@/lib/orders/checkout-data";
 import type { CartLine } from "@/lib/cart/types";
 
@@ -146,6 +147,7 @@ export async function createCheckout(input: CreateCheckoutInput, deps: CreateChe
         shippingAddress: input.address as unknown as object,
         shippingMethod: input.shippingMethod,
         shippingZoneId: quote.zoneId,
+        weightGr: orderWeightGr(cartLines), // snapshot para el envío automático a MiCorreo
         subtotal, shippingCost, discountTotal: discount, total,
         couponId,
         status: "pending_payment",

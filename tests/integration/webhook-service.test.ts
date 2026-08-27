@@ -13,9 +13,10 @@ interface FakeDbOpts {
 function makeFakeDb(opts: FakeDbOpts = {}) {
   const state = {
     order: {
-      id: "ord-1", status: "pending_payment", couponId: "co-1", customerId: opts.customerId ?? null,
+      id: "ord-1", orderNumber: "GLM-000009", status: "pending_payment", couponId: "co-1", customerId: opts.customerId ?? null,
       contactName: "Ana", contactEmail: "ana@example.com",
-      shippingMethod: "domicilio", subtotal: 6400, shippingCost: 2500, discountTotal: 640, total: 8260,
+      contactPhone: "1144556677", shippingMethod: "domicilio", shippingAddress: { cp: "1900", province: "Buenos Aires", street: "Calle 50", number: "123", city: "La Plata" }, weightGr: 100,
+      subtotal: 6400, shippingCost: 2500, discountTotal: 640, total: 8260,
       items: [{ variantId: "v1", comboId: null, productNameSnapshot: "Labial", variantNameSnapshot: "Rojo", qty: 2, lineTotal: 6400, combo: null }],
     } as any,
     variants: new Map<string, number>([["v1", 5]]),
@@ -95,7 +96,15 @@ function makeFakeDb(opts: FakeDbOpts = {}) {
         return {};
       }),
     },
-    shipment: { create: vi.fn(async ({ data }: any) => { state.shipments.push(data); return data; }) },
+    shipment: {
+      create: vi.fn(async ({ data }: any) => { state.shipments.push(data); return data; }),
+      update: vi.fn(async ({ where, data }: any) => {
+        const s = state.shipments.find((x) => x.orderId === where.orderId) ?? { orderId: where.orderId };
+        Object.assign(s, data);
+        if (!state.shipments.includes(s)) state.shipments.push(s);
+        return s;
+      }),
+    },
     $transaction: vi.fn(async (fn: any) => fn(db)),
   };
   return { db, state };
@@ -110,6 +119,7 @@ function makeDeps(over: Partial<ProcessWebhookDeps> = {}): ProcessWebhookDeps {
     verifySignature: vi.fn(async () => true),
     secret: "s",
     ownerEmail: "owner@test.com",
+    autoImportShipment: vi.fn(async () => ({ imported: true, service: "Correo Argentino Clásico", detail: "importado (ok)" }) as const),
     now: new Date("2026-06-04T12:00:00Z"),
     ...over,
   };
@@ -136,6 +146,32 @@ describe("processWebhook", () => {
     expect(state.payments).toHaveLength(1);
     expect(state.payments[0].status).toBe("approved");
     expect(state.payments[0].mpPaymentId).toBe("mp-pay-1");
+  });
+
+  it("approved (domicilio) → auto-importa a MiCorreo y guarda el service en el Shipment", async () => {
+    const { db, state } = makeFakeDb();
+    const deps = makeDeps({ db });
+    await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect((deps.autoImportShipment as any).mock.calls.length).toBe(1);
+    expect((deps.autoImportShipment as any).mock.calls[0][0]).toMatchObject({ orderNumber: "GLM-000009", shippingMethod: "domicilio", weightGr: 100 });
+    expect(state.shipments.find((s) => s.orderId === "ord-1")?.service).toBe("Correo Argentino Clásico");
+  });
+
+  it("un fallo del auto-import NO voltea el webhook (best-effort): el pedido queda pagado", async () => {
+    const { db, state } = makeFakeDb();
+    const deps = makeDeps({ db, autoImportShipment: vi.fn(async () => { throw new Error("MiCorreo caído"); }) });
+    const r = await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect(r.status).toBe(200);
+    expect(state.order.status).toBe("paid");
+  });
+
+  it("sucursal → no auto-importa (imported:false), no toca el Shipment", async () => {
+    const { db, state } = makeFakeDb();
+    const importSpy = vi.fn(async () => ({ imported: false, detail: "sucursal" }) as const);
+    const deps = makeDeps({ db, autoImportShipment: importSpy });
+    await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect(importSpy).toHaveBeenCalledTimes(1);
+    expect(state.shipments.find((s) => s.orderId === "ord-1")?.service).toBeUndefined();
   });
 
   it("idempotente: el mismo webhook 2× descuenta stock una sola vez", async () => {

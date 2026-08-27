@@ -4,7 +4,8 @@ import { processWebhook, type ProcessWebhookDeps, type WebhookOrder } from "@/li
 function makeOrder(over: Partial<WebhookOrder> = {}): WebhookOrder {
   return {
     id: "ord1", customerId: "u1", orderNumber: "GLM-000001", status: "pending_payment", couponId: "cpn1",
-    contactName: "Ana", contactEmail: "ana@x.com", shippingMethod: "domicilio",
+    contactName: "Ana", contactEmail: "ana@x.com", contactPhone: "1144556677", shippingMethod: "domicilio",
+    shippingAddress: {}, weightGr: 50,
     subtotal: 5000, shippingCost: 2500, discountTotal: 500, total: 7000, items: [], ...over,
   };
 }
@@ -22,12 +23,14 @@ function makeDeps(order: WebhookOrder) {
   const deps: ProcessWebhookDeps = {
     db: {
       order: { findFirst: vi.fn(async () => order) },
+      shipment: { update: vi.fn(async () => ({})) },
       $transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) => fn(tx)),
     } as never,
     getPayment: vi.fn(async () => ({ id: 123, status: "approved", external_reference: "ord1", transaction_amount: 7000 })) as never,
     sendEmail: vi.fn(async () => ({ id: null, logged: true })),
     verifySignature: vi.fn(async () => true),
     secret: "s",
+    autoImportShipment: vi.fn(async () => ({ imported: false, detail: "test: no-op" }) as const),
     now: new Date("2026-06-06T12:00:00Z"),
   };
   return { deps, couponUpsert };
