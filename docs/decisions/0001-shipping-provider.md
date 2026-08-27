@@ -74,6 +74,20 @@ Aires a Ushuaia, los dos extremos posibles). El `methodFactor` que traía el có
 (sucursal = 0.85× domicilio) estaba mal calibrado contra estos datos: la proporción real
 medida es 0.68-0.71×.
 
+**Control de distancia (Lazar preguntó si el precio bajo de MiCorreo se explicaba por la
+distancia corta Luján→La Plata; se verificó con un tramo corto real, Luján→Mercedes, ~30km,
+mismo paquete):**
+
+| Proveedor (sucursal) | Corta: Luján→Mercedes (~30km) | Larga: Luján→La Plata (~130km) | ¿Varía con la distancia? |
+|---|---|---|---|
+| MiCorreo directo (Clásico) | $5.044 | $6.113 | Sí, poco (+21% por 4x la distancia) |
+| Zipnova | $11.877 | $11.877 | No, nada — precio idéntico |
+| Andreani | $24.902 | $24.902 | No, nada — precio idéntico |
+
+Conclusión: la distancia no explica la diferencia. Zipnova y Andreani cobran el mismo número
+sin importar el tramo; MiCorreo directo es más barato en ambos casos y el único que reacciona
+(poco) a la distancia real.
+
 **Confirmado por Tiziana (2026-08-26): costo real, redondeado, sin margen.** `ShippingZone.price`
 (costo a domicilio) pasa a $9.000 en AMBA/Buenos Aires interior/Centro y $10.000 en el resto
 del país; `methodFactor(sucursal)` pasa de 0.85 a 0.7 (`lib/shipping/quote.ts`). Aplicado en
