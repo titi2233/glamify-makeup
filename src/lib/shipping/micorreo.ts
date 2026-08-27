@@ -200,3 +200,171 @@ export async function quoteMicorreo(
     return null;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Importación de envíos (POST /shipping/import)
+//
+// OJO — qué hace y qué NO hace (verificado en la librería `ylazzari-correoargentino`):
+// "Importar" es una PRE-IMPOSICIÓN: deja el pedido cargado en la cuenta de MiCorreo.
+// La respuesta es sólo `{ createdAt }` — NO devuelve número de seguimiento ni etiqueta.
+// El tracking y el rótulo se obtienen después entrando a MiCorreo, pagando el envío
+// con el saldo e imprimiendo. O sea: ahorra recargar los datos a mano y evita errores
+// de tipeo, pero no reemplaza el paso por el panel.
+//
+// Idempotencia: `extOrderId` debe ser único; MiCorreo rechaza el duplicado con
+// "La orden ya fue importada con anterioridad". Usamos el orderNumber del pedido,
+// así reintentar el botón nunca genera un envío doble.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Códigos oficiales de provincia de MiCorreo (tomados del selector de su propia web). */
+export const PROVINCE_CODES: Record<string, string> = {
+  "BUENOS AIRES": "B",
+  "CAPITAL FEDERAL": "C",
+  CABA: "C",
+  "CIUDAD AUTONOMA DE BUENOS AIRES": "C",
+  CATAMARCA: "K",
+  CHACO: "H",
+  CHUBUT: "U",
+  CORDOBA: "X",
+  CORRIENTES: "W",
+  "ENTRE RIOS": "E",
+  FORMOSA: "P",
+  JUJUY: "Y",
+  "LA PAMPA": "L",
+  "LA RIOJA": "F",
+  MENDOZA: "M",
+  MISIONES: "N",
+  NEUQUEN: "Q",
+  "RIO NEGRO": "R",
+  SALTA: "A",
+  "SAN JUAN": "J",
+  "SAN LUIS": "D",
+  "SANTA CRUZ": "Z",
+  "SANTA FE": "S",
+  "SANTIAGO DEL ESTERO": "G",
+  "TIERRA DEL FUEGO": "V",
+  TUCUMAN: "T",
+};
+
+/** Nombre de provincia → código de MiCorreo. Tolera acentos, minúsculas y espacios. */
+export function provinceCode(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const key = name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // saca acentos
+    .toUpperCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  return PROVINCE_CODES[key] ?? null;
+}
+
+export interface MicorreoShipmentInput {
+  /** ID único del pedido de nuestro lado (orderNumber). Da idempotencia. */
+  extOrderId: string;
+  recipient: { name: string; email: string; phone?: string | null };
+  metodo: "domicilio" | "sucursal";
+  pesoGr: number;
+  valorDeclarado: number;
+  /** Requerido si metodo === "domicilio". */
+  address?: {
+    streetName: string;
+    streetNumber: string;
+    city: string;
+    province: string;
+    postalCode: string;
+  } | null;
+  /** Código de sucursal (de /agencies). Requerido si metodo === "sucursal". */
+  agency?: string | null;
+}
+
+export type MicorreoShipmentResult =
+  | { ok: true; createdAt: string | null }
+  | { ok: false; error: string };
+
+/**
+ * Importa (pre-impone) un envío en MiCorreo. Ver el bloque de arriba: NO devuelve
+ * tracking ni etiqueta. A diferencia de `quoteMicorreo`, acá los fallos se devuelven
+ * con el motivo — es una acción del panel y la admin necesita saber qué pasó.
+ */
+export async function createMicorreoShipment(
+  input: MicorreoShipmentInput,
+  env: MicorreoEnv = process.env as MicorreoEnv,
+  fetchImpl: typeof fetch = fetch,
+  nowMs: number = Date.now(),
+): Promise<MicorreoShipmentResult> {
+  if (!isMicorreoConfigured(env)) {
+    return { ok: false, error: "Falta configurar las credenciales de MiCorreo." };
+  }
+  if (!input.extOrderId?.trim()) return { ok: false, error: "Falta el número de pedido." };
+  if (!input.recipient?.name?.trim() || !input.recipient?.email?.trim()) {
+    return { ok: false, error: "El pedido no tiene nombre o email de contacto." };
+  }
+
+  const deliveryType = DELIVERED_BY_METHOD[input.metodo];
+  const shipping: Record<string, unknown> = { deliveryType };
+
+  if (input.metodo === "sucursal") {
+    if (!input.agency?.trim()) {
+      return {
+        ok: false,
+        error:
+          "Este pedido es a sucursal y todavía no guardamos cuál eligió la clienta. Cargalo a mano en MiCorreo.",
+      };
+    }
+    shipping.agency = input.agency.trim();
+  } else {
+    const a = input.address;
+    if (!a?.streetName?.trim() || !a?.streetNumber?.trim() || !a?.city?.trim() || !a?.postalCode?.trim()) {
+      return { ok: false, error: "La dirección del pedido está incompleta (calle, número, localidad o CP)." };
+    }
+    const code = provinceCode(a.province);
+    if (!code) return { ok: false, error: `No reconozco la provincia "${a.province}".` };
+    shipping.address = {
+      streetName: a.streetName.trim(),
+      streetNumber: a.streetNumber.trim(),
+      city: a.city.trim(),
+      provinceCode: code,
+      postalCode: a.postalCode.trim(),
+    };
+  }
+
+  // Peso en gramos acá (a diferencia de /rates, que lo toma en kg).
+  shipping.weight = Math.max(1, Math.round(input.pesoGr));
+  shipping.declaredValue = input.valorDeclarado;
+  shipping.length = DEFAULT_ITEM_CM.length;
+  shipping.width = DEFAULT_ITEM_CM.width;
+  shipping.height = DEFAULT_ITEM_CM.height;
+
+  try {
+    const auth = await getAuth(env, fetchImpl, nowMs);
+    if (!auth) return { ok: false, error: "No pude autenticarme con MiCorreo. Revisá las credenciales." };
+
+    const res = await fetchImpl(`${apiBase(env)}/shipping/import`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        customerId: auth.customerId,
+        extOrderId: input.extOrderId.trim(),
+        recipient: {
+          name: input.recipient.name.trim(),
+          email: input.recipient.email.trim(),
+          ...(input.recipient.phone ? { phone: input.recipient.phone.trim() } : {}),
+        },
+        shipping,
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+
+    const json = (await res.json().catch(() => null)) as { createdAt?: string; message?: string } | null;
+    if (!res.ok) {
+      return { ok: false, error: json?.message || `MiCorreo rechazó el envío (HTTP ${res.status}).` };
+    }
+    return { ok: true, createdAt: json?.createdAt ?? null };
+  } catch {
+    return { ok: false, error: "No pude conectarme con MiCorreo. Probá de nuevo en un momento." };
+  }
+}

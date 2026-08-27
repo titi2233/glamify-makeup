@@ -67,6 +67,40 @@ ecosistema de plugins, no propia. Si el vendor la rota, la cotización en vivo d
 todo cae al fallback de zonas (degradación suave, no caída). Es zona gris de ToS. El dueño
 priorizó no depender de atención al cliente por encima de ese riesgo.
 
+### Importación de envíos: qué hace y qué NO (verificado 2026-08-27)
+
+El dueño pidió también crear envíos automáticamente (botón manual en el panel, no automático).
+`POST /shipping/import` existe y es oficial, pero **hace menos de lo que el nombre sugiere** —
+verificado leyendo la implementación de `ylazzari-correoargentino`:
+
+- **Devuelve sólo `{ createdAt }`.** No devuelve número de seguimiento ni etiqueta PDF.
+- Es una **pre-imposición**: deja el pedido cargado en la cuenta de MiCorreo. Tiziana sigue
+  teniendo que entrar al panel, pagar el envío con el saldo e imprimir el rótulo. El tracking
+  lo obtiene ahí, no por API.
+- **Valor real:** elimina recargar a mano nombre, dirección, CP, peso y dimensiones de cada
+  pedido, y con eso los errores de tipeo. No elimina el paso por el panel.
+- **Riesgo real: bajo.** No debita saldo al importar (el pago es en la imposición), y
+  `extOrderId` da idempotencia — MiCorreo rechaza el duplicado con "La orden ya fue importada
+  con anterioridad", así que apretar el botón dos veces no genera dos envíos.
+
+Implementado en `createMicorreoShipment()` (`lib/shipping/micorreo.ts`), con `provinceCode()`
+que traduce el nombre de provincia que guardamos al código de una letra que pide MiCorreo
+(mapa oficial tomado del selector de su propia web; tolera acentos y mayúsculas).
+
+**Limitación de alcance — envíos a sucursal:** la API exige `shipping.agency` (código de
+sucursal) para `deliveryType: "S"`, y hoy el checkout **no guarda qué sucursal eligió la
+clienta** (sólo el método). Los pedidos a domicilio se pueden importar completos; los de
+sucursal devuelven un error explicativo y hay que cargarlos a mano. Cerrar eso requiere un
+selector de sucursal en el checkout (endpoint `/agencies` por provincia) — cambio de UX, no
+sólo de backend, y hay que cuidar la regla del dueño de "tan simple que un niño lo entienda"
+con un desplegable de cientos de sucursales.
+
+**Pendiente de verificación:** nada de esto se probó contra la API real todavía (faltan los
+secrets). Hay dos supuestos a confirmar en el ambiente de test (`MICORREO_SANDBOX=1`) antes de
+usarlo en producción: (1) que `shipping.weight` en `/shipping/import` va en **gramos** — la
+librería lo sugiere, pero `/rates` lo toma en **kg**, así que la inconsistencia es sospechosa;
+(2) que importar efectivamente no debita saldo.
+
 ### Corrección: son DOS APIs distintas (verificado 2026-08-27)
 
 Una investigación previa concluyó que "la API exige acuerdo comercial" leyendo el manual

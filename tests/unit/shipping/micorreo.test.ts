@@ -3,9 +3,12 @@ import {
   pickRate,
   isMicorreoConfigured,
   quoteMicorreo,
+  provinceCode,
+  createMicorreoShipment,
   __resetMicorreoAuthCache,
   type MicorreoRatesResponse,
   type MicorreoEnv,
+  type MicorreoShipmentInput,
 } from "@/lib/shipping/micorreo";
 
 /** Recorte fiel de una respuesta de POST /micorreo/v1/rates (dos productos: Clásico y Expreso). */
@@ -119,5 +122,164 @@ describe("quoteMicorreo (flujo completo con fetch fake)", () => {
     }) as unknown as typeof fetch;
     const q = await quoteMicorreo({ cpDestino: "1900", pesoGr: 500, metodo: "sucursal" }, env, fakeFetch, 1000);
     expect(q).toBeNull();
+  });
+});
+
+describe("provinceCode", () => {
+  it("mapea nombres exactos", () => {
+    expect(provinceCode("Buenos Aires")).toBe("B");
+    expect(provinceCode("CORDOBA")).toBe("X");
+    expect(provinceCode("Tierra del Fuego")).toBe("V");
+  });
+  it("tolera acentos, minúsculas y espacios de más", () => {
+    expect(provinceCode("Córdoba")).toBe("X");
+    expect(provinceCode("  entre  ríos ")).toBe("E");
+    expect(provinceCode("Neuquén")).toBe("Q");
+    expect(provinceCode("Tucumán")).toBe("T");
+  });
+  it("CABA en sus variantes", () => {
+    expect(provinceCode("CABA")).toBe("C");
+    expect(provinceCode("Capital Federal")).toBe("C");
+  });
+  it("null si no la reconoce", () => {
+    expect(provinceCode("Montevideo")).toBeNull();
+    expect(provinceCode("")).toBeNull();
+    expect(provinceCode(null)).toBeNull();
+  });
+});
+
+describe("createMicorreoShipment", () => {
+  beforeEach(() => __resetMicorreoAuthCache());
+
+  const baseInput: MicorreoShipmentInput = {
+    extOrderId: "GLM-000123",
+    recipient: { name: "Maria Gonzalez", email: "maria@mail.com", phone: "1144556677" },
+    metodo: "domicilio",
+    pesoGr: 500,
+    valorDeclarado: 30000,
+    address: {
+      streetName: "Av. Corrientes",
+      streetNumber: "1234",
+      city: "La Plata",
+      province: "Buenos Aires",
+      postalCode: "1900",
+    },
+  };
+
+  /** Responde las dos llamadas de auth; null si la url no es de auth. */
+  const authOk = (url: string) => {
+    if (url.endsWith("/token")) return jsonRes({ token: "JWT", expire: "2099-01-01T00:00:00Z" });
+    if (url.endsWith("/users/validate")) return jsonRes({ customerId: 999 });
+    return null;
+  };
+
+  it("domicilio: manda deliveryType D con provinceCode traducido y peso en gramos", async () => {
+    let sent: Record<string, unknown> | null = null;
+    const fakeFetch = (async (url: string, init: RequestInit) => {
+      const pre = authOk(url);
+      if (pre) return pre;
+      sent = JSON.parse(init.body as string);
+      return jsonRes({ createdAt: "2026-08-27T10:00:00Z" });
+    }) as unknown as typeof fetch;
+
+    const r = await createMicorreoShipment(baseInput, env, fakeFetch, 1000);
+    expect(r).toEqual({ ok: true, createdAt: "2026-08-27T10:00:00Z" });
+    expect(sent).toMatchObject({
+      customerId: "999",
+      extOrderId: "GLM-000123",
+      recipient: { name: "Maria Gonzalez", email: "maria@mail.com", phone: "1144556677" },
+      shipping: {
+        deliveryType: "D",
+        address: {
+          streetName: "Av. Corrientes",
+          streetNumber: "1234",
+          city: "La Plata",
+          provinceCode: "B",
+          postalCode: "1900",
+        },
+        weight: 500, // gramos, NO kg (a diferencia de /rates)
+        declaredValue: 30000,
+      },
+    });
+  });
+
+  it("sucursal sin agencia: error claro, sin tocar la red", async () => {
+    let called = false;
+    const fakeFetch = (async () => {
+      called = true;
+      return jsonRes({});
+    }) as unknown as typeof fetch;
+    const r = await createMicorreoShipment({ ...baseInput, metodo: "sucursal", agency: null }, env, fakeFetch, 1000);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/sucursal/i);
+    expect(called).toBe(false);
+  });
+
+  it("sucursal con agencia: manda deliveryType S y el código, sin address", async () => {
+    let sent: { shipping: Record<string, unknown> } | null = null;
+    const fakeFetch = (async (url: string, init: RequestInit) => {
+      const pre = authOk(url);
+      if (pre) return pre;
+      sent = JSON.parse(init.body as string);
+      return jsonRes({ createdAt: "2026-08-27T10:00:00Z" });
+    }) as unknown as typeof fetch;
+
+    const r = await createMicorreoShipment({ ...baseInput, metodo: "sucursal", agency: "0021" }, env, fakeFetch, 1000);
+    expect(r.ok).toBe(true);
+    expect(sent!.shipping).toMatchObject({ deliveryType: "S", agency: "0021" });
+    expect(sent!.shipping.address).toBeUndefined();
+  });
+
+  it("dirección incompleta o provincia desconocida: error claro sin llamar a la API", async () => {
+    let called = false;
+    const fakeFetch = (async () => {
+      called = true;
+      return jsonRes({});
+    }) as unknown as typeof fetch;
+
+    const sinCalle = await createMicorreoShipment(
+      { ...baseInput, address: { ...baseInput.address!, streetName: "" } },
+      env,
+      fakeFetch,
+      1000,
+    );
+    expect(sinCalle.ok).toBe(false);
+
+    const provMala = await createMicorreoShipment(
+      { ...baseInput, address: { ...baseInput.address!, province: "Montevideo" } },
+      env,
+      fakeFetch,
+      1000,
+    );
+    expect(provMala.ok).toBe(false);
+    if (!provMala.ok) expect(provMala.error).toMatch(/Montevideo/);
+    expect(called).toBe(false);
+  });
+
+  it("propaga el mensaje de error de MiCorreo (ej. orden ya importada)", async () => {
+    const fakeFetch = (async (url: string) => {
+      const pre = authOk(url);
+      if (pre) return pre;
+      return {
+        ok: false,
+        status: 400,
+        json: async () => ({ message: "La orden ya fue importada con anterioridad" }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    const r = await createMicorreoShipment(baseInput, env, fakeFetch, 1000);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe("La orden ya fue importada con anterioridad");
+  });
+
+  it("sin credenciales: error claro, sin red", async () => {
+    let called = false;
+    const fakeFetch = (async () => {
+      called = true;
+      return jsonRes({});
+    }) as unknown as typeof fetch;
+    const r = await createMicorreoShipment(baseInput, {}, fakeFetch, 1000);
+    expect(r.ok).toBe(false);
+    expect(called).toBe(false);
   });
 });
