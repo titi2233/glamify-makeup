@@ -68,8 +68,8 @@ equivocado. Correo Argentino publica **dos APIs** en su portal de desarrolladore
 
 | | **API MiCorreo REST** | **API v2.0 REST (PAQ.AR)** |
 |---|---|---|
-| Base | `api.correoargentino.com.ar/paqar/v1/` | ídem (v2) |
-| Test | `apitest.correoargentino.com.ar/paqar/v1/` | ídem |
+| Base (real, del plugin) | `api.correoargentino.com.ar/micorreo/v1/` | `.../paqar/v1/` |
+| Test | `apitest.correoargentino.com.ar/micorreo/v1/` | `.../paqar/v1/` |
 | Utilización de API KEY | **No** | Sí |
 | Devuelve ID de usuario de MiCorreo | **Sí** | No |
 | Manual | `apiMiCorreo.pdf` | `apiPaqAr-v2.pdf` |
@@ -79,22 +79,43 @@ existente y devuelve un customer ID; no necesita acuerdo comercial ni cuenta cor
 envíos se descuentan del saldo prepago de la cuenta, que ya está operativa). Endpoints
 relevantes: `users/validate`, `rates`, `agencies`, `shipping/import`. Hay ambiente de test.
 
-**Pero las credenciales de gateway siguen siendo necesarias.** Se evaluó la hipótesis de que
-alcanzaba con el email y la contraseña de la cuenta MiCorreo estándar. Es falsa, confirmado
-por tres fuentes independientes:
+**Cómo lo hacen los devs sin depender de atención al cliente (verificado leyendo código
+productivo, 2026-08-27).** Se descargaron y auditaron los plugins open-source (GPL) de
+WooCommerce que hoy usan cientos de tiendas. El más relevante, `carriers-of-argentina-for-woocommerce`
+(vendor "yipi/KShipping"), pega **directo** contra `api.correoargentino.com.ar/micorreo/v1`
+sin proxy propio. Su flujo de auth real:
 
-1. La librería comunitaria `ylazzari-correoargentino` pide `userToken` + `passwordToken`
-   (HTTP Basic, nivel gateway) **además** de `email` + `password` (JWT, nivel usuario).
-2. La FAQ del propio portal documenta `403 = "Acceso denegado"`.
-3. Probado en vivo contra el ambiente de test público sin credenciales:
-   `POST /paqar/v1/users/validate` → **HTTP 403**, y `GET /paqar/v1/agencies` → **HTTP 403**.
-   El gateway rechaza antes de siquiera llegar al login de usuario.
+1. `POST /token` con **dos capas**: header `Authorization: Basic <cred>` (una credencial de
+   gateway **hardcodeada y ofuscada** en el plugin) + body `{email, password}` (el login normal
+   de la cuenta MiCorreo del comerciante). Devuelve un JWT (`token`) con expiración + el
+   `customer_id`.
+2. Las llamadas siguientes (`/rates`, `/shipping/import`, sucursales) van con
+   `Authorization: Bearer <JWT>` y el `customerId` en el body.
 
-O sea: el diseño del flujo que propone esa hipótesis (cotizar → crear envío → etiqueta →
-despachar → tracking) es correcto y es exactamente lo que documenta el portal. Lo único que
-falta es que Correo Argentino emita los dos tokens de gateway — que es un pedido, no un
-acuerdo comercial. Nota operativa: la cuenta de MiCorreo figura hoy como "Tipo de documento:
-Consumidor final"; conviene actualizarla a CUIT/monotributo al pedir el acceso.
+Correcciones a lo que decía antes esta misma sección:
+
+- **La base correcta es `/micorreo/v1/`, no `/paqar/v1/`.** El `/paqar/v1` de la FAQ del portal
+  es la API corporativa. Mi probe anterior dio 403 en parte por pegarle a la ruta equivocada.
+- **La credencial de gateway NO se pide por comerciante.** Es un secreto compartido embebido
+  en los plugins GPL de distribución pública (de facto público, se baja de wordpress.org). El
+  único dato por-comerciante es el `email`+`password` de la cuenta MiCorreo — que ya tenemos.
+- Sigue siendo cierto que sin la credencial de gateway el endpoint devuelve 403 (mi test lo
+  confirmó): la hipótesis "alcanza con email+password" es incompleta, pero le faltaba solo esa
+  pieza, que resulta ser pública, no gestionada.
+
+**Implicancia:** hay un camino self-service real, sin atención al cliente ni acuerdo comercial.
+`lib/shipping/micorreo.ts` implementaría exactamente ese flujo (`/token` → `/rates`), leyendo
+`MICORREO_EMAIL`, `MICORREO_PASSWORD` y `MICORREO_GATEWAY_AUTH` desde `.env` (mismo patrón que
+el resto de los secrets; el valor de gateway lo provee el dueño, no se hardcodea en el repo).
+Zona estática queda de fallback.
+
+**Riesgo a asumir (decisión del dueño, ver widget):** apoyarse en una credencial de gateway
+de un tercero es frágil (si el vendor la rota, deja de andar) y es zona gris de ToS. La
+alternativa 100% propia es pedir credenciales de gateway a nombre de Glamify por el formulario
+de contacto — pero eso es justamente lo que el dueño quiere evitar. Trade-off real, no técnico.
+
+Nota operativa: la cuenta de MiCorreo figura hoy como "Tipo de documento: Consumidor final";
+conviene actualizarla a CUIT/monotributo.
 
 ### Datos reales verificados el mismo día (paquete idéntico: 12x5x5cm, 0,5kg, $30.000 declarado)
 
