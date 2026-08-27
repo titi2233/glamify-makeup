@@ -12,7 +12,7 @@
  *
  * `productType`: CP = Clásico (2-5 días), EP = Expreso (1-3 días).
  * `deliveredType`: S = sucursal, D = domicilio.
- * `dimensions.weight` va en KG (decimales); largo/ancho/alto en CM.
+ * `dimensions.weight` va en GRAMOS enteros; largo/ancho/alto en CM.
  *
  * Cae a null ante cualquier problema para que el orquestador use la tabla de zonas
  * en vez de romper el checkout.
@@ -179,7 +179,8 @@ export async function quoteMicorreo(
       postalCodeDestination: input.cpDestino.trim(),
       deliveredType: DELIVERED_BY_METHOD[input.metodo],
       dimensions: {
-        weight: Math.max(0.1, input.pesoGr / 1000), // gramos → kg; piso 0.1kg.
+        // La API exige el peso en GRAMOS enteros (probado: 400 "must be Integer value in [g]").
+        weight: Math.max(1, Math.round(input.pesoGr)),
         ...DEFAULT_ITEM_CM,
       },
     };

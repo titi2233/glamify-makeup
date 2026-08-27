@@ -72,7 +72,7 @@ describe("quoteMicorreo (flujo completo con fetch fake)", () => {
       postalCodeOrigin: "6700",
       postalCodeDestination: "1900",
       deliveredType: "S", // sucursal
-      dimensions: { weight: 0.5, length: 12, width: 5, height: 5 }, // gramos → kg
+      dimensions: { weight: 500, length: 12, width: 5, height: 5 }, // gramos enteros (la API los exige en [g])
     });
     // El header Basic usa el gateway; /rates usa Bearer del token.
     expect(calls.find((c) => c.url.endsWith("/token"))).toBeTruthy();
