@@ -30,7 +30,8 @@
     "sim:webhook": "tsx --env-file=.env scripts/simulate-mp-webhook.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "zipnova:probe": "tsx --env-file=.env scripts/zipnova-probe.ts"
+    "zipnova:probe": "tsx --env-file=.env scripts/zipnova-probe.ts",
+    "micorreo:probe": "tsx --env-file=.env scripts/micorreo-probe.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.11",

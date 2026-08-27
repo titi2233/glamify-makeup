@@ -47,18 +47,25 @@ implementación, no un requisito del blueprint.
 
 ## Decisión
 
-Plan en dos tiempos, sin nueva dependencia externa para lanzar.
+**Cotización en vivo contra la API oficial de MiCorreo**, por el camino self-service (sin
+acuerdo comercial ni atención al cliente), elegido por el dueño el 2026-08-27.
 
-**Ahora:** apagar la cotización en vivo. `quoteShipping()` (`lib/shipping/index.ts`) ya no
-tiene a Zipnova como proveedor por defecto — cae directo a la tabla estática de
-`ShippingZone`. El despacho de cada pedido lo hace Tiziana a mano desde su cuenta MiCorreo ya
-operativa (validado en vivo: alta sin acuerdo comercial, cotiza y genera guías sin fricción).
+- `lib/shipping/micorreo.ts` implementa el flujo verificado del plugin GPL (`/token` →
+  `/users/validate` → `/rates`), y es el `liveQuote` por defecto de `quoteShipping()`
+  (`lib/shipping/index.ts`). Sin credenciales en el entorno devuelve `null` y todo cae a la
+  tabla de zonas — el checkout nunca se rompe por esto.
+- Se activa cargando en el entorno `MICORREO_EMAIL`, `MICORREO_PASSWORD` y
+  `MICORREO_GATEWAY_AUTH` (el dueño los pone en `.env` / `wrangler secret`; nunca en el repo).
+  Opcionales: `MICORREO_SANDBOX`, `MICORREO_ORIGIN_CP` (default 6700), `MICORREO_VELOCITY`
+  (default `classic`).
+- Verificación: `pnpm micorreo:probe [cp]` cotiza contra la API real y debe devolver ~$6.113
+  a sucursal para La Plata (1900), el número que ya vimos en la web de MiCorreo.
+- La tabla de zonas queda de fallback, ya recalibrada al costo real (ver más abajo).
 
-**Después (mejora, no bloquea el lanzamiento):** reintentar el pedido de credenciales de API
-de MiCorreo — ahora con CUIT de monotributo válido — por el formulario de contacto de la
-cuenta (`/MiCorreo/public/contacto`, asunto libre). Si se consigue, un
-`lib/shipping/micorreo.ts` nuevo se inyecta como `deps.liveQuote` en `checkout-service.ts` /
-`actions.ts`, sin tocar el resto de `quoteShipping()`.
+**Riesgo aceptado por el dueño:** la credencial de gateway es un secreto compartido del
+ecosistema de plugins, no propia. Si el vendor la rota, la cotización en vivo deja de andar y
+todo cae al fallback de zonas (degradación suave, no caída). Es zona gris de ToS. El dueño
+priorizó no depender de atención al cliente por encima de ese riesgo.
 
 ### Corrección: son DOS APIs distintas (verificado 2026-08-27)
 
@@ -109,10 +116,8 @@ Correcciones a lo que decía antes esta misma sección:
 el resto de los secrets; el valor de gateway lo provee el dueño, no se hardcodea en el repo).
 Zona estática queda de fallback.
 
-**Riesgo a asumir (decisión del dueño, ver widget):** apoyarse en una credencial de gateway
-de un tercero es frágil (si el vendor la rota, deja de andar) y es zona gris de ToS. La
-alternativa 100% propia es pedir credenciales de gateway a nombre de Glamify por el formulario
-de contacto — pero eso es justamente lo que el dueño quiere evitar. Trade-off real, no técnico.
+Este flujo es el que implementa `lib/shipping/micorreo.ts` (ver sección Decisión arriba). El
+trade-off de riesgo quedó documentado y aceptado por el dueño.
 
 Nota operativa: la cuenta de MiCorreo figura hoy como "Tipo de documento: Consumidor final";
 conviene actualizarla a CUIT/monotributo.

@@ -2,6 +2,7 @@
 // Es server por importar prisma indirectamente; ningún client component lo importa.
 import { round2 } from "@/lib/money";
 import { matchZone, isFreeShipping, methodFactor, orderWeightGr, type Zone } from "@/lib/shipping/quote";
+import { quoteMicorreo } from "@/lib/shipping/micorreo";
 import type { CartLine } from "@/lib/cart/types";
 
 /** Opción ganadora normalizada de un proveedor de cotización en vivo (forma genérica, no atada a un vendor). */
@@ -45,16 +46,17 @@ export interface QuoteShippingDeps {
   }) => Promise<LiveQuote | null>;
 }
 
-// Sin proveedor en vivo por defecto (ver docs/decisions/0001-shipping-provider.md: Zipnova
-// cancelado por markup ~2x vs. costo real; MiCorreo directo pendiente de credenciales de API).
-// Mientras tanto, todo pedido resuelve por la tabla de zonas de abajo.
-const NO_LIVE_QUOTE = async () => null;
+// Proveedor en vivo por defecto: API oficial de MiCorreo (ver docs/decisions/0001-shipping-provider.md).
+// Sin credenciales en el entorno, quoteMicorreo devuelve null y todo cae a la tabla de zonas.
+// MiCorreo sólo necesita CP, peso y método; el resto de los campos del contrato se ignoran.
+const DEFAULT_LIVE_QUOTE: NonNullable<QuoteShippingDeps["liveQuote"]> = ({ cpDestino, pesoGr, metodo }) =>
+  quoteMicorreo({ cpDestino, pesoGr, metodo });
 
 /** Orquesta el costo de envío: gratis por umbral → cotización en vivo (si se inyecta un proveedor) → tabla de zonas. */
 export async function quoteShipping(input: QuoteShippingInput, deps: QuoteShippingDeps = {}): Promise<ShippingQuote> {
   const getZones = deps.getZones ?? (async () => []);
   const getThreshold = deps.getThreshold ?? (async () => 0);
-  const liveQuote = deps.liveQuote ?? NO_LIVE_QUOTE;
+  const liveQuote = deps.liveQuote ?? DEFAULT_LIVE_QUOTE;
 
   const threshold = await getThreshold();
   if (isFreeShipping(input.subtotal, threshold)) {
