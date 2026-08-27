@@ -106,15 +106,21 @@ npm run build:worker && wrangler deploy
 ```
 
 ### 3.3 Variables de entorno en Cloudflare
-Las secrets se cargan con el CLI de Wrangler:
+Las secrets se cargan con el CLI de Wrangler. Lista completa (ver `docs/LAUNCH.md` para el detalle de cada una y el runbook de lanzamiento):
 ```bash
 wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 wrangler secret put DATABASE_URL
 wrangler secret put DIRECT_URL
-# (más adelante)
-# wrangler secret put MP_ACCESS_TOKEN
-# wrangler secret put MP_WEBHOOK_SECRET
-# wrangler secret put RESEND_API_KEY
+wrangler secret put MP_ACCESS_TOKEN       # token PROD de Mercado Pago (no TEST)
+wrangler secret put MP_WEBHOOK_SECRET
+wrangler secret put RESEND_API_KEY
+wrangler secret put RESEND_FROM           # ej. "Glamify Makeup <hola@glamifymakeup.site>"
+wrangler secret put RESEND_OWNER_EMAIL    # email donde caen alertas (pedidos + arrepentimientos)
+wrangler secret put MICORREO_EMAIL
+wrangler secret put MICORREO_PASSWORD
+wrangler secret put MICORREO_GATEWAY_AUTH
+wrangler secret put MICORREO_SANDBOX       # "true"/"false" — ausente cae al lado seguro (API PROD)
+# Opcionales: MICORREO_VELOCITY ("classic" por defecto / "express"), MICORREO_ORIGIN_CP (6700)
 ```
 
 Las variables **públicas** (`NEXT_PUBLIC_*`) van en `wrangler.jsonc` bajo `[vars]` o en el dashboard:

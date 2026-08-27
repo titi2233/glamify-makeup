@@ -1,6 +1,9 @@
 import type { PaymentStatus } from "@prisma/client";
 
 const MP_API = "https://api.mercadopago.com";
+// Sin esto, un MP colgado (no error HTTP, directamente no responde) cuelga el checkout
+// o el webhook indefinidamente. Mismo patrón que src/lib/shipping/micorreo.ts.
+const TIMEOUT_MS = 8000;
 
 export interface MpDeps {
   fetch?: typeof fetch;
@@ -54,6 +57,7 @@ export async function createPreference(input: CreatePreferenceInput, deps: MpDep
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`MP createPreference falló: ${res.status} ${await res.text()}`);
   return (await res.json()) as MpPreference;
@@ -69,7 +73,10 @@ export interface MpPayment {
 /** Consulta un pago por id (fuente de verdad del webhook). */
 export async function getPayment(id: string, deps: MpDeps = {}): Promise<MpPayment> {
   const { fetchFn, token } = resolveDeps(deps);
-  const res = await fetchFn(`${MP_API}/v1/payments/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetchFn(`${MP_API}/v1/payments/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`MP getPayment falló: ${res.status} ${await res.text()}`);
   const raw = (await res.json()) as { id: number | string; status: string; external_reference?: string; transaction_amount?: number };
   return { id: String(raw.id), status: raw.status, external_reference: raw.external_reference, transaction_amount: raw.transaction_amount };

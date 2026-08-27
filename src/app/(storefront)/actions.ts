@@ -164,6 +164,10 @@ export async function createCheckoutAction(input: {
     );
     return { ok: true, initPoint: result.initPoint, orderNumber: result.orderNumber };
   } catch (e) {
+    // AbortSignal.timeout() en mercadopago.ts tira un DOMException técnico en inglés — no mostrárselo a la clienta.
+    if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      return { ok: false, error: "No pudimos conectar con Mercado Pago. Probá de nuevo en unos segundos." };
+    }
     return { ok: false, error: e instanceof Error ? e.message : "No se pudo iniciar el pago." };
   }
 }

@@ -38,3 +38,11 @@ Sin ningún mecanismo en el flujo: no hay campo de CUIT/DNI del comprador en che
 ## Veredicto de la fase
 
 🔴 **Hay un gap real y no bloqueante-de-código pero sí bloqueante-legal**: falta el mecanismo de facturación (o al menos confirmar que se hace manual) y falta aceptación explícita de términos en el checkout. Las páginas legales de consumidor están sólidas; lo fiscal (AFIP) no fue contemplado en ningún lado del proyecto.
+
+## Fix aplicado (2026-08-28) — checkbox de T&C
+
+Decisión del dueño: agregar el checkbox. `src/app/(storefront)/checkout/checkout-form.tsx` — nuevo estado `acceptedTerms`, nueva regla en `validate()` ("Tenés que aceptar los Términos y Condiciones."), checkbox + links a `/terminos` y `/privacidad` antes del botón de pago. Mínimo a propósito: sin persistir `termsAcceptedAt` en `Order` (no hay migración de schema) — si se quiere trazabilidad legal más fuerte (poder probar que una clienta puntual aceptó), es un paso aparte.
+
+Verificado en el navegador real (dev local, no solo unit test): sin tildar → bloquea con el mensaje esperado, no llega a llamar a Mercado Pago. Con el checkbox tildado → pasa la validación y sí llama a la Server Action real (confirmado porque llegó hasta un error real de la API de Mercado Pago por `back_url` en `http://localhost` — límite conocido de probar en local, no un bug). `pnpm typecheck`/`pnpm lint`/`pnpm test` (465/465) verdes.
+
+Facturación AFIP: sigue sin resolver — decisión de negocio, ver conversación con el dueño (necesita un modelo de facturación, no un fix de código).

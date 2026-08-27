@@ -75,3 +75,21 @@ Si la primera query devuelve filas: hay evidencia dura de que `simulate-mp-webho
 ## Veredicto de la fase
 
 🔴 **Bloqueante.** No es un problema de "puede que haya datos de prueba" — es que el repo, tal como está hoy, no tiene NINGUNA barrera entre "correr un comando en la laptop" y "escribir en la base que sirve a clientas reales". Antes de la primera venta real hay que, como mínimo: (a) confirmar con el SQL de arriba si ya hay contaminación, (b) decidir cómo se van a correr seeds/scripts de ahora en más sin este riesgo.
+
+## Fix aplicado (2026-08-28)
+
+Decisión del dueño: blindar los scripts con guard de entorno, no separar Supabase por ahora.
+
+Se agregó `scripts/prod-write-guard.ts::confirmProdWrite(action)` — como dev y prod comparten el mismo `DATABASE_URL`, no hay forma de distinguirlas por URL/NODE_ENV. El guard muestra el host real contra el que se va a escribir y obliga a tipearlo de vuelta para confirmar; sin TTY (automatización) se niega de inmediato en vez de escribir sin permiso. Ningún script del repo corre en CI (confirmado por grep sobre `.github/workflows/`), así que negarse sin TTY es seguro.
+
+Cableado en `prisma/seed.ts:4,403` (antes de sembrar) y `scripts/simulate-mp-webhook.ts:11,24` (antes de crear el pedido simulado).
+
+Verificación: `pnpm typecheck` verde, `pnpm lint` sin warnings nuevos, probado a mano con stdin cerrado (rechaza al toque) y con host real extraído correctamente del formato de `DATABASE_URL` del pooler de Supabase que usa este proyecto.
+
+**Esto no reemplaza la limpieza pendiente** (`pnpm db:cleanup`) ni resuelve que dev y prod sigan siendo la misma base — solo evita que un comando corrido sin pensar la vuelva a ensuciar.
+
+## Corrección tras revisión adversarial (2026-08-28)
+
+Un reviewer de contexto fresco encontró que el fix de arriba, tal como quedó, **no protegía el script que más importaba**: `package.json` (`db:seed` y `"prisma": {"seed": ...}`) no tenían `--env-file=.env` — a diferencia de todos los demás scripts que mutan la DB. `tsx` no carga `.env` solo, así que `DATABASE_URL` llegaba vacío a `prod-write-guard.ts`, que mostraba `"(DATABASE_URL no seteada)"` en vez del host real y le pedía a la persona confirmar tipeando ESE texto — vaciando el propósito del guard justo en `seed.ts`, el hallazgo 🔴 más grave de esta fase.
+
+Fix: agregado `--env-file=.env` a ambas entradas (`package.json:23,84`). Verificado con `npx tsx --env-file=.env -e "..."` que `DATABASE_URL` ahora sí se carga. `pnpm typecheck`/`pnpm lint`/`pnpm test` (465/465) verdes.

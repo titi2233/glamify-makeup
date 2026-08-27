@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,14 +14,18 @@ export function CatalogBreadcrumbs({ items }: { items: Crumb[] }) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((c, i) => (
-          <BreadcrumbItem key={c.href}>
-            {c.current ? (
-              <BreadcrumbPage className="line-clamp-1">{c.label}</BreadcrumbPage>
-            ) : (
-              <BreadcrumbLink href={c.href}>{c.label}</BreadcrumbLink>
-            )}
+          // BreadcrumbSeparator es un <li> — tiene que ser hermano de BreadcrumbItem (otro <li>),
+          // no hijo: <li> anidado en <li> es HTML inválido y rompe la hidratación de React.
+          <Fragment key={c.href}>
+            <BreadcrumbItem>
+              {c.current ? (
+                <BreadcrumbPage className="line-clamp-1">{c.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink href={c.href}>{c.label}</BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
             {i < items.length - 1 && <BreadcrumbSeparator />}
-          </BreadcrumbItem>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>

@@ -38,6 +38,7 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
   const [floorApt, setFloorApt] = useState("");
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Sucursal: lista de sucursales de MiCorreo + la elegida.
   const [agencies, setAgencies] = useState<{ code: string; label: string }[]>([]);
@@ -88,6 +89,7 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
     if (method === "domicilio" && (!street.trim() || !number.trim())) return "Completá calle y número.";
     if (method === "sucursal" && !agencyCode) return "Elegí una sucursal de Correo.";
     if (shippingCost == null) return "Calculá el envío con tu código postal.";
+    if (!acceptedTerms) return "Tenés que aceptar los Términos y Condiciones.";
     return null;
   };
 
@@ -182,6 +184,21 @@ export function CheckoutForm({ subtotal, discount, couponCode, couponFreeShippin
         <Separator />
         <CouponInput applied={couponCode} />
         <CartSummary subtotal={subtotal} discount={discount} shippingCost={shippingCost} total={total} freeShipping={couponFreeShipping || shipping?.free} />
+        <label className="flex items-start gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 rounded border-border"
+            aria-label="Acepto los Términos y Condiciones"
+          />
+          <span>
+            Acepto los{" "}
+            <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos y Condiciones</a>{" "}
+            y la{" "}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Política de Privacidad</a>.
+          </span>
+        </label>
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}

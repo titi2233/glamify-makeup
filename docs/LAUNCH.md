@@ -50,8 +50,9 @@ Variables públicas (`NEXT_PUBLIC_*`) van en `wrangler.jsonc → [vars]` o dashb
 
 - **Resend:** verificar el dominio `glamifymakeup.site` (registros SPF/DKIM) para entregabilidad.
 - **Mercado Pago:** configurar la URL del webhook de PROD apuntando a `https://glamifymakeup.site/api/webhooks/mercadopago` y excluir efectivo (Checkout Pro).
-- **MiCorreo (envíos, cotización en vivo):** cargar los secrets `MICORREO_EMAIL`, `MICORREO_PASSWORD`
-  y `MICORREO_GATEWAY_AUTH` (ver `docs/decisions/0001-shipping-provider.md` para qué es cada uno).
+- **MiCorreo (envíos, cotización en vivo):** cargar los secrets `MICORREO_EMAIL`, `MICORREO_PASSWORD`,
+  `MICORREO_GATEWAY_AUTH` y `MICORREO_SANDBOX` (`"true"`/`"false"` — ausente cae al lado seguro, API PROD;
+  ver `docs/decisions/0001-shipping-provider.md` para qué es cada uno).
   Sin ellos la cotización cae a la tabla de zonas (ya recalibrada al costo real, así que no hay
   pérdida grave). Verificar con `pnpm micorreo:probe` — debe dar ~$6.113 a sucursal para La Plata (1900).
   Opcionales: `MICORREO_VELOCITY` (`classic` por defecto / `express`), `MICORREO_ORIGIN_CP` (6700).

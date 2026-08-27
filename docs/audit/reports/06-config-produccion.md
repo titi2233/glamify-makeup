@@ -43,3 +43,17 @@ El bloque de `wrangler secret put` en `SETUP.md:108-118` **no incluye** `RESEND_
 ## Veredicto de la fase
 
 🔴 **Dos hallazgos de código reales**: falta try/catch best-effort en el email de confirmación dentro del webhook (inconsistente con el propio patrón que el repo ya usa), y `SETUP.md` no documenta todos los secrets que el código realmente necesita en runtime. Ninguno de los dos es de datos/dinero perdido (la idempotencia del pago no se rompe), pero sí generan ruido operativo y riesgo de "silencio" (emails que no salen sin que nadie se entere).
+
+## Fixes aplicados (2026-08-28)
+
+- **Punto 3 (email sin try/catch)**: `src/lib/orders/webhook-service.ts` — bloque 6b envuelto en try/catch, mismo criterio que el bloque 6a (auto-import MiCorreo) dos líneas arriba. Test nuevo en `tests/integration/webhook-service.test.ts` ("un fallo de Resend al mandar los emails NO voltea el webhook"). Nota al reverificar: `SETUP.md:108-118` en verdad estaba desactualizado — `docs/LAUNCH.md` (el runbook vigente) YA tenía `RESEND_FROM`/`RESEND_OWNER_EMAIL`/MiCorreo completos; el hallazgo real era que `SETUP.md` no reflejaba lo que `LAUNCH.md` ya sabía, no que faltara documentar en todos lados.
+- **Punto 1 (drift `NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED`)**: agregado a `wrangler.jsonc [vars]`. Confirmado con `npx wrangler deploy --dry-run` que el binding queda cargado correctamente (sin impacto funcional real — el código ya usaba `=== "true"` como comparación estricta, así que ausente o `"false"` se comportaban igual).
+- **Punto 5 (`SETUP.md` incompleto)**: `SETUP.md` §3.3 actualizado para incluir la lista completa de secrets, alineada con `docs/LAUNCH.md`.
+
+Verificación: `pnpm typecheck` verde, `pnpm test` completo (465/465) verde, `pnpm build` verde, `wrangler deploy --dry-run` confirma el binding nuevo. Revisión adversarial de contexto fresco corrida sobre el diff.
+
+No se tocó: duplicación de "URL base" en 3 lugares (punto 4, refactor sin bug activo — queda como deuda técnica, no bloquea). El resto de fase 6 (secrets realmente cargados en Cloudflare, dominio Resend verificado, redirect URLs de Supabase) sigue siendo operativo, no verificable desde el repo.
+
+## Corrección tras revisión adversarial (2026-08-28)
+
+El reviewer notó que `SETUP.md` (ya corregido arriba) documenta 5 de las 6 vars de MiCorreo pero falta `MICORREO_SANDBOX` (usada en `micorreo.ts:88` para elegir base URL TEST vs PROD) — el gap era preexistente también en `docs/LAUNCH.md`, no cerrado por el primer pase. Fix: agregada a ambos documentos (`SETUP.md` y `docs/LAUNCH.md`). Impacto bajo (ausente, cae al lado seguro — API PROD), pero cierra el hallazgo original al 100% en vez de 5/6.

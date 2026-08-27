@@ -20,7 +20,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx --env-file=.env prisma/seed.ts",
     "db:cleanup": "tsx --env-file=.env prisma/cleanup-seed.ts",
     "set:whatsapp": "tsx --env-file=.env prisma/set-whatsapp.ts",
     "setup:storage": "tsx scripts/setup-storage.ts",
@@ -81,6 +81,6 @@
   },
   "packageManager": "pnpm@8.15.0",
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx --env-file=.env prisma/seed.ts"
   }
 }

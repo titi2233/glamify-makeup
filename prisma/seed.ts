@@ -1,6 +1,7 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { generateSku } from "../src/lib/sku";
+import { confirmProdWrite } from "../scripts/prod-write-guard";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -400,6 +401,7 @@ async function upsertCombo(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  await confirmProdWrite("sembrar el catálogo de prueba (borra y recrea zonas de envío, crea el pedido GLM-E2E001)");
   console.log("🌱 Seeding catálogo Glamify Makeup…");
   const idBySlug = await upsertCategories();
   await upsertProducts(idBySlug);

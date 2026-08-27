@@ -165,6 +165,14 @@ describe("processWebhook", () => {
     expect(state.order.status).toBe("paid");
   });
 
+  it("un fallo de Resend al mandar los emails NO voltea el webhook (best-effort): el pedido queda pagado", async () => {
+    const { db, state } = makeFakeDb();
+    const deps = makeDeps({ db, sendEmail: vi.fn(async () => { throw new Error("Resend caído"); }) });
+    const r = await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect(r.status).toBe(200);
+    expect(state.order.status).toBe("paid");
+  });
+
   it("sucursal → no auto-importa (imported:false), no toca el Shipment", async () => {
     const { db, state } = makeFakeDb();
     const importSpy = vi.fn(async () => ({ imported: false, detail: "sucursal" }) as const);
