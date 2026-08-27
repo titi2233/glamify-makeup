@@ -26,6 +26,9 @@ export interface CheckoutAddress {
   floorApt?: string | null;
   city?: string;
   notes?: string | null;
+  /** Sólo método sucursal: código y etiqueta de la sucursal de MiCorreo elegida. */
+  agencyCode?: string | null;
+  agencyLabel?: string | null;
 }
 export interface CreateCheckoutInput {
   contactName: string;

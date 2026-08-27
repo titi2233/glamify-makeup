@@ -29,8 +29,27 @@ describe("buildImportInput", () => {
     });
   });
 
-  it("sucursal: skip (no guardamos la sucursal elegida)", () => {
-    expect(buildImportInput(baseOrder({ shippingMethod: "sucursal" }))).toEqual({ skip: expect.stringContaining("sucursal") });
+  it("sucursal con agencyCode: arma input con agency (sin address)", () => {
+    const r = buildImportInput(baseOrder({
+      shippingMethod: "sucursal",
+      shippingAddress: { cp: "1900", province: "Buenos Aires", city: "La Plata", agencyCode: "B0200" },
+    }));
+    expect(r).toEqual({
+      input: {
+        extOrderId: "GLM-000123",
+        recipient: { name: "Maria Gonzalez", email: "maria@mail.com", phone: "1144556677" },
+        metodo: "sucursal",
+        pesoGr: 120,
+        valorDeclarado: 30000,
+        agency: "B0200",
+      },
+    });
+  });
+
+  it("sucursal SIN agencyCode (pedido viejo): skip → carga manual", () => {
+    expect(buildImportInput(baseOrder({ shippingMethod: "sucursal", shippingAddress: { cp: "1900", city: "La Plata" } }))).toEqual({
+      skip: expect.stringContaining("sucursal"),
+    });
   });
 
   it("dirección incompleta: skip", () => {
