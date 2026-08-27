@@ -252,10 +252,12 @@ interface SeedZone {
   order: number;
 }
 const ZONES: SeedZone[] = [
-  { name: "AMBA (CABA + GBA)", matchType: "cpRange", cpFrom: "1000", cpTo: "1900", price: 2500, order: 0 },
-  { name: "Buenos Aires interior", matchType: "province", provinces: ["Buenos Aires"], price: 3800, order: 1 },
-  { name: "Centro (Córdoba, Santa Fe, Entre Ríos)", matchType: "province", provinces: ["Córdoba", "Santa Fe", "Entre Ríos"], price: 4500, order: 2 },
-  { name: "Resto del país", matchType: "cpRange", cpFrom: "0", cpTo: "9999", price: 6200, order: 3 },
+  // Precios a domicilio (methodFactor aplica el descuento de sucursal, ver quote.ts). Recalibrados
+  // con cotizaciones reales en vivo de MiCorreo PAQ.AR Clásico — ver docs/decisions/0001-shipping-provider.md.
+  { name: "AMBA (CABA + GBA)", matchType: "cpRange", cpFrom: "1000", cpTo: "1900", price: 9000, order: 0 },
+  { name: "Buenos Aires interior", matchType: "province", provinces: ["Buenos Aires"], price: 9000, order: 1 },
+  { name: "Centro (Córdoba, Santa Fe, Entre Ríos)", matchType: "province", provinces: ["Córdoba", "Santa Fe", "Entre Ríos"], price: 9000, order: 2 },
+  { name: "Resto del país", matchType: "cpRange", cpFrom: "0", cpTo: "9999", price: 10000, order: 3 },
 ];
 
 async function upsertZones(): Promise<void> {

@@ -8,8 +8,8 @@ import type { CartLine } from "@/lib/cart/types";
 // (ver docs/decisions/0001-shipping-provider.md) — este archivo sólo integra quoteShipping.
 const line = (over: Partial<CartLine> = {}): CartLine => ({ id: "l1", kind: "variant", refId: "v1", unitPrice: 1000, qty: 1, weightGr: 50, ...over });
 const zones: Zone[] = [
-  { id: "z-amba", matchType: "cpRange", provinces: [], cpFrom: "1000", cpTo: "1900", price: 2500, active: true, order: 0 },
-  { id: "z-resto", matchType: "cpRange", provinces: [], cpFrom: "0", cpTo: "9999", price: 6200, active: true, order: 3 },
+  { id: "z-amba", matchType: "cpRange", provinces: [], cpFrom: "1000", cpTo: "1900", price: 9000, active: true, order: 0 },
+  { id: "z-resto", matchType: "cpRange", provinces: [], cpFrom: "0", cpTo: "9999", price: 10000, active: true, order: 3 },
 ];
 
 describe("quoteShipping", () => {
@@ -22,11 +22,11 @@ describe("quoteShipping", () => {
   });
   it("usa la zona cuando no hay cotización en vivo", async () => {
     const q = await quoteShipping({ ...base, method: "domicilio" }, deps);
-    expect(q).toMatchObject({ cost: 2500, free: false, source: "zone", zoneId: "z-amba" });
+    expect(q).toMatchObject({ cost: 9000, free: false, source: "zone", zoneId: "z-amba" });
   });
-  it("en el fallback de zonas, sucursal sigue siendo más barata (methodFactor 0.85)", async () => {
+  it("en el fallback de zonas, sucursal sigue siendo más barata (methodFactor 0.7, ver ADR 0001)", async () => {
     const q = await quoteShipping({ ...base, method: "sucursal" }, deps);
-    expect(q.cost).toBe(2125); // 2500 * 0.85
+    expect(q.cost).toBe(6300); // 9000 * 0.7
   });
   it("prefiere la cotización en vivo y expone operador y fecha estimada", async () => {
     const q = await quoteShipping(

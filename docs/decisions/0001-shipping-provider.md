@@ -66,11 +66,14 @@ de la cuenta (más trazable que el mail genérico ya probado). Si se consigue, u
 | Ushuaia (extremo sur del país) | $6.941 | $15.902 | $9.808 | $22.483 |
 
 Hallazgo clave: **PAQ.AR Clásico a sucursal es casi plano en todo el país** (+13% de Buenos
-Aires a Ushuaia, los dos extremos posibles). El `methodFactor` actual en código
-(sucursal = 0.85× domicilio) está mal calibrado contra estos datos: la proporción real medida
-es ~0.68-0.71×, no 0.85×. Es una corrección de código (el número no viene del blueprint, ver
-arriba) — pero el precio final a cobrar en el checkout es una decisión de negocio de Tiziana,
-no técnica, y queda pendiente de su confirmación antes de tocar `ShippingZone` en producción.
+Aires a Ushuaia, los dos extremos posibles). El `methodFactor` que traía el código
+(sucursal = 0.85× domicilio) estaba mal calibrado contra estos datos: la proporción real
+medida es 0.68-0.71×.
+
+**Confirmado por Tiziana (2026-08-26): costo real, redondeado, sin margen.** `ShippingZone.price`
+(costo a domicilio) pasa a $9.000 en AMBA/Buenos Aires interior/Centro y $10.000 en el resto
+del país; `methodFactor(sucursal)` pasa de 0.85 a 0.7 (`lib/shipping/quote.ts`). Aplicado en
+`prisma/seed.ts` y en la tabla `ShippingZone` de producción.
 
 ## Reversibilidad
 
