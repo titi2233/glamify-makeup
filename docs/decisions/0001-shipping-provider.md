@@ -26,10 +26,9 @@ implementación, no un requisito del blueprint.
    con el mismo paquete y mismo transportista (Correo Argentino): $11.877 vía Zipnova vs.
    $6.113 directo (PAQ.AR Clásico). Zippin resultó ser la misma empresa: `zippin.com.ar/precios`
    redirige (301) a `zipnova.com/ar/productos/envios/precios` — no es una alternativa real.
-2. **PAQ.AR API directa (Correo Argentino)** — exige acuerdo comercial gestionado con
-   ejecutivo; ya se intentó por mail sin respuesta útil. Tres fuentes independientes
-   confirman que las credenciales de API (no la cuenta MiCorreo en sí, que es de alta libre)
-   pasan por gestión comercial.
+2. **PAQ.AR API v2 (corporativa)** — exige acuerdo comercial gestionado con ejecutivo; ya se
+   intentó por mail sin respuesta útil. **Ojo:** esto aplica a la API v2 corporativa, no a la
+   API MiCorreo REST — ver la corrección más abajo, que es la que sí nos sirve.
 3. **Andreani** — sí tiene autoservicio sin acuerdo comercial (`pymes.andreani.com`, producto
    "Paquetería"), a diferencia de lo que decían las comparativas genéricas — pero verificado en
    vivo el mismo paquete (Luján→La Plata, 0,5kg/12x5x5cm, $30.000 declarado): **$24.902
@@ -56,10 +55,46 @@ tiene a Zipnova como proveedor por defecto — cae directo a la tabla estática 
 operativa (validado en vivo: alta sin acuerdo comercial, cotiza y genera guías sin fricción).
 
 **Después (mejora, no bloquea el lanzamiento):** reintentar el pedido de credenciales de API
-de MiCorreo — ahora con CUIT de monotributo válido — por el canal "Ingresar Reclamos" dentro
-de la cuenta (más trazable que el mail genérico ya probado). Si se consigue, un
+de MiCorreo — ahora con CUIT de monotributo válido — por el formulario de contacto de la
+cuenta (`/MiCorreo/public/contacto`, asunto libre). Si se consigue, un
 `lib/shipping/micorreo.ts` nuevo se inyecta como `deps.liveQuote` en `checkout-service.ts` /
 `actions.ts`, sin tocar el resto de `quoteShipping()`.
+
+### Corrección: son DOS APIs distintas (verificado 2026-08-27)
+
+Una investigación previa concluyó que "la API exige acuerdo comercial" leyendo el manual
+equivocado. Correo Argentino publica **dos APIs** en su portal de desarrolladores
+(`tintegraciones.correoargentino.com.ar`, público, sin gate comercial):
+
+| | **API MiCorreo REST** | **API v2.0 REST (PAQ.AR)** |
+|---|---|---|
+| Base | `api.correoargentino.com.ar/paqar/v1/` | ídem (v2) |
+| Test | `apitest.correoargentino.com.ar/paqar/v1/` | ídem |
+| Utilización de API KEY | **No** | Sí |
+| Devuelve ID de usuario de MiCorreo | **Sí** | No |
+| Manual | `apiMiCorreo.pdf` | `apiPaqAr-v2.pdf` |
+
+La que nos sirve es **API MiCorreo REST**: valida las credenciales de la cuenta MiCorreo
+existente y devuelve un customer ID; no necesita acuerdo comercial ni cuenta corriente (los
+envíos se descuentan del saldo prepago de la cuenta, que ya está operativa). Endpoints
+relevantes: `users/validate`, `rates`, `agencies`, `shipping/import`. Hay ambiente de test.
+
+**Pero las credenciales de gateway siguen siendo necesarias.** Se evaluó la hipótesis de que
+alcanzaba con el email y la contraseña de la cuenta MiCorreo estándar. Es falsa, confirmado
+por tres fuentes independientes:
+
+1. La librería comunitaria `ylazzari-correoargentino` pide `userToken` + `passwordToken`
+   (HTTP Basic, nivel gateway) **además** de `email` + `password` (JWT, nivel usuario).
+2. La FAQ del propio portal documenta `403 = "Acceso denegado"`.
+3. Probado en vivo contra el ambiente de test público sin credenciales:
+   `POST /paqar/v1/users/validate` → **HTTP 403**, y `GET /paqar/v1/agencies` → **HTTP 403**.
+   El gateway rechaza antes de siquiera llegar al login de usuario.
+
+O sea: el diseño del flujo que propone esa hipótesis (cotizar → crear envío → etiqueta →
+despachar → tracking) es correcto y es exactamente lo que documenta el portal. Lo único que
+falta es que Correo Argentino emita los dos tokens de gateway — que es un pedido, no un
+acuerdo comercial. Nota operativa: la cuenta de MiCorreo figura hoy como "Tipo de documento:
+Consumidor final"; conviene actualizarla a CUIT/monotributo al pedir el acceso.
 
 ### Datos reales verificados el mismo día (paquete idéntico: 12x5x5cm, 0,5kg, $30.000 declarado)
 
