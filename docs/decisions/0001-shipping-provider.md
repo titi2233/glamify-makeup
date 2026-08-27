@@ -30,8 +30,12 @@ implementación, no un requisito del blueprint.
    ejecutivo; ya se intentó por mail sin respuesta útil. Tres fuentes independientes
    confirman que las credenciales de API (no la cuenta MiCorreo en sí, que es de alta libre)
    pasan por gestión comercial.
-3. **Andreani** — misma barrera: acuerdo comercial obligatorio, tarifas de lista más altas,
-   descrito como "inaccesible para tiendas chicas" en comparativas 2026.
+3. **Andreani** — sí tiene autoservicio sin acuerdo comercial (`pymes.andreani.com`, producto
+   "Paquetería"), a diferencia de lo que decían las comparativas genéricas — pero verificado en
+   vivo el mismo paquete (Luján→La Plata, 0,5kg/12x5x5cm, $30.000 declarado): **$24.902
+   sucursal / $26.724 domicilio**. 2x Zipnova y 4x MiCorreo directo. Descartado por precio, no
+   por acceso — el declarado mínimo de $30.000 y el precio plano por tramo ("Chico" hasta 10kg)
+   sugieren que el producto está pensado para paquetes más grandes/pesados, no para maquillaje.
 4. **OCA / ePak** — alta con aprobación de documentación fiscal (AFIP, monotributo/RI), no
    autogestionable end-to-end; hilo de Comunidad Tiendanube confirma fricción real de
    usuarios en situación fiscal similar a la de Tiziana.
