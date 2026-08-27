@@ -50,7 +50,14 @@ Variables públicas (`NEXT_PUBLIC_*`) van en `wrangler.jsonc → [vars]` o dashb
 
 - **Resend:** verificar el dominio `glamifymakeup.site` (registros SPF/DKIM) para entregabilidad.
 - **Mercado Pago:** configurar la URL del webhook de PROD apuntando a `https://glamifymakeup.site/api/webhooks/mercadopago` y excluir efectivo (Checkout Pro).
-- **MiCorreo:** si se activa la cotización en vivo, cargar credenciales (hoy hay fallback a tabla de zonas en `lib/shipping/correo.ts`).
+- **MiCorreo (envíos, cotización en vivo):** cargar los secrets `MICORREO_EMAIL`, `MICORREO_PASSWORD`
+  y `MICORREO_GATEWAY_AUTH` (ver `docs/decisions/0001-shipping-provider.md` para qué es cada uno).
+  Sin ellos la cotización cae a la tabla de zonas (ya recalibrada al costo real, así que no hay
+  pérdida grave). Verificar con `pnpm micorreo:probe` — debe dar ~$6.113 a sucursal para La Plata (1900).
+  Opcionales: `MICORREO_VELOCITY` (`classic` por defecto / `express`), `MICORREO_ORIGIN_CP` (6700).
+  - Zipnova fue **cancelado** (markup ~2x); `lib/shipping/zipnova.ts` y sus secrets quedan sin uso.
+  - Requisito operativo (no de código): la cuenta MiCorreo se debita de un **saldo prepago** al crear
+    cada envío; cargar crédito antes de la primera venta.
 
 ### 4. Aplicar la migración M5 a la base
 La migración `20260606120000_m5_retraction_request` (tabla `RetractionRequest` del Botón de Arrepentimiento)

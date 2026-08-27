@@ -7,6 +7,7 @@ import { computeStockDecrements, type Shortage } from "@/lib/orders/stock";
 import { sendEmail as realSendEmail } from "@/lib/email/resend";
 import { orderConfirmationEmail, newOrderAlertEmail, type OrderEmailData } from "@/lib/email/templates";
 import { toNumber } from "@/lib/catalog/pricing";
+import { autoImportShipment as autoImportShipmentImpl, type AutoShipmentOrder, type AutoShipmentOutcome } from "@/lib/orders/auto-shipment";
 import type { CartLine } from "@/lib/cart/types";
 import type { OrderStatus } from "@prisma/client";
 import type { Money } from "@/lib/catalog/types";
@@ -19,6 +20,7 @@ export interface ProcessWebhookInput {
 /** Interfaz mínima de la DB necesaria para el webhook (para inyectar fakes en tests). */
 export interface WebhookDb {
   order: { findFirst: (args: Record<string, unknown>) => Promise<WebhookOrder | null> };
+  shipment: { update: (args: { where: { orderId: string }; data: { service: string } }) => Promise<unknown> };
   $transaction: <T>(fn: (tx: PrismaTransactionClient) => Promise<T>) => Promise<T>;
 }
 
@@ -43,7 +45,10 @@ export interface WebhookOrder {
   couponId: string | null;
   contactName: string;
   contactEmail: string;
+  contactPhone: string;
   shippingMethod: string;
+  shippingAddress: unknown;
+  weightGr: number;
   subtotal: Money;
   shippingCost: Money;
   discountTotal: Money;
@@ -58,6 +63,8 @@ export interface ProcessWebhookDeps {
   verifySignature: (input: { xSignature: string | null; xRequestId: string | null; dataId: string; secret: string }) => Promise<boolean>;
   secret: string;
   ownerEmail?: string;
+  /** Envío automático a MiCorreo al pagar (inyectable para tests). Best-effort. */
+  autoImportShipment?: (order: AutoShipmentOrder) => Promise<AutoShipmentOutcome>;
   now?: Date;
 }
 export interface ProcessWebhookResult {
@@ -230,6 +237,30 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
     if (deps.ownerEmail) {
       const owner = newOrderAlertEmail({ ...emailData, oversoldLines: oversoldLines.length ? oversoldLines : undefined });
       await deps.sendEmail({ to: deps.ownerEmail, subject: owner.subject, html: owner.html, text: owner.text });
+    }
+
+    // Envío automático a MiCorreo (best-effort, fuera de la tx). Un fallo NO voltea el
+    // webhook: el pedido ya está pagado. Idempotente por wonPaidTransition (una vez) +
+    // el extOrderId único de MiCorreo. Sólo domicilio; sucursal se carga a mano.
+    try {
+      const doImport = deps.autoImportShipment ?? ((o: AutoShipmentOrder) => autoImportShipmentImpl(o));
+      const outcome = await doImport({
+        orderNumber: order.orderNumber,
+        contactName: order.contactName,
+        contactEmail: order.contactEmail,
+        contactPhone: order.contactPhone,
+        shippingMethod: order.shippingMethod,
+        shippingAddress: order.shippingAddress,
+        weightGr: order.weightGr,
+        declaredValue: toNumber(order.subtotal),
+      });
+      if (outcome.imported) {
+        await deps.db.shipment.update({ where: { orderId: order.id }, data: { service: outcome.service } });
+      } else {
+        console.info(`[webhook] pedido ${order.orderNumber}: no auto-importado a MiCorreo (${outcome.detail})`);
+      }
+    } catch (e) {
+      console.error(`[webhook] auto-import MiCorreo falló (pedido ${order.orderNumber}):`, e instanceof Error ? e.message : e);
     }
   }
 

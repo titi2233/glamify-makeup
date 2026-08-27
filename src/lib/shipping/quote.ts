@@ -45,7 +45,12 @@ export function isFreeShipping(subtotal: number, threshold: number): boolean {
   return threshold > 0 && subtotal >= threshold;
 }
 
-/** Factor de costo por método: sucursal de Correo suele ser más barata que domicilio (blueprint 05 §3). */
+/**
+ * Factor de costo por método: sucursal de Correo es más barata que domicilio (blueprint 05 §3).
+ * 0.7 medido con cotizaciones reales en vivo de MiCorreo PAQ.AR Clásico el mismo día en dos
+ * extremos del país (ratio sucursal/domicilio: 0.68 en Buenos Aires, 0.71 en Ushuaia) — ver
+ * docs/decisions/0001-shipping-provider.md. `zone.price` representa el costo a domicilio.
+ */
 export function methodFactor(method: "domicilio" | "sucursal"): number {
-  return method === "sucursal" ? 0.85 : 1;
+  return method === "sucursal" ? 0.7 : 1;
 }

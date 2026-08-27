@@ -60,6 +60,8 @@ async function main(): Promise<void> {
     db: prisma as any,
     getPayment: async () => ({ id: dataId, status: "approved", external_reference: orderId, transaction_amount: toNumber(order!.total) }),
     sendEmail, verifySignature: verifyMpSignature, secret: SECRET, ownerEmail: process.env.RESEND_OWNER_EMAIL || "",
+    // No-op en la simulación: no crear un envío real en MiCorreo por un pedido de prueba.
+    autoImportShipment: async () => ({ imported: false as const, detail: "simulación" }),
   };
 
   const r1 = await processWebhook(input, deps);

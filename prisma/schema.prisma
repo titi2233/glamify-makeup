@@ -294,6 +294,7 @@ model Order {
   shippingMethod  ShippingMethod
   shippingZoneId  String?        @db.Uuid
   shippingZone    ShippingZone?  @relation(fields: [shippingZoneId], references: [id])
+  weightGr        Int            @default(0) // peso total snapshoteado al checkout (para el envío en MiCorreo)
   subtotal        Decimal        @db.Decimal(12, 2)
   shippingCost    Decimal        @db.Decimal(12, 2)
   discountTotal   Decimal        @default(0) @db.Decimal(12, 2)
