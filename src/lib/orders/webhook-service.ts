@@ -254,19 +254,27 @@ export async function processWebhook(input: ProcessWebhookInput, deps: ProcessWe
 
     // 6b. Emails. La alerta a la dueña incluye el resultado del auto-import (si falló, hay que
     // cargarlo a mano / reintentar desde el panel).
-    const emailData: OrderEmailData = {
-      orderNumber: order.orderNumber, contactName: order.contactName, contactEmail: order.contactEmail,
-      items: order.items.map((it) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
-      subtotal: toNumber(order.subtotal), shippingCost: toNumber(order.shippingCost), discountTotal: toNumber(order.discountTotal), total: toNumber(order.total),
-      shippingMethod: order.shippingMethod,
-      // Defensa: monto realmente acreditado por MP → la alerta a la dueña flaggea si no coincide con el total.
-      amountPaid: mpPayment.transaction_amount ?? undefined,
-    };
-    const customer = orderConfirmationEmail(emailData);
-    await deps.sendEmail({ to: order.contactEmail, subject: customer.subject, html: customer.html, text: customer.text });
-    if (deps.ownerEmail) {
-      const owner = newOrderAlertEmail({ ...emailData, oversoldLines: oversoldLines.length ? oversoldLines : undefined, micorreoImport });
-      await deps.sendEmail({ to: deps.ownerEmail, subject: owner.subject, html: owner.html, text: owner.text });
+    // Best-effort, mismo criterio que 6a: el pago YA está confirmado en DB — un fallo de Resend
+    // acá no debe voltear el webhook (si no, MP reintenta indefinidamente sobre un pago que ya
+    // es idempotente, en vez de cerrar con 200).
+    try {
+      const emailData: OrderEmailData = {
+        orderNumber: order.orderNumber, contactName: order.contactName, contactEmail: order.contactEmail,
+        items: order.items.map((it) => ({ name: it.productNameSnapshot, variantName: it.variantNameSnapshot, qty: it.qty, lineTotal: toNumber(it.lineTotal) })),
+        subtotal: toNumber(order.subtotal), shippingCost: toNumber(order.shippingCost), discountTotal: toNumber(order.discountTotal), total: toNumber(order.total),
+        shippingMethod: order.shippingMethod,
+        // Defensa: monto realmente acreditado por MP → la alerta a la dueña flaggea si no coincide con el total.
+        amountPaid: mpPayment.transaction_amount ?? undefined,
+      };
+      const customer = orderConfirmationEmail(emailData);
+      await deps.sendEmail({ to: order.contactEmail, subject: customer.subject, html: customer.html, text: customer.text });
+      if (deps.ownerEmail) {
+        const owner = newOrderAlertEmail({ ...emailData, oversoldLines: oversoldLines.length ? oversoldLines : undefined, micorreoImport });
+        await deps.sendEmail({ to: deps.ownerEmail, subject: owner.subject, html: owner.html, text: owner.text });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[webhook] envío de emails falló (pedido ${order.orderNumber}):`, msg);
     }
   }
 

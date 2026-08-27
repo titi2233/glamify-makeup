@@ -8,6 +8,7 @@ import { quoteShipping } from "../src/lib/shipping/index";
 import { sendEmail } from "../src/lib/email/resend";
 import { verifyMpSignature } from "../src/lib/payments/signature";
 import { toNumber } from "../src/lib/catalog/pricing";
+import { confirmProdWrite } from "./prod-write-guard";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -21,6 +22,7 @@ function buildSignature(dataId: string, requestId: string, ts: string): string {
 }
 
 async function main(): Promise<void> {
+  await confirmProdWrite("simular un pedido pagado (crea un pedido real con orderNumber real y descuenta stock real)");
   const qty = 2;
   const variant = await prisma.productVariant.findFirst({ where: { stock: { gt: qty }, active: true }, include: { product: true } });
   if (!variant) throw new Error("No hay variante con stock suficiente para simular. Corré `pnpm db:seed`.");
