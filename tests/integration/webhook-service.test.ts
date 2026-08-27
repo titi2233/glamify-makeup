@@ -174,6 +174,22 @@ describe("processWebhook", () => {
     expect(state.shipments.find((s) => s.orderId === "ord-1")?.service).toBeUndefined();
   });
 
+  it("auto-import OK → marca micorreoImportedAt en el Shipment", async () => {
+    const { db, state } = makeFakeDb();
+    const deps = makeDeps({ db });
+    await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    expect(state.shipments.find((s) => s.orderId === "ord-1")?.micorreoImportedAt).toBeInstanceOf(Date);
+  });
+
+  it("auto-import falla → el mail a la dueña avisa que NO se cargó solo (REVISAR)", async () => {
+    const { db } = makeFakeDb();
+    const deps = makeDeps({ db, autoImportShipment: vi.fn(async () => ({ imported: false, detail: "dirección incompleta en el pedido" }) as const) });
+    await processWebhook({ dataId: "mp-pay-1", xSignature: "ok", xRequestId: "r" }, deps);
+    const ownerEmail = (deps.sendEmail as any).mock.calls.find((c: any) => c[0].to === "owner@test.com");
+    expect(ownerEmail[0].html).toContain("NO se cargó");
+    expect(ownerEmail[0].subject).toContain("REVISAR");
+  });
+
   it("idempotente: el mismo webhook 2× descuenta stock una sola vez", async () => {
     const { db, state } = makeFakeDb();
     const deps = makeDeps({ db });

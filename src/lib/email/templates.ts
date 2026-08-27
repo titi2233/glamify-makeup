@@ -1,4 +1,5 @@
 import { formatARS } from "@/lib/money";
+import { CORREO_TRACKING_URL } from "@/lib/shipping/tracking";
 
 /** Escapa HTML para interpolar texto del usuario en cuerpos de email (anti-inyección). */
 function escapeHtml(s: string): string {
@@ -29,6 +30,8 @@ export interface OrderEmailData {
   oversoldLines?: Array<{ name: string }>;
   /** Monto realmente acreditado por MP (para reconciliar contra `total` en la alerta a la dueña). */
   amountPaid?: number;
+  /** Resultado del auto-import a MiCorreo (para avisarle a la dueña si hay que cargarlo a mano). */
+  micorreoImport?: { imported: boolean; detail: string };
 }
 export interface EmailContent {
   subject: string;
@@ -77,7 +80,9 @@ export function orderConfirmationEmail(d: OrderEmailData): EmailContent {
 export function newOrderAlertEmail(d: OrderEmailData): EmailContent {
   const oversell = d.oversoldLines && d.oversoldLines.length > 0;
   const amountMismatch = d.amountPaid != null && Math.abs(d.amountPaid - d.total) > 0.01;
-  const needsReview = oversell || amountMismatch;
+  // Sólo cuenta como "no cargado" si sabemos el resultado y fue negativo. Sin dato → no alarmar.
+  const notImported = d.micorreoImport != null && !d.micorreoImport.imported;
+  const needsReview = oversell || amountMismatch || notImported;
   const subject = needsReview
     ? `⚠️ Nuevo pedido ${d.orderNumber} — REVISAR`
     : `🛍️ Nuevo pedido pagado ${d.orderNumber} (${formatARS(d.total)})`;
@@ -93,16 +98,55 @@ export function newOrderAlertEmail(d: OrderEmailData): EmailContent {
         <strong>Monto:</strong> MP acreditó ${formatARS(d.amountPaid!)} pero el total del pedido es ${formatARS(d.total)}. Revisar antes de despachar.
       </div>`
     : "";
+  const importHtml = notImported
+    ? `<div style="background:#FEE;padding:8px;border-radius:8px">
+        <strong>MiCorreo:</strong> este envío <strong>NO se cargó solo</strong> (${escapeHtml(d.micorreoImport!.detail)}).
+        Entrá al pedido en el panel y tocá "Reintentar carga en MiCorreo", o cargalo a mano.
+      </div>`
+    : "";
   const html = `<div style="font-family:sans-serif;color:#6E0B3F">
     <h1>Nuevo pedido ${d.orderNumber}</h1>
     ${oversellHtml}
     ${amountHtml}
+    ${importHtml}
     <p>Cliente: ${d.contactName} — ${d.contactEmail}</p>
     <table style="width:100%;border-collapse:collapse">${itemsHtml(d.items)}</table>
     <table style="width:100%;border-collapse:collapse">${totalsBlock(d)}</table>
     <p>Envío: ${d.shippingMethod}.</p>
   </div>`;
-  const text = `Nuevo pedido ${d.orderNumber}\nCliente: ${d.contactName} (${d.contactEmail})\nTotal: ${formatARS(d.total)}${oversell ? `\n⚠️ OVERSELL: ${d.oversoldLines!.map((l) => l.name).join(", ")}` : ""}${amountMismatch ? `\n⚠️ MONTO: acreditado ${formatARS(d.amountPaid!)} ≠ total ${formatARS(d.total)}` : ""}`;
+  const text = `Nuevo pedido ${d.orderNumber}\nCliente: ${d.contactName} (${d.contactEmail})\nTotal: ${formatARS(d.total)}${oversell ? `\n⚠️ OVERSELL: ${d.oversoldLines!.map((l) => l.name).join(", ")}` : ""}${amountMismatch ? `\n⚠️ MONTO: acreditado ${formatARS(d.amountPaid!)} ≠ total ${formatARS(d.total)}` : ""}${notImported ? `\n⚠️ MiCorreo NO cargó solo: ${d.micorreoImport!.detail}` : ""}`;
+  return { subject, html, text };
+}
+
+export interface DispatchEmailData {
+  orderNumber: string;
+  contactName: string;
+  trackingNumber: string;
+  /** Servicio de envío (ej. "Correo Argentino Clásico"), opcional. */
+  service?: string | null;
+}
+
+/**
+ * Email a la clienta cuando su pedido se despacha (la dueña cargó el tracking).
+ * Cumple la promesa publicada en el sitio ("recibís el número de seguimiento por email").
+ * Linkea la página de rastreo de Correo Argentino y muestra el número para pegar.
+ */
+export function shipmentDispatchedEmail(d: DispatchEmailData): EmailContent {
+  const subject = `📦 ¡Tu pedido ${d.orderNumber} está en camino! — Glamify Makeup`;
+  const svc = d.service ? ` por ${escapeHtml(d.service)}` : "";
+  const html = `<div style="font-family:sans-serif;color:#6E0B3F">
+    <h1 style="color:#FF2E93">¡Ya salió, ${escapeHtml(d.contactName)}! 📦</h1>
+    <p>Despachamos tu pedido <strong>${escapeHtml(d.orderNumber)}</strong>${svc}.</p>
+    <p>Tu número de seguimiento es:</p>
+    <p style="font-size:20px;font-weight:bold;color:#FF2E93">${escapeHtml(d.trackingNumber)}</p>
+    <p>
+      Rastrealo en
+      <a href="${CORREO_TRACKING_URL}" style="color:#FF2E93">Correo Argentino</a>
+      pegando ese número (puede tardar hasta 24 h en aparecer).
+    </p>
+    <p>Cualquier duda, escribinos por WhatsApp. 💕</p>
+  </div>`;
+  const text = `¡Ya salió, ${d.contactName}!\nDespachamos tu pedido ${d.orderNumber}${d.service ? ` por ${d.service}` : ""}.\n\nSeguimiento: ${d.trackingNumber}\nRastrealo en ${CORREO_TRACKING_URL} (puede tardar hasta 24 h en aparecer).`;
   return { subject, html, text };
 }
 

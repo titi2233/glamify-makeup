@@ -29,6 +29,7 @@ import { toNumber } from "@/lib/catalog/pricing";
 import { STATUS_LABELS } from "@/lib/admin/orders/service";
 import { OrderStatusControl } from "../order-status-control";
 import { ShipmentForm, type ShipmentDefaults } from "../shipment-form";
+import { MicorreoPanel } from "../micorreo-panel";
 import type { OrderStatus, ShipmentStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,8 @@ interface AddressSnapshot {
   floorApt?: string | null;
   city?: string;
   notes?: string | null;
+  agencyCode?: string | null;
+  agencyLabel?: string | null;
 }
 
 /** Cabecera de card-sección: medallón chico + título serif + ayuda opcional. */
@@ -132,6 +135,20 @@ export default async function PedidoDetallePage({
 
   const statusPres = ORDER_PRESENTATION[order.status];
   const StatusIcon = statusPres.icon;
+
+  // Panel de instrucciones MiCorreo: sólo tiene sentido una vez pagado el pedido.
+  const showMicorreo = ["paid", "preparing", "shipped", "delivered"].includes(order.status);
+  const isSucursal = order.shippingMethod === "sucursal";
+  const destino = isSucursal
+    ? addr.agencyLabel ?? (addr.agencyCode ? `Sucursal ${addr.agencyCode}` : "Sucursal (no guardada)")
+    : [
+        [addr.street, addr.number].filter(Boolean).join(" "),
+        addr.floorApt,
+        [addr.city, addr.province].filter(Boolean).join(", "),
+        addr.cp ? `CP ${addr.cp}` : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
   return (
     <div className="stagger space-y-6">
@@ -309,6 +326,22 @@ export default async function PedidoDetallePage({
           </section>
         </div>
       </div>
+
+      {/* Instrucciones MiCorreo (qué hacer con este pedido) */}
+      {showMicorreo ? (
+        <MicorreoPanel
+          orderId={order.id}
+          orderNumber={order.orderNumber}
+          imported={Boolean(order.shipment?.micorreoImportedAt)}
+          trackingLoaded={Boolean(order.shipment?.trackingNumber)}
+          recipientName={order.contactName}
+          recipientPhone={order.contactPhone}
+          destino={destino}
+          metodoLabel={isSucursal ? "Sucursal" : "Dirección"}
+          weightGr={order.weightGr}
+          declaredValue={toNumber(order.subtotal)}
+        />
+      ) : null}
 
       {/* Envío y seguimiento */}
       <section className="rounded-2xl border border-border/70 bg-card shadow-soft">
