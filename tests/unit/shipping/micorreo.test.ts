@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   pickRate,
+  pickAgency,
   isMicorreoConfigured,
   quoteMicorreo,
+  getMicorreoAgencies,
   provinceCode,
   createMicorreoShipment,
   __resetMicorreoAuthCache,
@@ -281,5 +283,62 @@ describe("createMicorreoShipment", () => {
     const r = await createMicorreoShipment(baseInput, {}, fakeFetch, 1000);
     expect(r.ok).toBe(false);
     expect(called).toBe(false);
+  });
+});
+
+describe("pickAgency", () => {
+  it("normaliza la fila anidada real de /agencies", () => {
+    const row = {
+      code: "B0200",
+      name: "LA PLATA",
+      services: { packageReception: true },
+      location: { address: { streetName: "AV 51", streetNumber: "456", locality: "LA PLATA", city: "LA PLATA" } },
+    };
+    expect(pickAgency(row)).toEqual({ code: "B0200", label: "LA PLATA · AV 51 456 · LA PLATA", locality: "LA PLATA" });
+  });
+  it("null si no hay código", () => {
+    expect(pickAgency({ name: "X" })).toBeNull();
+  });
+  it("label cae al código si no hay nombre ni dirección", () => {
+    expect(pickAgency({ code: "B9999" })).toEqual({ code: "B9999", label: "B9999", locality: "" });
+  });
+});
+
+describe("getMicorreoAgencies", () => {
+  beforeEach(() => __resetMicorreoAuthCache());
+  const agEnv: MicorreoEnv = { MICORREO_EMAIL: "e", MICORREO_PASSWORD: "p", MICORREO_GATEWAY_AUTH: "g" };
+  const rows = [
+    { code: "B0200", name: "LA PLATA", services: { packageReception: true }, location: { address: { locality: "LA PLATA" } } },
+    { code: "B0300", name: "BERISSO", services: { packageReception: true }, location: { address: { locality: "BERISSO" } } },
+    { code: "B0400", name: "NO RECIBE", services: { packageReception: false }, location: { address: { locality: "LA PLATA" } } },
+  ];
+  const fakeFetch = (async (url: string) => {
+    if (url.endsWith("/token")) return { ok: true, json: async () => ({ token: "JWT", expire: "2099-01-01T00:00:00Z" }) } as Response;
+    if (url.endsWith("/users/validate")) return { ok: true, json: async () => ({ customerId: 1 }) } as Response;
+    if (url.includes("/agencies")) return { ok: true, json: async () => rows } as Response;
+    throw new Error("url inesperada " + url);
+  }) as unknown as typeof fetch;
+
+  it("filtra por localidad y excluye las que no reciben paquetes", async () => {
+    const list = await getMicorreoAgencies("B", "la plata", agEnv, fakeFetch, 1000);
+    expect(list).toEqual([{ code: "B0200", label: "LA PLATA · LA PLATA", locality: "LA PLATA" }]);
+  });
+  it("sin filtro de localidad devuelve todas las que reciben (acento-insensible)", async () => {
+    const list = await getMicorreoAgencies("B", null, agEnv, fakeFetch, 1000);
+    expect(list.map((a) => a.code)).toEqual(["B0200", "B0300"]);
+  });
+  it("[] sin credenciales, sin tocar la red", async () => {
+    let called = false;
+    const spy = (async () => { called = true; return {} as Response; }) as unknown as typeof fetch;
+    expect(await getMicorreoAgencies("B", null, {}, spy, 1000)).toEqual([]);
+    expect(called).toBe(false);
+  });
+  it("[] si /agencies falla", async () => {
+    const failFetch = (async (url: string) => {
+      if (url.endsWith("/token")) return { ok: true, json: async () => ({ token: "JWT", expire: "2099-01-01T00:00:00Z" }) } as Response;
+      if (url.endsWith("/users/validate")) return { ok: true, json: async () => ({ customerId: 1 }) } as Response;
+      return { ok: false, json: async () => ({}) } as Response;
+    }) as unknown as typeof fetch;
+    expect(await getMicorreoAgencies("B", null, agEnv, failFetch, 1000)).toEqual([]);
   });
 });

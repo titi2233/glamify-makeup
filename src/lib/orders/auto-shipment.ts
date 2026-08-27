@@ -26,6 +26,7 @@ interface StoredAddress {
   street?: string;
   number?: string;
   city?: string;
+  agencyCode?: string | null;
 }
 
 /** Campos del pedido que necesita el auto-import. */
@@ -55,20 +56,25 @@ function serviceLabel(env: MicorreoEnv): string {
  * Devuelve `{ skip }` (con motivo) cuando el pedido no se puede auto-importar.
  */
 export function buildImportInput(order: AutoShipmentOrder): { input: MicorreoShipmentInput } | { skip: string } {
-  if (order.shippingMethod === "sucursal") {
-    return { skip: "pedido a sucursal: no se guarda la sucursal elegida, se carga a mano" };
-  }
   const a = (order.shippingAddress ?? {}) as StoredAddress;
+  const recipient = { name: order.contactName, email: order.contactEmail, phone: order.contactPhone };
+  const common = { extOrderId: order.orderNumber, recipient, pesoGr: order.weightGr, valorDeclarado: order.declaredValue };
+
+  if (order.shippingMethod === "sucursal") {
+    // Sólo pedidos nuevos guardan el código de sucursal; los viejos se cargan a mano.
+    if (!a.agencyCode?.trim()) {
+      return { skip: "pedido a sucursal sin código de sucursal guardado, se carga a mano" };
+    }
+    return { input: { ...common, metodo: "sucursal", agency: a.agencyCode.trim() } };
+  }
+
   if (!a.street?.trim() || !a.number?.trim() || !a.city?.trim() || !a.cp?.trim() || !a.province?.trim()) {
     return { skip: "dirección incompleta en el pedido" };
   }
   return {
     input: {
-      extOrderId: order.orderNumber,
-      recipient: { name: order.contactName, email: order.contactEmail, phone: order.contactPhone },
+      ...common,
       metodo: "domicilio",
-      pesoGr: order.weightGr,
-      valorDeclarado: order.declaredValue,
       address: {
         streetName: a.street.trim(),
         streetNumber: a.number.trim(),

@@ -10,6 +10,7 @@ import { validateCoupon, applyCoupon } from "@/lib/coupons/apply";
 import { toNumber } from "@/lib/catalog/pricing";
 import { prisma } from "@/lib/prisma";
 import { quoteShipping } from "@/lib/shipping/index";
+import { provinceCode, getMicorreoAgencies } from "@/lib/shipping/micorreo";
 import { getShippingZonesForQuote, getFreeShippingThreshold } from "@/lib/orders/checkout-data";
 import { createCheckout, defaultCheckoutDeps } from "@/lib/orders/checkout-service";
 import { getCustomer } from "@/lib/customer/auth";
@@ -126,6 +127,17 @@ export async function quoteShippingAction(input: { cp: string; province?: string
   return { ok: true, cost: quote.cost, free: quote.free, source: quote.source };
 }
 
+export interface AgenciesResult extends ActionResult {
+  agencies?: { code: string; label: string }[];
+}
+/** Lista sucursales de MiCorreo para la provincia/localidad elegidas (selector de checkout). */
+export async function agenciesAction(input: { province?: string; city?: string }): Promise<AgenciesResult> {
+  const code = provinceCode(input.province);
+  if (!code) return { ok: false, error: "Provincia no reconocida." };
+  const agencies = await getMicorreoAgencies(code, input.city ?? null);
+  return { ok: true, agencies: agencies.map((a) => ({ code: a.code, label: a.label })) };
+}
+
 export interface CheckoutResult extends ActionResult {
   initPoint?: string;
   orderNumber?: string;
@@ -133,7 +145,7 @@ export interface CheckoutResult extends ActionResult {
 export async function createCheckoutAction(input: {
   contactName: string; contactEmail: string; contactPhone: string;
   shippingMethod: "domicilio" | "sucursal";
-  address: { cp: string; province?: string; street?: string; number?: string; floorApt?: string; city?: string; notes?: string };
+  address: { cp: string; province?: string; street?: string; number?: string; floorApt?: string; city?: string; notes?: string; agencyCode?: string; agencyLabel?: string };
 }): Promise<CheckoutResult> {
   try {
     const { cart, cartId } = await loadCurrentCart();

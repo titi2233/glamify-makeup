@@ -152,6 +152,72 @@ async function getAuth(
   return { token, customerId: String(customerId) };
 }
 
+/** Sucursal de MiCorreo normalizada para el selector del checkout. */
+export interface MicorreoAgency {
+  /** Código de agencia (lo que espera `shipping.agency` en /shipping/import). */
+  code: string;
+  /** Etiqueta legible para la clienta (nombre · dirección · localidad). */
+  label: string;
+  /** Localidad, para filtrar por la que ingresó la clienta. */
+  locality: string;
+}
+
+/** Fila cruda de /agencies (estructura real anidada, verificada contra la API). */
+interface RawAgency {
+  code?: string;
+  name?: string;
+  services?: { packageReception?: boolean } | null;
+  location?: { address?: { streetName?: string; streetNumber?: string; locality?: string; city?: string } | null } | null;
+}
+
+/** Normaliza una fila de /agencies. Pura y testeable. Null si no tiene código. */
+export function pickAgency(row: RawAgency): MicorreoAgency | null {
+  const code = (row.code ?? "").trim();
+  if (!code) return null;
+  const addr = row.location?.address ?? {};
+  const locality = (addr.locality || addr.city || "").trim();
+  const street = [addr.streetName, addr.streetNumber].filter((s) => s?.trim()).join(" ");
+  const parts = [row.name?.trim(), street.trim(), locality].filter((p) => p);
+  return { code, label: parts.length ? parts.join(" · ") : code, locality };
+}
+
+/**
+ * Lista las sucursales de MiCorreo que RECIBEN paquetes en una provincia (código de
+ * MiCorreo, ej. "B", "X"), opcionalmente filtradas por localidad (match parcial, sin
+ * acentos). Devuelve [] ante cualquier problema para que el checkout degrade sin romperse.
+ */
+export async function getMicorreoAgencies(
+  provinceCode: string,
+  localityFilter: string | null = null,
+  env: MicorreoEnv = process.env as MicorreoEnv,
+  fetchImpl: typeof fetch = fetch,
+  nowMs: number = Date.now(),
+): Promise<MicorreoAgency[]> {
+  if (!isMicorreoConfigured(env) || !provinceCode?.trim()) return [];
+  try {
+    const auth = await getAuth(env, fetchImpl, nowMs);
+    if (!auth) return [];
+    const url = `${apiBase(env)}/agencies?customerId=${encodeURIComponent(auth.customerId)}&provinceCode=${encodeURIComponent(provinceCode.trim())}`;
+    const res = await fetchImpl(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${auth.token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as RawAgency[] | { agencies?: RawAgency[] };
+    const rows = Array.isArray(json) ? json : (json.agencies ?? []);
+    const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+    const needle = localityFilter?.trim() ? norm(localityFilter) : null;
+    return rows
+      .filter((r) => r?.services?.packageReception !== false) // sólo las que reciben paquetes
+      .map(pickAgency)
+      .filter((a): a is MicorreoAgency => a !== null)
+      .filter((a) => (needle ? norm(a.locality).includes(needle) : true));
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Cotiza un envío. Devuelve null ante cualquier problema (sin credenciales,
  * timeout, error HTTP, tarifa ausente) para caer a la tabla de zonas.
