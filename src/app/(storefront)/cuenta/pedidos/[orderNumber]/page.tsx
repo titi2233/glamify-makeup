@@ -4,6 +4,7 @@ import { requireCustomer } from "@/lib/customer/auth";
 import { prisma } from "@/lib/prisma";
 import { formatARS } from "@/lib/money";
 import { Badge } from "@/components/ui/badge";
+import { CORREO_TRACKING_URL } from "@/lib/shipping/tracking";
 
 const STATUS_LABEL: Record<string, string> = {
   pending_payment: "Pago pendiente", paid: "Pagado", preparing: "Preparando",
@@ -50,7 +51,17 @@ export default async function PedidoDetallePage({ params }: { params: Promise<{ 
       </div>
 
       {order.shipment?.trackingNumber && (
-        <p className="text-sm text-muted-foreground">Seguimiento: <strong>{order.shipment.trackingNumber}</strong></p>
+        <p className="text-sm text-muted-foreground">
+          Seguimiento: <strong>{order.shipment.trackingNumber}</strong>{" "}
+          <a
+            href={CORREO_TRACKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            rastrear en Correo Argentino
+          </a>
+        </p>
       )}
       <Link href="/cuenta/pedidos" className="inline-block text-sm text-primary underline">← Volver a mis pedidos</Link>
     </div>

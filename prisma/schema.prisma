@@ -369,6 +369,7 @@ model Shipment {
   trackingNumber String?
   status         ShipmentStatus  @default(pending)
   labelUrl       String?
+  micorreoImportedAt DateTime?    // set al pre-imponer en MiCorreo (auto o reintento); null = falta cargarlo a mano
   cost           Decimal         @db.Decimal(12, 2)
   createdAt      DateTime        @default(now())
 }
