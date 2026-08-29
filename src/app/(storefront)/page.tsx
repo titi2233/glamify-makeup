@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { ProductImage } from "@/components/catalog/product-image";
 import { ValueProps } from "@/components/marketing/value-props";
@@ -8,7 +7,7 @@ import { GiftSection } from "@/components/marketing/gift-section";
 import { getCategoryTree, getFeaturedProducts, getNewestProducts } from "@/lib/catalog/queries";
 import { buildWebSiteJsonLd, buildOrganizationJsonLd, serializeJsonLd } from "@/lib/seo/jsonld";
 import { appBaseUrl } from "@/lib/seo/url";
-import { Sparkles, ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default async function HomePage() {
   const [tree, featuredRaw] = await Promise.all([getCategoryTree(), getFeaturedProducts(8)]);
@@ -20,58 +19,8 @@ export default async function HomePage() {
     <div className="space-y-16 pb-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
 
-      {/* Banner Editorial Glamify (según diseño de referencia) */}
+      {/* Banner Editorial Glamify con botones de acción */}
       <GlamifyWelcomeBanner />
-
-      {/* Hero Editorial de Alto Impacto */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/80 bg-white/95 backdrop-blur-md shadow-soft-lg grid grid-cols-1 md:grid-cols-12 gap-8 items-center p-8 md:p-12 lg:p-16">
-        <div className="md:col-span-7 text-center md:text-left space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary text-primary text-xs font-bold uppercase tracking-widest border border-primary/20">
-            <Sparkles className="size-3.5" />
-            <span>MAKEUP, TRENDS &amp; GIRLY THINGS ✦</span>
-          </div>
-
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
-            Maquillaje que cuida y resalta tu piel real
-          </h1>
-
-          <p className="max-w-xl text-base md:text-lg text-muted-foreground leading-relaxed mx-auto md:mx-0">
-            Fórmulas dermatológicamente testeadas, tonos en tendencia y acabado natural de larga duración. Glamour accesible, sin comprometer tu piel.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
-            <Button asChild size="lg" className="bg-[#161413] text-white hover:bg-neutral-800 rounded-2xl px-8 py-6 text-sm font-semibold shadow-soft hover:shadow-soft-lg transition-all">
-              <Link href="/tienda" className="flex items-center gap-2">
-                <span>Explorar Catálogo</span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="rounded-2xl px-6 py-6 text-sm font-semibold border-border/80 hover:bg-secondary">
-              <Link href="/tienda?filter=offers">Ver Novedades &amp; Ofertas</Link>
-            </Button>
-          </div>
-
-          {/* Micro Social Proof Badge */}
-          <div className="flex items-center justify-center md:justify-start gap-3 pt-4 border-t border-border/60">
-            <div className="flex text-amber-500">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="size-4 fill-amber-400 text-amber-400" />
-              ))}
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">
-              <strong className="text-foreground font-bold">4.9 / 5.0</strong> en más de 2.500 reseñas verificadas
-            </span>
-          </div>
-        </div>
-
-        <div className="md:col-span-5 relative aspect-[4/3] md:aspect-square w-full overflow-hidden rounded-2xl border border-border/60 shadow-soft bg-secondary">
-          <img
-            src="/images/hero_editorial_glow.jpg"
-            alt="Glamify Makeup - Colección de Belleza Editorial"
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-          />
-        </div>
-      </section>
 
       {/* Sección Especial Regalos: Regalá beauty, regalá Glamify */}
       <GiftSection />

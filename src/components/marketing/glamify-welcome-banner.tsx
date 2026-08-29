@@ -1,4 +1,6 @@
-import { Sparkles, Heart } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Heart, ArrowRight } from "lucide-react";
 
 export function GlamifyWelcomeBanner() {
   return (
@@ -7,47 +9,51 @@ export function GlamifyWelcomeBanner() {
       <div className="pointer-events-none absolute -top-10 -left-10 size-48 rounded-full bg-pink-200/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-10 -right-10 size-48 rounded-full bg-pink-300/20 blur-3xl" />
 
-      {/* Marca de agua decorativa sutil */}
-      <div className="relative z-10 mx-auto max-w-3xl space-y-4">
+      {/* Contenido central */}
+      <div className="relative z-10 mx-auto max-w-3xl space-y-6">
         {/* Estrella superior rosa */}
         <div className="flex justify-center">
           <Sparkles className="size-5 md:size-6 text-[#FF2E93] animate-pulse" aria-hidden="true" />
         </div>
 
-        {/* GLAMIFY */}
-        <div className="space-y-1">
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.35em] sm:tracking-[0.45em] text-[#161413] uppercase pl-[0.35em]">
-            GLAMIFY
-          </h2>
-          {/* MAKEUP */}
-          <p className="text-xs sm:text-sm md:text-base font-bold tracking-[0.45em] sm:tracking-[0.6em] text-[#FF2E93] uppercase pl-[0.45em]">
-            MAKEUP
-          </p>
-        </div>
-
-        {/* Separador fino con estrella central */}
-        <div className="flex items-center justify-center gap-3 w-40 sm:w-56 mx-auto py-1 text-pink-300">
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-pink-300" />
-          <span className="text-[#FF2E93] text-xs">✦</span>
-          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-pink-300" />
-        </div>
-
         {/* Frase central */}
-        <div className="space-y-1 pt-1">
-          <p className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#161413] font-normal leading-tight">
+        <h1 className="space-y-1">
+          <span className="block font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#161413] font-normal leading-tight">
             Decile{" "}
             <span className="font-display italic text-[#FF2E93] font-medium text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
               ¡Hola!
             </span>
-          </p>
-          <p className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#161413] font-normal leading-tight">
+          </span>
+          <span className="block font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#161413] font-normal leading-tight">
             a tu nuevo maquillaje favorito. <span className="inline-block hover:scale-125 transition-transform duration-200">💋</span>
-          </p>
+          </span>
+        </h1>
+
+        {/* Botones de acción */}
+        <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 pt-2">
+          <Button
+            asChild
+            size="lg"
+            className="bg-[#161413] text-white hover:bg-neutral-800 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-7 sm:px-8 py-6 text-sm font-semibold shadow-soft hover:shadow-soft-lg transition-all duration-200"
+          >
+            <Link href="/tienda" className="flex items-center gap-2">
+              <span>Explorar Catálogo</span>
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="bg-white/80 backdrop-blur-sm border-pink-200/80 hover:bg-pink-50/70 hover:border-pink-300 hover:scale-[1.02] active:scale-[0.98] rounded-2xl px-6 sm:px-7 py-6 text-sm font-semibold text-[#161413] shadow-soft hover:shadow-soft-lg transition-all duration-200"
+          >
+            <Link href="/tienda?filter=offers">Ver Novedades &amp; Ofertas</Link>
+          </Button>
         </div>
 
         {/* Corazón inferior rosa */}
-        <div className="pt-2 flex justify-center">
-          <Heart className="size-5 sm:size-6 text-[#FF2E93] stroke-[1.75] fill-pink-50" aria-hidden="true" />
+        <div className="pt-1 flex justify-center">
+          <Heart className="size-5 sm:size-6 text-[#FF2E93] stroke-[1.75] fill-pink-50 hover:scale-125 transition-transform duration-200" aria-hidden="true" />
         </div>
       </div>
     </section>
