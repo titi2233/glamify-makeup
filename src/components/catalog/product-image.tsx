@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { productImageUrl } from "@/lib/images";
@@ -13,21 +16,28 @@ interface ProductImageProps {
 }
 
 export function ProductImage({ src, alt, fallbackLabel, className, sizes, priority }: ProductImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
   const url = productImageUrl(src);
+
   if (url) {
     return (
-      <div className={cn("relative aspect-square overflow-hidden bg-muted/60", className)}>
+      <div className={cn("relative aspect-square overflow-hidden bg-secondary skeleton-shimmer", className)}>
         <Image
           src={url}
           alt={alt}
           fill
           sizes={sizes ?? "(max-width:768px) 50vw, 25vw"}
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          className={cn(
+            "object-cover transition-all duration-500 ease-out group-hover:scale-105",
+            isLoaded ? "opacity-100" : "opacity-0"
+          )}
           priority={priority}
+          onLoad={() => setIsLoaded(true)}
         />
       </div>
     );
   }
+
   const initial = fallbackLabel.trim().charAt(0).toUpperCase() || "G";
   return (
     <div

@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: CatalogListItem }) {
       href={`/producto/${product.slug}`}
       className="group block overflow-hidden rounded-2xl border border-border/80 bg-white shadow-soft transition-all duration-300 hover:shadow-soft-lg hover:-translate-y-1.5 hover:border-neutral-300/80 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-secondary">
+      <div className="relative aspect-square w-full overflow-hidden bg-secondary skeleton-shimmer">
         {primaryUrl ? (
           <>
             <Image
