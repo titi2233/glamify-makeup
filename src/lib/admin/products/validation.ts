@@ -23,6 +23,8 @@ export interface ProductFormInput {
   slug: string;
   description: string | null;
   categoryId: string;
+  /** Categorías adicionales (además de la primaria `categoryId`) — sin duplicar el producto. */
+  extraCategoryIds: string[];
   basePrice: number | "";
   compareAtPrice: number | null;
   cost: number | "";
@@ -56,6 +58,7 @@ export interface ProductClean {
   slug: string;
   description: string | null;
   categoryId: string;
+  extraCategoryIds: string[];
   basePrice: number;
   compareAtPrice: number | null;
   cost: number;
@@ -139,6 +142,11 @@ export function validateProduct(input: ProductFormInput): Validated<ProductClean
   if (!slug) return { ok: false, error: "No se pudo generar un enlace (slug) válido a partir del nombre." };
 
   if (!input.categoryId.trim()) return { ok: false, error: "Elegí una categoría para el producto." };
+  const categoryId = input.categoryId.trim();
+
+  // Dedupe y excluye la primaria: nunca debe quedar duplicada entre primaria y adicionales.
+  const extraCategoryIds = Array.from(new Set(input.extraCategoryIds.map((id) => id.trim()).filter((id) => id !== "")))
+    .filter((id) => id !== categoryId);
 
   if (typeof input.basePrice !== "number" || !(input.basePrice > 0)) return { ok: false, error: "El precio debe ser mayor a 0." };
   if (typeof input.cost !== "number" || input.cost < 0) return { ok: false, error: "El costo no puede ser negativo." };
@@ -186,7 +194,8 @@ export function validateProduct(input: ProductFormInput): Validated<ProductClean
       name,
       slug,
       description: input.description != null && input.description.trim() !== "" ? input.description.trim() : null,
-      categoryId: input.categoryId.trim(),
+      categoryId,
+      extraCategoryIds,
       basePrice: typeof input.basePrice === "number" ? input.basePrice : 0,
       compareAtPrice,
       cost: typeof input.cost === "number" ? input.cost : 0,

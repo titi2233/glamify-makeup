@@ -40,6 +40,7 @@ function blank(): ProductFormInput {
     slug: "",
     description: null,
     categoryId: "",
+    extraCategoryIds: [],
     basePrice: "",
     compareAtPrice: null,
     cost: "",
@@ -131,7 +132,16 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
           </div>
           <div className="space-y-1">
             <Label htmlFor="category">Categoría</Label>
-            <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
+            <Select
+              value={form.categoryId}
+              onValueChange={(v) => {
+                set("categoryId", v);
+                // La primaria nunca puede quedar duplicada entre las adicionales.
+                if (form.extraCategoryIds.includes(v)) {
+                  set("extraCategoryIds", form.extraCategoryIds.filter((id) => id !== v));
+                }
+              }}
+            >
               <SelectTrigger id="category"><SelectValue placeholder="Elegí una categoría" /></SelectTrigger>
               <SelectContent>
                 {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -146,6 +156,30 @@ export function ProductForm({ categories, publicBase, productId, initial }: Prop
         <div className="space-y-1">
           <Label htmlFor="description">Descripción</Label>
           <Textarea id="description" value={form.description ?? ""} onChange={(e) => set("description", e.target.value === "" ? null : e.target.value)} placeholder="Contale a la clienta de qué se trata" rows={4} />
+        </div>
+        <div className="space-y-1">
+          <Label>Categorías adicionales (opcional)</Label>
+          <div className="grid gap-2 rounded-xl border border-border/70 p-3 sm:grid-cols-2">
+            {categories.filter((c) => c.id !== form.categoryId).map((c) => (
+              <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.extraCategoryIds.includes(c.id)}
+                  onChange={(e) =>
+                    set(
+                      "extraCategoryIds",
+                      e.target.checked
+                        ? [...form.extraCategoryIds, c.id]
+                        : form.extraCategoryIds.filter((id) => id !== c.id),
+                    )
+                  }
+                  className="size-4 accent-primary"
+                />
+                {c.name}
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">El producto va a aparecer también en estas categorías, además de la principal.</p>
         </div>
       </FormSection>
 

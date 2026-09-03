@@ -27,6 +27,7 @@ export default async function EditarCategoriaPage({
       order: true,
       active: true,
       image: true,
+      showInMenu: true,
     },
   });
   if (!category) notFound();
@@ -48,6 +49,7 @@ export default async function EditarCategoriaPage({
     order: category.order,
     active: category.active,
     image: category.image,
+    showInMenu: category.showInMenu,
   };
 
   return (

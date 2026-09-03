@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { productImageUrl } from "@/lib/images";
@@ -17,9 +17,17 @@ interface ProductImageProps {
 
 export function ProductImage({ src, alt, fallbackLabel, className, sizes, priority }: ProductImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const url = productImageUrl(src);
 
-  if (url) {
+  // La instancia se reusa al cambiar `src` (ej. thumbnails de la galería, misma posición del árbol) —
+  // sin esto, una imagen rota deja el placeholder pegado aunque el `src` siguiente sea válido.
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [url]);
+
+  if (url && !hasError) {
     return (
       <div className={cn("relative aspect-square overflow-hidden bg-secondary skeleton-shimmer", className)}>
         <Image
@@ -33,6 +41,7 @@ export function ProductImage({ src, alt, fallbackLabel, className, sizes, priori
           )}
           priority={priority}
           onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
         />
       </div>
     );

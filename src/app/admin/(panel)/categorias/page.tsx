@@ -6,6 +6,7 @@ import {
   EyeOff,
   CornerDownRight,
   Folder,
+  MenuSquare,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ interface CategoryNode {
   skuPrefix: string;
   order: number;
   active: boolean;
+  showInMenu: boolean;
   parentId: string | null;
   productCount: number;
   childCount: number;
@@ -44,8 +46,9 @@ async function loadCategories(): Promise<CategoryNode[]> {
       skuPrefix: true,
       order: true,
       active: true,
+      showInMenu: true,
       parentId: true,
-      _count: { select: { products: true, children: true } },
+      _count: { select: { products: true, productLinks: true, children: true } },
     },
   });
   return rows.map((r) => ({
@@ -55,8 +58,12 @@ async function loadCategories(): Promise<CategoryNode[]> {
     skuPrefix: r.skuPrefix,
     order: r.order,
     active: r.active,
+    showInMenu: r.showInMenu,
     parentId: r.parentId,
-    productCount: r._count.products,
+    // Primaria + adicional (un producto nunca cuenta las dos veces: la validación excluye la
+    // primaria de las adicionales), para que el conteo refleje también los productos que llegan
+    // vía categoría adicional (ej. "Lip Combos").
+    productCount: r._count.products + r._count.productLinks,
     childCount: r._count.children,
   }));
 }
@@ -127,15 +134,22 @@ export default async function CategoriasPage() {
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{root.productCount}</TableCell>
                   <TableCell>
-                    {root.active ? (
-                      <Badge variant="success" className="gap-1">
-                        <CircleCheck className="size-3" aria-hidden /> Activa
-                      </Badge>
-                    ) : (
-                      <Badge variant="muted" className="gap-1">
-                        <EyeOff className="size-3" aria-hidden /> Inactiva
-                      </Badge>
-                    )}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {root.active ? (
+                        <Badge variant="success" className="gap-1">
+                          <CircleCheck className="size-3" aria-hidden /> Activa
+                        </Badge>
+                      ) : (
+                        <Badge variant="muted" className="gap-1">
+                          <EyeOff className="size-3" aria-hidden /> Inactiva
+                        </Badge>
+                      )}
+                      {!root.showInMenu && (
+                        <Badge variant="outline" className="gap-1">
+                          <MenuSquare className="size-3" aria-hidden /> Oculta del menú
+                        </Badge>
+                      )}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
@@ -159,15 +173,22 @@ export default async function CategoriasPage() {
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{child.productCount}</TableCell>
                   <TableCell>
-                    {child.active ? (
-                      <Badge variant="success" className="gap-1">
-                        <CircleCheck className="size-3" aria-hidden /> Activa
-                      </Badge>
-                    ) : (
-                      <Badge variant="muted" className="gap-1">
-                        <EyeOff className="size-3" aria-hidden /> Inactiva
-                      </Badge>
-                    )}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {child.active ? (
+                        <Badge variant="success" className="gap-1">
+                          <CircleCheck className="size-3" aria-hidden /> Activa
+                        </Badge>
+                      ) : (
+                        <Badge variant="muted" className="gap-1">
+                          <EyeOff className="size-3" aria-hidden /> Inactiva
+                        </Badge>
+                      )}
+                      {!child.showInMenu && (
+                        <Badge variant="outline" className="gap-1">
+                          <MenuSquare className="size-3" aria-hidden /> Oculta del menú
+                        </Badge>
+                      )}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">

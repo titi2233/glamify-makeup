@@ -20,7 +20,7 @@ export const PRODUCT_INCLUDE = {
 export async function getCategoryTree(): Promise<CategoryNode[]> {
   const rows = await prisma.category.findMany({
     where: { active: true },
-    select: { id: true, slug: true, name: true, parentId: true, order: true, image: true, active: true },
+    select: { id: true, slug: true, name: true, parentId: true, order: true, image: true, active: true, showInMenu: true },
     orderBy: { order: "asc" },
   });
   return buildCategoryTree(rows);

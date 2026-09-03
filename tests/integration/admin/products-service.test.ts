@@ -27,6 +27,7 @@ const clean = (over: Partial<ProductClean> = {}): ProductClean => ({
   slug: "labial-mate",
   description: "Larga duración",
   categoryId: "cat-1",
+  extraCategoryIds: [],
   basePrice: 3200,
   compareAtPrice: null,
   cost: 1000,
@@ -79,6 +80,10 @@ function makeDeps(opts: FakeOpts = {}): { deps: CreateProductDeps; tx: any; db: 
       findMany: vi.fn(async ({ where }: any) =>
         comboRefs.filter((v) => where.variantId.in.includes(v)).map((variantId) => ({ variantId })),
       ),
+    },
+    productCategory: {
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+      createMany: vi.fn(async ({ data }: any) => ({ count: data.length })),
     },
   };
   const db = {
@@ -146,6 +151,24 @@ describe("createProduct", () => {
     const { deps } = makeDeps({ prefix: undefined });
     await expect(createProduct(clean(), deps)).rejects.toThrow(/categor/i);
   });
+
+  it("crea las categorías adicionales junto con el producto", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB" });
+    await createProduct(clean({ extraCategoryIds: ["cat-gift", "cat-box"] }), deps);
+    expect(tx.productCategory.deleteMany).toHaveBeenCalledWith({ where: { productId: "prod-1" } });
+    expect(tx.productCategory.createMany).toHaveBeenCalledWith({
+      data: [
+        { productId: "prod-1", categoryId: "cat-gift" },
+        { productId: "prod-1", categoryId: "cat-box" },
+      ],
+    });
+  });
+
+  it("sin categorías adicionales, no llama createMany", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB" });
+    await createProduct(clean({ extraCategoryIds: [] }), deps);
+    expect(tx.productCategory.createMany).not.toHaveBeenCalled();
+  });
 });
 
 describe("updateProduct", () => {
@@ -188,6 +211,15 @@ describe("updateProduct", () => {
   it("falla si el slug pertenece a otro producto", async () => {
     const { deps } = makeDeps({ prefix: "LAB", slugTaken: true });
     await expect(updateProduct("prod-1", clean(), deps)).rejects.toThrow(/enlace|slug/i);
+  });
+
+  it("rehace las categorías adicionales (borra todas y recrea las que vienen)", async () => {
+    const { deps, tx } = makeDeps({ prefix: "LAB", existingSkus: ["LAB-0001"], existingVariantIds: ["v1"] });
+    await updateProduct("prod-1", clean({ variants: [variant({ id: "v1" })], extraCategoryIds: ["cat-gift"] }), deps);
+    expect(tx.productCategory.deleteMany).toHaveBeenCalledWith({ where: { productId: "prod-1" } });
+    expect(tx.productCategory.createMany).toHaveBeenCalledWith({
+      data: [{ productId: "prod-1", categoryId: "cat-gift" }],
+    });
   });
 });
 

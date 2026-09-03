@@ -12,7 +12,10 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
   const [product, categories] = await Promise.all([
     prisma.product.findFirst({
       where: { id, deletedAt: null },
-      include: { variants: { orderBy: { order: "asc" } } },
+      include: {
+        variants: { orderBy: { order: "asc" } },
+        categories: { select: { categoryId: true } },
+      },
     }),
     prisma.category.findMany({
       where: { active: true },
@@ -29,6 +32,7 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
     slug: product.slug,
     description: product.description,
     categoryId: product.categoryId,
+    extraCategoryIds: product.categories.map((c) => c.categoryId),
     basePrice: toNumber(product.basePrice),
     compareAtPrice: product.compareAtPrice != null ? toNumber(product.compareAtPrice) : null,
     cost: toNumber(product.cost),

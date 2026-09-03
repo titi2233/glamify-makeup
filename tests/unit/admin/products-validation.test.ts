@@ -25,6 +25,7 @@ const baseProduct = (over: Partial<ProductFormInput> = {}): ProductFormInput => 
   slug: "",
   description: "Larga duración",
   categoryId: "11111111-1111-1111-1111-111111111111",
+  extraCategoryIds: [],
   basePrice: 3200,
   compareAtPrice: null,
   cost: 1000,
@@ -169,5 +170,25 @@ describe("validateProduct", () => {
       baseProduct({ variants: [baseVariant({ sku: "LAB-0001" }), baseVariant({ name: "Otra", sku: "LAB-0001" })] }),
     );
     expect(r.ok).toBe(false);
+  });
+
+  it("acepta categorías adicionales y las conserva", () => {
+    const r = validateProduct(baseProduct({ extraCategoryIds: ["cat-a", "cat-b"] }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.extraCategoryIds).toEqual(["cat-a", "cat-b"]);
+  });
+
+  it("deduplica categorías adicionales repetidas", () => {
+    const r = validateProduct(baseProduct({ extraCategoryIds: ["cat-a", "cat-a", "cat-b"] }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.extraCategoryIds).toEqual(["cat-a", "cat-b"]);
+  });
+
+  it("excluye la categoría primaria de las adicionales aunque venga tildada", () => {
+    const r = validateProduct(
+      baseProduct({ categoryId: "11111111-1111-1111-1111-111111111111", extraCategoryIds: ["11111111-1111-1111-1111-111111111111", "cat-b"] }),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.extraCategoryIds).toEqual(["cat-b"]);
   });
 });

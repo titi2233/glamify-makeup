@@ -57,7 +57,12 @@ export function buildProductWhere(
 ): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { active: true, deletedAt: null };
   if (categoryIds && categoryIds.length > 0) {
-    where.categoryId = { in: categoryIds };
+    // Categoría primaria O adicional (tabla de asociación `categories`). Si en el futuro se agrega
+    // otro filtro que necesite su propio `where.OR`, hay que combinarlos: este es el único hoy.
+    where.OR = [
+      { categoryId: { in: categoryIds } },
+      { categories: { some: { categoryId: { in: categoryIds } } } },
+    ];
   }
   if (params.minPrice !== undefined || params.maxPrice !== undefined) {
     where.basePrice = {

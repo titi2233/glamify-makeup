@@ -20,6 +20,9 @@ export interface CategoryDb {
   product: {
     count: (args: { where: { categoryId: string; deletedAt?: null } }) => Promise<number>;
   };
+  productCategory: {
+    count: (args: { where: { categoryId: string; product: { deletedAt: null } } }) => Promise<number>;
+  };
 }
 
 export interface CategoryCreateData {
@@ -30,6 +33,7 @@ export interface CategoryCreateData {
   order: number;
   active: boolean;
   image: string | null;
+  showInMenu: boolean;
 }
 export type CategoryUpdateData = CategoryCreateData;
 
@@ -67,6 +71,7 @@ function toData(input: CategoryClean): CategoryCreateData {
     order: input.order,
     active: input.active,
     image: input.image,
+    showInMenu: input.showInMenu,
   };
 }
 
@@ -97,6 +102,12 @@ export async function updateCategory(
 export async function deleteCategory(id: string, deps: CategoryServiceDeps): Promise<void> {
   const products = await deps.db.product.count({ where: { categoryId: id, deletedAt: null } });
   if (products > 0) throw new Error("No se puede borrar: la categoría tiene productos.");
+  const productLinks = await deps.db.productCategory.count({
+    where: { categoryId: id, product: { deletedAt: null } },
+  });
+  if (productLinks > 0) {
+    throw new Error("No se puede borrar: hay productos que la tienen como categoría adicional.");
+  }
   const children = await deps.db.category.count({ where: { parentId: id } });
   if (children > 0) throw new Error("No se puede borrar: la categoría tiene subcategorías.");
   await deps.db.category.delete({ where: { id } });
