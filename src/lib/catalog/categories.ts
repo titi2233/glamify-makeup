@@ -6,6 +6,7 @@ export interface FlatCategory {
   order: number;
   image?: string | null;
   active?: boolean;
+  showInMenu?: boolean;
 }
 
 export interface CategoryNode {
@@ -15,6 +16,9 @@ export interface CategoryNode {
   parentId: string | null;
   order: number;
   image?: string | null;
+  /** false = no aparece en el menú principal ni en "Comprar por categoría" del home, pero sigue
+   *  siendo una ruta /tienda/[categoria] válida (ver `filterVisibleInNav`). */
+  showInMenu: boolean;
   children: CategoryNode[];
 }
 
@@ -30,6 +34,7 @@ export function buildCategoryTree(categories: FlatCategory[]): CategoryNode[] {
       parentId: c.parentId,
       order: c.order,
       image: c.image ?? null,
+      showInMenu: c.showInMenu ?? true,
       children: [],
     });
   }
@@ -45,6 +50,15 @@ export function buildCategoryTree(categories: FlatCategory[]): CategoryNode[] {
   };
   sortRec(roots);
   return roots;
+}
+
+/** Categorías visibles en navegación (menú principal, "Comprar por categoría" del home) — filtra
+ *  raíces Y subcategorías por `showInMenu`. Las ocultas siguen siendo rutas /tienda/[categoria]
+ *  válidas, solo se filtran acá. */
+export function filterVisibleInNav(tree: CategoryNode[]): CategoryNode[] {
+  return tree
+    .filter((c) => c.showInMenu)
+    .map((c) => (c.children.length > 0 ? { ...c, children: filterVisibleInNav(c.children) } : c));
 }
 
 export interface ResolvedCategory {

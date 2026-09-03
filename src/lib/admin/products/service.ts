@@ -19,6 +19,10 @@ export interface ProductTx {
     create: (args: { data: Record<string, unknown> }) => Promise<{ id: string }>;
     update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<{ id: string }>;
   };
+  productCategory: {
+    deleteMany: (args: { where: { productId: string } }) => Promise<{ count: number }>;
+    createMany: (args: { data: Array<{ productId: string; categoryId: string }> }) => Promise<{ count: number }>;
+  };
 }
 
 /** Superficie mínima de Prisma usada por el servicio (para inyectar fakes en tests). */
@@ -131,6 +135,16 @@ function productData(input: ProductClean, variantRows: VariantCreateData[]): Rec
   return { ...productScalarData(input), variants: { create: variantRows } };
 }
 
+/** Rehace las categorías adicionales del producto (tabla de asociación pura, sin historia que preservar). */
+async function syncExtraCategories(tx: ProductTx, productId: string, extraCategoryIds: string[]): Promise<void> {
+  await tx.productCategory.deleteMany({ where: { productId } });
+  if (extraCategoryIds.length > 0) {
+    await tx.productCategory.createMany({
+      data: extraCategoryIds.map((categoryId) => ({ productId, categoryId })),
+    });
+  }
+}
+
 export async function createProduct(input: ProductClean, deps: CreateProductDeps): Promise<{ id: string }> {
   const existing = await deps.db.product.findFirst({ where: { slug: input.slug, deletedAt: null } });
   if (existing) throw new Error(`Ya existe un producto con el enlace "${input.slug}". Cambiá el slug.`);
@@ -144,6 +158,7 @@ export async function createProduct(input: ProductClean, deps: CreateProductDeps
       const startSeq = nextSkuSequence(rows.map((r) => r.sku));
       const variantRows = assignSkus(variants, prefix, startSeq);
       const created = await tx.product.create({ data: productData(input, variantRows) });
+      await syncExtraCategories(tx, created.id, input.extraCategoryIds);
       return { id: created.id };
     });
   };
@@ -200,6 +215,7 @@ export async function updateProduct(id: string, input: ProductClean, deps: Creat
       if (staleIds.length > 0) {
         await tx.productVariant.deleteMany({ where: { id: { in: staleIds } } });
       }
+      await syncExtraCategories(tx, id, input.extraCategoryIds);
 
       return { id: updated.id };
     });

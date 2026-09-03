@@ -30,12 +30,19 @@ describe("buildProductWhere", () => {
   it("siempre filtra activos y no borrados", () => {
     const where = buildProductWhere(parseProductListParams({}), null);
     expect(where).toMatchObject({ active: true, deletedAt: null });
-    expect(where.categoryId).toBeUndefined();
+    expect(where.OR).toBeUndefined();
   });
-  it("filtra por categoryIds, precio, oferta y disponible", () => {
+  it("sin categoryIds (array vacío) tampoco filtra por categoría", () => {
+    const where = buildProductWhere(parseProductListParams({}), []);
+    expect(where.OR).toBeUndefined();
+  });
+  it("filtra por categoryIds (primaria o adicional), precio, oferta y disponible", () => {
     const params = parseProductListParams({ min: "500", max: "2000", oferta: "1", disponible: "1" });
     const where = buildProductWhere(params, ["c1", "c2"]);
-    expect(where.categoryId).toEqual({ in: ["c1", "c2"] });
+    expect(where.OR).toEqual([
+      { categoryId: { in: ["c1", "c2"] } },
+      { categories: { some: { categoryId: { in: ["c1", "c2"] } } } },
+    ]);
     expect(where.basePrice).toEqual({ gte: 500, lte: 2000 });
     expect(where.compareAtPrice).toEqual({ not: null });
     expect(where.variants).toEqual({ some: { active: true, stock: { gt: 0 } } });

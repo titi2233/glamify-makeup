@@ -18,7 +18,7 @@ const GIFT_ITEMS: GiftItem[] = [
     title: "Lip Combo's",
     badge: "Tendencia Viral 🔥",
     description: "Combinaciones exclusivas de delineador, labial y gloss para un acabado profesional y jugoso.",
-    href: "/tienda/labios",
+    href: "/tienda/lip-combos",
     icon: Sparkles,
     image: "/images/product_lipstick.png",
     gradient: "from-rose-500/10 to-pink-500/5",
@@ -28,7 +28,7 @@ const GIFT_ITEMS: GiftItem[] = [
     title: "Gift Cards",
     badge: "Regalo Seguro 🎀",
     description: "La tarjeta de regalo perfecta para que esa persona especial elija sus productos favoritos.",
-    href: "/tienda",
+    href: "/tienda/gift-cards",
     icon: Gift,
     image: "/images/exit_modal_visual.jpg",
     gradient: "from-purple-500/10 to-pink-500/5",
@@ -38,7 +38,7 @@ const GIFT_ITEMS: GiftItem[] = [
     title: "Ramos de Maquillaje",
     badge: "El Más Elegido 💐",
     description: "Presentaciones tipo ramo súper originales armadas con los mejores cosméticos y detalles girly.",
-    href: "/tienda",
+    href: "/tienda/ramos-maquillaje",
     icon: Flower2,
     image: "/images/hero_editorial_glow.jpg",
     gradient: "from-amber-500/10 to-rose-500/5",
@@ -48,7 +48,7 @@ const GIFT_ITEMS: GiftItem[] = [
     title: "Box de Maquillaje",
     badge: "Set Completo ✨",
     description: "Cajas temáticas con mix de productos seleccionados para armar looks deslumbrantes.",
-    href: "/tienda",
+    href: "/tienda/box-maquillaje",
     icon: Package,
     image: "/images/product_brushes.png",
     gradient: "from-pink-500/10 to-rose-500/5",
@@ -72,7 +72,7 @@ export function GiftSection() {
           </p>
         </div>
         <Link
-          href="/tienda"
+          href="/tienda/especial-regalos"
           className="text-xs font-bold uppercase tracking-widest text-primary hover:underline inline-flex items-center gap-1 shrink-0"
         >
           <span>Ver todas las opciones</span>

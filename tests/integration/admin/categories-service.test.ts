@@ -17,6 +17,7 @@ const cleanRoot: CategoryClean = {
   order: 0,
   active: true,
   image: null,
+  showInMenu: true,
 };
 
 function makeDeps(over: Partial<CategoryServiceDeps["db"]> = {}) {
@@ -30,6 +31,7 @@ function makeDeps(over: Partial<CategoryServiceDeps["db"]> = {}) {
       count: vi.fn(async () => 0), // sin hijos por defecto
     },
     product: { count: vi.fn(async () => 0) }, // sin productos por defecto
+    productCategory: { count: vi.fn(async () => 0) }, // sin usos como categoría adicional por defecto
     ...over,
   };
   const deps: CategoryServiceDeps = { db: db as unknown as CategoryServiceDeps["db"] };
@@ -153,6 +155,13 @@ describe("deleteCategory", () => {
     const { deps } = makeDeps({ product: { count: vi.fn(async () => 3) } });
     await expect(deleteCategory("cat-1", deps)).rejects.toThrow(
       "No se puede borrar: la categoría tiene productos.",
+    );
+  });
+
+  it("bloquea el borrado si está asignada como categoría adicional de algún producto", async () => {
+    const { deps } = makeDeps({ productCategory: { count: vi.fn(async () => 2) } });
+    await expect(deleteCategory("cat-1", deps)).rejects.toThrow(
+      "No se puede borrar: hay productos que la tienen como categoría adicional.",
     );
   });
 

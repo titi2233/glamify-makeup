@@ -5,6 +5,7 @@ import { CategoryNav } from "@/components/layout/category-nav";
 import { CartButton } from "@/components/cart/cart-button";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { getCategoryTree } from "@/lib/catalog/queries";
+import { filterVisibleInNav } from "@/lib/catalog/categories";
 import { getCartView } from "@/lib/cart/cart-view";
 
 export async function SiteHeader() {
@@ -17,7 +18,7 @@ export async function SiteHeader() {
           <Link href="/" className="flex items-center gap-2 group py-2" aria-label="Glamify Makeup Inicio">
             <Logo size="sm" />
           </Link>
-          <CategoryNav tree={tree} />
+          <CategoryNav tree={filterVisibleInNav(tree)} />
           <div className="flex items-center gap-3">
             <Link
               href="/tienda"

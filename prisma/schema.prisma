@@ -93,46 +93,66 @@ enum RetractionStatus {
 
 // ============ CATÁLOGO ============
 model Category {
-  id        String     @id @default(uuid()) @db.Uuid
-  slug      String     @unique
-  name      String
-  parentId  String?    @db.Uuid
-  parent    Category?  @relation("CategoryToChildren", fields: [parentId], references: [id], onDelete: SetNull)
-  children  Category[] @relation("CategoryToChildren")
-  skuPrefix String     @db.VarChar(3)
-  image     String?
-  order     Int        @default(0)
-  active    Boolean    @default(true)
-  products  Product[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           String            @id @default(uuid()) @db.Uuid
+  slug         String            @unique
+  name         String
+  parentId     String?           @db.Uuid
+  parent       Category?         @relation("CategoryToChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[]        @relation("CategoryToChildren")
+  skuPrefix    String            @db.VarChar(3)
+  image        String?
+  order        Int               @default(0)
+  active       Boolean           @default(true)
+  /** Si es false, no aparece en el menú principal ni en "Comprar por categoría" del home,
+   *  pero sigue siendo una ruta /tienda/[categoria] válida y aparece en el sitemap. */
+  showInMenu   Boolean           @default(true)
+  products     Product[]
+  productLinks ProductCategory[] @relation("ProductCategoryLinks")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }
 
 model Product {
-  id             String           @id @default(uuid()) @db.Uuid
-  slug           String           @unique
+  id             String            @id @default(uuid()) @db.Uuid
+  slug           String            @unique
   name           String
   description    String?
-  categoryId     String           @db.Uuid
-  category       Category         @relation(fields: [categoryId], references: [id])
-  basePrice      Decimal          @db.Decimal(12, 2)
-  compareAtPrice Decimal?         @db.Decimal(12, 2) // precio "antes" (oferta). Setear SOLO si > basePrice.
-  cost           Decimal          @db.Decimal(12, 2)
+  categoryId     String            @db.Uuid
+  category       Category          @relation(fields: [categoryId], references: [id])
+  /** Categorías adicionales (además de la primaria de arriba) — un producto puede vivir en varias
+   *  categorías a la vez sin duplicarse. La primaria sigue siendo la única fuente del prefijo de SKU. */
+  categories     ProductCategory[]
+  basePrice      Decimal           @db.Decimal(12, 2)
+  compareAtPrice Decimal?          @db.Decimal(12, 2) // precio "antes" (oferta). Setear SOLO si > basePrice.
+  cost           Decimal           @db.Decimal(12, 2)
   weightGr       Int
   images         String[]
-  isFeatured     Boolean          @default(false)
+  isFeatured     Boolean           @default(false)
   heroRank       Int?
   tags           String[]
   seoTitle       String?
   seoDescription String?
-  active         Boolean          @default(true)
+  active         Boolean           @default(true)
   variants       ProductVariant[]
   reviews        Review[]
   wishlistedBy   Wishlist[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   deletedAt      DateTime?
 
+  @@index([categoryId])
+}
+
+/** Categorías adicionales de un producto (la primaria vive en Product.categoryId). Tabla de
+ *  asociación pura, sin historia que preservar: se rehace entera en cada edición del producto. */
+model ProductCategory {
+  productId  String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId String   @db.Uuid
+  category   Category @relation("ProductCategoryLinks", fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@id([productId, categoryId])
   @@index([categoryId])
 }
 

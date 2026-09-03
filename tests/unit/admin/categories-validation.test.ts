@@ -13,6 +13,7 @@ const base: CategoryFormInput = {
   order: "0",
   active: true,
   image: null,
+  showInMenu: true,
 };
 
 describe("validateCategory", () => {
@@ -76,6 +77,13 @@ describe("validateCategory", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.value.parentId).toBe("cat-root");
+  });
+
+  it("propaga showInMenu tal cual (true u false)", () => {
+    const r = validateCategory({ ...base, showInMenu: false });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.value.showInMenu).toBe(false);
   });
 });
 

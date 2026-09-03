@@ -28,6 +28,7 @@ export interface CategoryFormValues {
   order: number;
   active: boolean;
   image: string | null;
+  showInMenu: boolean;
 }
 
 export interface ParentOption {
@@ -79,6 +80,7 @@ export function CategoryForm({ initial, parents }: Props) {
   const [skuPrefix, setSkuPrefix] = useState(initial?.skuPrefix ?? "");
   const [order, setOrder] = useState(String(initial?.order ?? 0));
   const [active, setActive] = useState(initial?.active ?? true);
+  const [showInMenu, setShowInMenu] = useState(initial?.showInMenu ?? true);
   const [image, setImage] = useState(initial?.image ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -101,6 +103,7 @@ export function CategoryForm({ initial, parents }: Props) {
         order,
         active,
         image: image || null,
+        showInMenu,
       };
       const r = initial?.id
         ? await updateCategoryAction(initial.id, payload)
@@ -226,6 +229,16 @@ export function CategoryForm({ initial, parents }: Props) {
             </div>
           </div>
           <Switch id="cat-active" checked={active} onCheckedChange={setActive} />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-surface-alt/50 p-3.5">
+          <div>
+            <Label htmlFor="cat-show-in-menu">Mostrar en menú</Label>
+            <p className="text-xs text-muted-foreground">
+              Si está apagado, la categoría sigue visible en /tienda pero no aparece en el menú principal ni en &ldquo;Comprar por categoría&rdquo; del home.
+            </p>
+          </div>
+          <Switch id="cat-show-in-menu" checked={showInMenu} onCheckedChange={setShowInMenu} />
         </div>
       </FormSection>
 

@@ -3,6 +3,7 @@ import {
   buildCategoryTree,
   findCategoryByPath,
   buildBreadcrumbs,
+  filterVisibleInNav,
 } from "@/lib/catalog/categories";
 
 const flat = [
@@ -19,6 +20,30 @@ describe("buildCategoryTree", () => {
     expect(tree.map((c) => c.slug)).toEqual(["labios", "ojos"]);
     const labios = tree[0];
     expect(labios.children.map((c) => c.slug)).toEqual(["gloss", "labiales"]); // order 0 antes que 1
+  });
+});
+
+describe("filterVisibleInNav", () => {
+  it("sin showInMenu (undefined) se trata como visible", () => {
+    const tree = buildCategoryTree(flat);
+    expect(filterVisibleInNav(tree).map((c) => c.slug)).toEqual(["labios", "ojos"]);
+  });
+  it("excluye las raíces con showInMenu: false, conserva las que sí se muestran", () => {
+    const flatWithHidden = [
+      ...flat,
+      { id: "gift-cards", slug: "gift-cards", name: "Gift Cards", parentId: null, order: 3, showInMenu: false },
+    ];
+    const tree = buildCategoryTree(flatWithHidden);
+    const visible = filterVisibleInNav(tree);
+    expect(visible.map((c) => c.slug)).toEqual(["labios", "ojos"]);
+    expect(visible.find((c) => c.slug === "labios")?.children.map((c) => c.slug)).toEqual(["gloss", "labiales"]);
+  });
+  it("excluye también subcategorías con showInMenu: false (no solo raíces)", () => {
+    const flatWithHiddenChild = flat.map((c) => (c.slug === "labiales" ? { ...c, showInMenu: false } : c));
+    const tree = buildCategoryTree(flatWithHiddenChild);
+    const visible = filterVisibleInNav(tree);
+    const labios = visible.find((c) => c.slug === "labios");
+    expect(labios?.children.map((c) => c.slug)).toEqual(["gloss"]);
   });
 });
 

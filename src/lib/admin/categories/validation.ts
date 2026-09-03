@@ -10,6 +10,8 @@ export interface CategoryFormInput {
   order: string;
   active: boolean;
   image: string | null;
+  /** Si es false, no aparece en el menú principal ni en "Comprar por categoría" del home. */
+  showInMenu: boolean;
 }
 
 /** Datos ya validados y normalizados, listos para el servicio. */
@@ -21,6 +23,7 @@ export interface CategoryClean {
   order: number;
   active: boolean;
   image: string | null;
+  showInMenu: boolean;
 }
 
 export type Validated<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -51,7 +54,7 @@ export function validateCategory(input: CategoryFormInput): Validated<CategoryCl
 
   return {
     ok: true,
-    value: { name, slug, parentId, skuPrefix, order, active: input.active, image },
+    value: { name, slug, parentId, skuPrefix, order, active: input.active, image, showInMenu: input.showInMenu },
   };
 }
 

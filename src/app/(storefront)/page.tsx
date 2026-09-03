@@ -5,12 +5,14 @@ import { ValueProps } from "@/components/marketing/value-props";
 import { GlamifyWelcomeBanner } from "@/components/marketing/glamify-welcome-banner";
 import { GiftSection } from "@/components/marketing/gift-section";
 import { getCategoryTree, getFeaturedProducts, getNewestProducts } from "@/lib/catalog/queries";
+import { filterVisibleInNav } from "@/lib/catalog/categories";
 import { buildWebSiteJsonLd, buildOrganizationJsonLd, serializeJsonLd } from "@/lib/seo/jsonld";
 import { appBaseUrl } from "@/lib/seo/url";
 import { ArrowRight } from "lucide-react";
 
 export default async function HomePage() {
-  const [tree, featuredRaw] = await Promise.all([getCategoryTree(), getFeaturedProducts(8)]);
+  const [treeRaw, featuredRaw] = await Promise.all([getCategoryTree(), getFeaturedProducts(8)]);
+  const tree = filterVisibleInNav(treeRaw);
   const featured = featuredRaw.length > 0 ? featuredRaw : await getNewestProducts(8);
   const base = appBaseUrl();
   const jsonLd = [buildWebSiteJsonLd(base), buildOrganizationJsonLd(base)];
